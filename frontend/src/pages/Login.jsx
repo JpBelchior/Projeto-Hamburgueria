@@ -10,7 +10,7 @@ import {
   Award,
 } from "lucide-react";
 
-const Login: React.FC = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userType, setUserType] = useState("funcionario");
@@ -19,7 +19,7 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
