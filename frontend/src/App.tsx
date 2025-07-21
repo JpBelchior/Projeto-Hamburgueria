@@ -7,7 +7,7 @@ function Layout() {
   const isLoginPage = location.pathname === "/";
 
   return (
-    <div className="flex justify-center">
+    <div>
       <AppRoutes />
       {!isLoginPage && (
         <>
