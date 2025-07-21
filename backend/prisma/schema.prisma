@@ -48,6 +48,7 @@ model Order {
   status       String      @default("preparando") // "preparando", "pronto", "entregue"
   userId       Int         // Qual atendente criou o pedido
   createdAt    DateTime    @default(now())
+  finishedAt   DateTime? // Para calcular tempo de preparo
   updatedAt    DateTime    @updatedAt
   
   // Relacionamentos
