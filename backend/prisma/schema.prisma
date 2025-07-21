@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("atendente") // "atendente" ou "gerente"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Um atendente pode criar vários pedidos
+  orders    Order[]
+  
+  @@map("users")
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String      // "Big Burger", "Coca-Cola"
+  description String?     @db.Text
+  price       Float       // 25.90
+  category    String      // "hamburguer", "bebida", "acompanhamento"
+  available   Boolean     @default(true)
+  image       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Um produto pode estar em vários pedidos
+  orderItems  OrderItem[]
+  
+  @@map("products")
+}
+
+model Order {
+  id           Int         @id @default(autoincrement())
+  orderNumber  String      @unique // "PED001", "PED002"
+  customerName String?     // Nome do cliente (opcional)
+  total        Float       // Total do pedido
+  status       String      @default("preparando") // "preparando", "pronto", "entregue"
+  userId       Int         // Qual atendente criou o pedido
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  // Relacionamentos
+  user         User        @relation(fields: [userId], references: [id])
+  items        OrderItem[] // Itens do pedido
+  
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int     // Qual pedido
+  productId Int     // Qual produto
+  quantity  Int     // Quantidade
+  price     Float   // Preço no momento do pedido
+  
+  // Relacionamentos
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+  
+  @@map("order_items")
+}
