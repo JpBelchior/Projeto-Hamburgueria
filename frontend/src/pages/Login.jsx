@@ -9,6 +9,11 @@ import {
   Clock,
   Award,
 } from "lucide-react";
+import PasswordToggle from "../hooks/buttonPassord";
+import Footer from "../components/Login/footer";
+import MetricCard from "../components/Login/MetricCard";
+import UserTypeButton from "../components/Login/UserType";
+import LogoHeader from "../components/Login/LogoHeader";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -48,34 +53,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-zinc-900 to-neutral-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Organic Shapes */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute top-3/4 left-3/4 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl"></div>
-      </div>
-
       {/* Main Login Container */}
-      <div className="relative z-10 w-full max-w-xl">
+      <div className="relative z-10 w-full max-w-4xl">
         <div className="bg-black/70 backdrop-blur-2xl border border-amber-500/10 rounded-3xl shadow-2xl p-10">
           {/* Premium Logo Section */}
-          <div className="text-center mb-10">
-            <div className="relative inline-block mb-6">
-              <div className="bg-gradient-to-br from-amber-400 to-orange-500 p-4 rounded-2xl shadow-lg">
-                <div className="text-4xl filter drop-shadow-lg">🍔</div>
-              </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-3">
-              Burger
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-                Analytics
-              </span>
-            </h1>
-            <p className="text-slate-400 text-sm font-medium">
-              Sistema Avançado de Métricas & Performance
-            </p>
-          </div>
+          <LogoHeader />
 
           {/* Login Form */}
           <div className="space-y-8">
@@ -132,6 +114,9 @@ const Login = () => {
                   placeholder="••••••••••••"
                   required
                 />
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <PasswordToggle />
+                </div>
               </div>
             </div>
 
@@ -161,43 +146,28 @@ const Login = () => {
           <div className="mt-10 space-y-6">
             <div className="border-t border-slate-700/50 pt-6">
               <p className="text-slate-400 text-sm text-center mb-4 font-medium">
-                MÉTRICAS EM TEMPO REAL
+                MÉTRICAS QUE TRANSFORMAM SEU NEGÓCIO
               </p>
-
-              {/* Interactive Metric Cards */}
               <div className="grid grid-cols-3 gap-3">
-                <div
-                  className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 text-center 
-                              hover:bg-slate-800/50 hover:scale-105 transition-all duration-300 group cursor-pointer"
-                >
-                  <Clock className="h-4 w-4 text-blue-400 mx-auto mb-1 group-hover:animate-pulse" />
-                  <p className="text-blue-300 text-xs font-semibold">
-                    TEMPO PREPARO
-                  </p>
-                </div>
+                <MetricCard
+                  icon={Clock}
+                  text="TEMPO PREPARO"
+                  color={{ icon: "text-blue-400", text: "text-blue-300" }}
+                />
 
-                <div
-                  className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 text-center 
-                              hover:bg-slate-800/50 hover:scale-105 transition-all duration-300 group cursor-pointer"
-                >
-                  <Target className="h-4 w-4 text-green-400 mx-auto mb-1 group-hover:animate-pulse" />
-                  <p className="text-green-300 text-xs font-semibold">
-                    MAIS PEDIDO
-                  </p>
-                </div>
+                <MetricCard
+                  icon={Target}
+                  text="MAIS PEDIDO"
+                  color={{ icon: "text-green-400", text: "text-green-300" }}
+                />
 
-                <div
-                  className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 text-center 
-                              hover:bg-slate-800/50 hover:scale-105 transition-all duration-300 group cursor-pointer"
-                >
-                  <TrendingUp className="h-4 w-4 text-amber-400 mx-auto mb-1 group-hover:animate-pulse" />
-                  <p className="text-amber-300 text-xs font-semibold">
-                    PEDIDOS DIÁRIOS
-                  </p>
-                </div>
+                <MetricCard
+                  icon={TrendingUp}
+                  text="PEDIDOS DIÁRIOS"
+                  color={{ icon: "text-amber-400", text: "text-amber-300" }}
+                />
               </div>
             </div>
-
             {/* Access Level Selection */}
             <div className="border-t border-slate-700/50 pt-6">
               <p className="text-slate-400 text-sm text-center mb-4 font-medium">
@@ -205,35 +175,22 @@ const Login = () => {
               </p>
 
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setUserType("funcionario")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-300 flex items-center justify-center space-x-2 ${
-                    userType === "funcionario"
-                      ? "bg-blue-600/20 border-blue-500/50 text-blue-300"
-                      : "bg-slate-800/30 border-slate-600/30 text-slate-400 hover:border-blue-500/30 hover:text-blue-400"
-                  }`}
-                >
-                  <Activity className="h-4 w-4" />
-                  <span className="font-semibold text-xs uppercase">
-                    Funcionário
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setUserType("gerente")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-300 flex items-center justify-center space-x-2 ${
-                    userType === "gerente"
-                      ? "bg-amber-600/20 border-amber-500/50 text-amber-300"
-                      : "bg-slate-800/30 border-slate-600/30 text-slate-400 hover:border-amber-500/30 hover:text-amber-400"
-                  }`}
-                >
-                  <Award className="h-4 w-4" />
-                  <span className="font-semibold text-xs uppercase">
-                    Gerente
-                  </span>
-                </button>
+                <UserTypeButton
+                  icon={Activity}
+                  text="FUNCIONÁRIO"
+                  value="funcionario"
+                  userType={userType}
+                  setUserType={setUserType}
+                  color="blue"
+                />
+                <UserTypeButton
+                  icon={Award}
+                  text="GERENTE"
+                  value="gerente"
+                  userType={userType}
+                  setUserType={setUserType}
+                  color="amber"
+                />
               </div>
             </div>
           </div>
@@ -263,20 +220,7 @@ const Login = () => {
                 </div>
               </div>
             </div>
-
-            <div className="text-center">
-              <p className="text-slate-500 text-xs leading-relaxed">
-                © 2025 BurgerAnalytics™ | Sistema Inteligente de Métricas
-                <br />
-                <span className="text-slate-600">
-                  Transformando dados em crescimento para sua hamburgueria
-                </span>
-                <br />
-                <span className="text-amber-400/70">
-                  Desenvolvido por JpBelchior
-                </span>
-              </p>
-            </div>
+            <Footer />
           </div>
         </div>
       </div>
