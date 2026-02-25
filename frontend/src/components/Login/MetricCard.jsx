@@ -1,6 +1,5 @@
 import { Clock, Target, TrendingUp } from "lucide-react";
 
-// Componente reutilizável
 const MetricCard = ({ icon: Icon, text, color }) => {
   return (
     <div className="bg-slate-800/30 border border-slate-700/30 rounded-lg p-3 text-center hover:bg-slate-800/50 hover:scale-105 transition-all duration-300 group">

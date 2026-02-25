@@ -15,13 +15,13 @@ export const useLogin = () => {
     try {
       const { token, user } = await authService.login(email, password);
 
-      const expectedRole = userType === "funcionario" ? "atendente" : "gerente";
+      const expectedRole = userType === "funcionario" ? "ATENDENTE" : "GERENTE";
+
       if (user.role !== expectedRole) {
         setError("Nível de acesso incorreto para o tipo de usuário selecionado.");
         return;
       }
 
-      // Persiste sessão
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 

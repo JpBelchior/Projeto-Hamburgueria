@@ -1,6 +1,6 @@
 const LogoHeader = ({
   emoji = "🍔",
-  title = "Burger",
+  title = "Food",
   highlightText = "Analytics",
   subtitle = "Sistema Avançado de Métricas & Performance",
   showIndicator = true,
@@ -15,9 +15,6 @@ const LogoHeader = ({
         >
           <div className="text-4xl filter drop-shadow-lg">{emoji}</div>
         </div>
-        {showIndicator && (
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-        )}
       </div>
 
       <h1 className="text-4xl font-bold text-white mb-3">

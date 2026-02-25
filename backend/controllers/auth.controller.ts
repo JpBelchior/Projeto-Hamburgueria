@@ -9,13 +9,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
-    // Validação básica
     if (!email || !password) {
       res.status(400).json({ message: "E-mail e senha são obrigatórios." });
       return;
     }
 
-    // Buscar usuário no banco
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.active) {
@@ -23,15 +21,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Verificar senha
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
       res.status(401).json({ message: "Credenciais inválidas." });
       return;
     }
 
-    // Gerar token JWT
     const secret = process.env.JWT_SECRET as string;
+
+    // role salvo como enum no banco: "GERENTE" | "ATENDENTE"
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, name: user.name },
       secret,
@@ -44,7 +42,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role, 
       },
     });
   } catch (error) {
@@ -54,7 +52,5 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const me = async (req: Request, res: Response): Promise<void> => {
-  // req.user é preenchido pelo middleware de autenticação
-  const user = (req as any).user;
-  res.json({ user });
+  res.json({ user: req.user });
 };
