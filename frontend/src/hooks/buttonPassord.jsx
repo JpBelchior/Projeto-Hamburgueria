@@ -19,7 +19,8 @@ const PasswordToggle = () => {
       type="button"
       onClick={togglePassword}
       className={`
-        w-10 h-10 rounded-full bg-transparent text-amber-400
+        w-8 h-8 rounded-full bg-black hover:bg-black/80
+         text-amber-400 flex items-center justify-center
       `}
       title={showPassword ? "Ocultar senha" : "Mostrar senha"}
     >

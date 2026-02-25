@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   User,
   Shield,
@@ -9,6 +8,7 @@ import {
   Clock,
   Award,
 } from "lucide-react";
+import { useLogin } from "../hooks/useLogin";
 import PasswordToggle from "../hooks/buttonPassord";
 import Footer from "../components/Login/footer";
 import MetricCard from "../components/Login/MetricCard";
@@ -19,49 +19,21 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [userType, setUserType] = useState("funcionario");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const navigate = useNavigate();
+  const { login, isLoading, error } = useLogin();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    // Simular autenticação
-    setTimeout(() => {
-      // Verificar credenciais baseadas no tipo de usuário
-      const validCredentials =
-        (userType === "funcionario" &&
-          email === "funcionario@burgeranalytics.com" &&
-          password === "123456") ||
-        (userType === "gerente" &&
-          email === "gerente@burgeranalytics.com" &&
-          password === "654321");
-
-      if (validCredentials) {
-        setIsLoading(false);
-        // Redirecionar para o Dashboard
-        navigate("/Dashboard");
-      } else {
-        setError("Credenciais inválidas para o tipo de usuário selecionado.");
-        setIsLoading(false);
-      }
-    }, 1500);
+    login(email, password, userType);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-zinc-900 to-neutral-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Main Login Container */}
       <div className="relative z-10 w-full max-w-4xl">
         <div className="bg-black/70 backdrop-blur-2xl border border-amber-500/10 rounded-3xl shadow-2xl p-10">
-          {/* Premium Logo Section */}
           <LogoHeader />
 
-          {/* Login Form */}
           <div className="space-y-8">
-            {/* Error Message */}
             {error && (
               <div className="bg-red-500/10 border border-red-400/30 rounded-xl p-4 animate-pulse">
                 <p className="text-red-300 text-sm text-center flex items-center justify-center">
@@ -71,7 +43,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* Email Field */}
             <div className="space-y-3">
               <label className="block text-white font-semibold text-sm uppercase tracking-wider">
                 E-MAIL CORPORATIVO
@@ -94,7 +65,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Password Field */}
             <div className="space-y-3">
               <label className="block text-white font-semibold text-sm uppercase tracking-wider">
                 SENHA DE ACESSO
@@ -120,7 +90,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Premium Login Button */}
             <button
               onClick={handleSubmit}
               disabled={isLoading}
@@ -142,7 +111,6 @@ const Login = () => {
             </button>
           </div>
 
-          {/* Metrics Preview Cards */}
           <div className="mt-10 space-y-6">
             <div className="border-t border-slate-700/50 pt-6">
               <p className="text-slate-400 text-sm text-center mb-4 font-medium">
@@ -154,13 +122,11 @@ const Login = () => {
                   text="TEMPO PREPARO"
                   color={{ icon: "text-blue-400", text: "text-blue-300" }}
                 />
-
                 <MetricCard
                   icon={Target}
                   text="MAIS PEDIDO"
                   color={{ icon: "text-green-400", text: "text-green-300" }}
                 />
-
                 <MetricCard
                   icon={TrendingUp}
                   text="PEDIDOS DIÁRIOS"
@@ -168,12 +134,11 @@ const Login = () => {
                 />
               </div>
             </div>
-            {/* Access Level Selection */}
+
             <div className="border-t border-slate-700/50 pt-6">
               <p className="text-slate-400 text-sm text-center mb-4 font-medium">
                 NÍVEIS DE ACESSO
               </p>
-
               <div className="grid grid-cols-2 gap-3">
                 <UserTypeButton
                   icon={Activity}
@@ -195,31 +160,7 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Premium Footer */}
-          <div className="mt-8 text-center space-y-3">
-            <div className="bg-slate-800/20 border border-slate-700/20 rounded-lg p-4">
-              <p className="text-slate-400 text-xs mb-2 font-medium">
-                CREDENCIAIS DE TESTE:
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-300 text-xs font-semibold">
-                    FUNCIONÁRIO:
-                  </span>
-                  <span className="text-slate-300 text-xs">
-                    funcionario@burgeranalytics.com | 123456
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-amber-300 text-xs font-semibold">
-                    GERENTE:
-                  </span>
-                  <span className="text-slate-300 text-xs">
-                    gerente@burgeranalytics.com | 654321
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="mt-8 text-center">
             <Footer />
           </div>
         </div>
