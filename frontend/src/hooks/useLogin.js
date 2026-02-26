@@ -13,16 +13,19 @@ export const useLogin = () => {
     setError("");
 
     try {
-      const { token, user } = await authService.login(email, password);
+      const { token, refreshToken, user } = await authService.login(email, password);
 
+      // Verifica se o nível de acesso bate com o botão selecionado
+      // O role vem do banco em maiúsculas (GERENTE / ATENDENTE)
       const expectedRole = userType === "funcionario" ? "ATENDENTE" : "GERENTE";
-
       if (user.role !== expectedRole) {
         setError("Nível de acesso incorreto para o tipo de usuário selecionado.");
         return;
       }
 
+      // Persiste a sessão completa
       localStorage.setItem("token", token);
+      localStorage.setItem("refreshToken", refreshToken); // ← novo
       localStorage.setItem("user", JSON.stringify(user));
 
       navigate("/Dashboard");

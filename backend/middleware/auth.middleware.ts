@@ -1,12 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { verifyAccessToken, AccessTokenPayload } from "../helpers/jtw.helper"
 
-export interface JwtPayload {
-  id: number;
-  email: string;
-  role: string;
-  name: string;
-}
+export type JwtPayload = AccessTokenPayload;
 
 // Extende o Request do Express para incluir o usuário
 declare global {
@@ -32,8 +27,7 @@ export const authenticate = (
   const token = authHeader.split(" ")[1];
 
   try {
-    const secret = process.env.JWT_SECRET as string;
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = verifyAccessToken(token);
     req.user = decoded;
     next();
   } catch {
@@ -41,13 +35,12 @@ export const authenticate = (
   }
 };
 
-// Middleware para verificar se é gerente
 export const requireManager = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  if (req.user?.role !== "gerente") {
+  if (req.user?.role !== "GERENTE") {
     res.status(403).json({ message: "Acesso restrito a gerentes." });
     return;
   }

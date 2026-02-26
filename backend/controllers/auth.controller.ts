@@ -1,9 +1,17 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../helpers/jtw.helper"
 
 const prisma = new PrismaClient();
+
+// ─────────────────────────────────────────
+// LOGIN
+// ─────────────────────────────────────────
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -27,22 +35,32 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const secret = process.env.JWT_SECRET as string;
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    };
 
-    // role salvo como enum no banco: "GERENTE" | "ATENDENTE"
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
-      secret,
-      { expiresIn: "8h" }
-    );
+    // Gera ambos os tokens
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(user.id);
+
+    // Persiste o refresh token no banco (invalida o anterior automaticamente)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
 
     res.json({
-      token,
+      token: accessToken,           // expira em 30min
+      refreshToken,                  // expira em 7 dias
+      expiresIn: 30 * 60,           // segundos → frontend usa para agendar renovação
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role, 
+        role: user.role,
       },
     });
   } catch (error) {
@@ -51,6 +69,84 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+// ─────────────────────────────────────────
+// REFRESH — renova o access token silenciosamente
+// ─────────────────────────────────────────
+
+export const refresh = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      res.status(401).json({ message: "Refresh token não fornecido." });
+      return;
+    }
+
+    let decoded: { id: number };
+
+    try {
+      decoded = verifyRefreshToken(refreshToken);
+    } catch {
+      res.status(401).json({ message: "Refresh token inválido ou expirado. Faça login novamente." });
+      return;
+    }
+
+    // Busca usuário e verifica se o refresh token bate com o salvo no banco
+    // (Isso garante que apenas 1 sessão ativa por usuário — ao fazer novo login,
+    //  o token antigo é invalidado automaticamente)
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+
+    if (!user || !user.active || user.refreshToken !== refreshToken) {
+      res.status(401).json({ message: "Sessão inválida. Faça login novamente." });
+      return;
+    }
+
+    // Gera novo access token
+    const newAccessToken = generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: user.name,
+    });
+
+    res.json({
+      token: newAccessToken,
+      expiresIn: 30 * 60,
+    });
+  } catch (error) {
+    console.error("Erro no refresh:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+// ─────────────────────────────────────────
+// LOGOUT — invalida o refresh token no banco
+// ─────────────────────────────────────────
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.id;
+
+    if (userId) {
+      // Remove o refresh token do banco — sessão encerrada
+      await prisma.user.update({
+        where: { id: userId },
+        data: { refreshToken: null },
+      });
+    }
+
+    res.json({ message: "Logout realizado com sucesso." });
+  } catch (error) {
+    console.error("Erro no logout:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+// ─────────────────────────────────────────
+// ME — retorna dados do usuário logado
+// ─────────────────────────────────────────
+
 export const me = async (req: Request, res: Response): Promise<void> => {
-  res.json({ user: req.user });
+  const user = (req as any).user;
+  res.json({ user });
 };

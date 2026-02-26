@@ -8,6 +8,6 @@ export const authService = {
       email,
       password,
     });
-    return response.data; // { token, user }
+    return response.data; 
   },
 };

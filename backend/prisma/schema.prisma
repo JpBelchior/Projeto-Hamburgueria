@@ -56,14 +56,16 @@ enum UnidadeMedida {
 // ─────────────────────────────────────────
 
 model User {
-  id          Int          @id @default(autoincrement())
-  name        String
-  email       String       @unique
-  password    String
-  role        Role         @default(GERENTE)
-  active      Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           Int          @id @default(autoincrement())
+  name         String
+  email        String       @unique
+  password     String
+  role         Role         @default(GERENTE)
+  active       Boolean      @default(true)
+  // Token de refresh — gerado no login, invalidado no logout
+  refreshToken String?      @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   funcionario Funcionario?
 
@@ -80,6 +82,7 @@ model Funcionario {
   cargo        Cargo
   salario      Float
   dataAdmissao DateTime  @default(now())
+  active       Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -99,6 +102,7 @@ model Ingrediente {
   quantidadeAtual Float
   unidade         UnidadeMedida
   custoPorUnidade Float
+  essencial       Boolean              @default(false)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
@@ -117,7 +121,7 @@ model Produto {
   descricao            String?              @db.Text
   categoria            CategoriaProduct
   precoVenda           Float
-  tempoPreparoEstimado Int?                 // em minutos — opcional
+  tempoPreparoEstimado Int?
   ativo                Boolean              @default(true)
   imagem               String?
   createdAt            DateTime             @default(now())
@@ -142,7 +146,7 @@ model ProdutoIngrediente {
   produto         Produto     @relation(fields: [produtoId], references: [id], onDelete: Cascade)
   ingrediente     Ingrediente @relation(fields: [ingredienteId], references: [id])
 
-  @@id([produtoId, ingredienteId]) // chave composta — sem id extra necessário
+  @@id([produtoId, ingredienteId])
   @@map("produto_ingredientes")
 }
 
@@ -213,7 +217,7 @@ model PedidoItem {
   produtoId     Int?
   comboId       Int?
   quantidade    Int
-  precoUnitario Float   // snapshot do preço no momento
+  precoUnitario Float
   observacao    String?
 
   pedido        Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
