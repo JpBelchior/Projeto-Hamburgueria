@@ -1,5 +1,4 @@
 const LogoHeader = ({
-  emoji = "🍔",
   title = "Food",
   highlightText = "Analytics",
   subtitle = "Sistema Avançado de Métricas & Performance",
@@ -9,11 +8,13 @@ const LogoHeader = ({
 }) => {
   return (
     <div className="text-center mb-10">
-      <div className="relative inline-block mb-6">
-        <div
-          className={`bg-gradient-to-br from-${gradientFrom} to-${gradientTo} p-4 rounded-2xl shadow-lg`}
-        >
-          <div className="text-4xl filter drop-shadow-lg">{emoji}</div>
+      <div className="relative inline-block ">
+        <div className="relative inline-block ">
+          <img
+            src="/logo.png"
+            alt="Logo FastFood Control"
+            className="w-28 h-28 object-contain drop-shadow-[0_0_35px_rgba(255,140,0,0.6)]"
+          />
         </div>
       </div>
 
@@ -30,4 +31,5 @@ const LogoHeader = ({
     </div>
   );
 };
+
 export default LogoHeader;
