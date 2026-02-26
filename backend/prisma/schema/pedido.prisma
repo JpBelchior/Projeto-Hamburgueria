@@ -1,0 +1,38 @@
+// PEDIDO
+
+model Pedido {
+  id                 Int             @id @default(autoincrement())
+  numeroPedido       String          @unique
+  nomeCliente        String?
+  status             StatusPedido    @default(ABERTO)
+  formaPagamento     FormaPagamento?
+  valorTotal         Float           @default(0)
+  funcionarioId      Int
+  tempoInicioPreparo DateTime?
+  tempoFimPreparo    DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  funcionario        Funcionario     @relation(fields: [funcionarioId], references: [id])
+  itens              PedidoItem[]
+
+  @@map("pedidos")
+}
+
+// PEDIDO ITEM — produto ou combo
+
+model PedidoItem {
+  id            Int     @id @default(autoincrement())
+  pedidoId      Int
+  produtoId     Int?
+  comboId       Int?
+  quantidade    Int
+  precoUnitario Float
+  observacao    String?
+
+  pedido        Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto       Produto? @relation(fields: [produtoId], references: [id])
+  combo         Combo?   @relation(fields: [comboId], references: [id])
+
+  @@map("pedido_itens")
+}

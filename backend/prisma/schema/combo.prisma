@@ -1,0 +1,29 @@
+// COMBO
+
+model Combo {
+  id          Int            @id @default(autoincrement())
+  nome        String
+  preco       Float
+  ativo       Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  produtos    ComboProduto[]
+  pedidoItens PedidoItem[]
+
+  @@map("combos")
+}
+
+// COMBO ↔ PRODUTO
+
+model ComboProduto {
+  comboId    Int
+  produtoId  Int
+  quantidade Int     @default(1)
+
+  combo      Combo   @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  produto    Produto @relation(fields: [produtoId], references: [id])
+
+  @@id([comboId, produtoId])
+  @@map("combo_produtos")
+}

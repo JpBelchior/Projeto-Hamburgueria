@@ -16,7 +16,7 @@ export interface AccessTokenPayload {
 // ─────────────────────────────────────────
 
 /**
- * Gera o access token com validade curta (30 minutos).
+ * Gera o access token com validade curta.
  * Usado em toda requisição autenticada.
  */
 export const generateAccessToken = (payload: AccessTokenPayload): string => {
@@ -25,7 +25,7 @@ export const generateAccessToken = (payload: AccessTokenPayload): string => {
 };
 
 /**
- * Gera o refresh token com validade longa (7 dias).
+ * Gera o refresh token com validade longa .
  * Usa uma chave separada — um token não pode ser usado no lugar do outro.
  * Armazenado no banco e invalidado no logout.
  */

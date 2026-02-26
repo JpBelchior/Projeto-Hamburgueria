@@ -1,0 +1,51 @@
+// INGREDIENTE — estoque
+
+model Ingrediente {
+  id              Int                  @id @default(autoincrement())
+  nome            String               @unique
+  quantidadeAtual Float
+  unidade         UnidadeMedida
+  custoPorUnidade Float
+  essencial       Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  produtos        ProdutoIngrediente[]
+
+  @@map("ingredientes")
+}
+
+// PRODUTO
+
+model Produto {
+  id                   Int                  @id @default(autoincrement())
+  nome                 String
+  descricao            String?              @db.Text
+  categoria            CategoriaProduct
+  precoVenda           Float
+  tempoPreparoEstimado Int?
+  ativo                Boolean              @default(true)
+  imagem               String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  ingredientes         ProdutoIngrediente[]
+  combos               ComboProduto[]
+  pedidoItens          PedidoItem[]
+
+  @@map("produtos")
+}
+
+// PRODUTO ↔ INGREDIENTE
+
+model ProdutoIngrediente {
+  produtoId       Int
+  ingredienteId   Int
+  quantidadeUsada Float
+
+  produto         Produto     @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  ingrediente     Ingrediente @relation(fields: [ingredienteId], references: [id])
+
+  @@id([produtoId, ingredienteId])
+  @@map("produto_ingredientes")
+}

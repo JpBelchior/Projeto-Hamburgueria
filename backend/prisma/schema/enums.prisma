@@ -1,0 +1,39 @@
+enum Role {
+  GERENTE
+  ATENDENTE
+}
+
+enum Cargo {
+  ATENDENTE
+  COZINHEIRO
+  CAIXA
+}
+
+enum CategoriaProduct {
+  PRINCIPAL
+  ACOMPANHAMENTO
+  BEBIDA
+  SOBREMESA
+}
+
+enum StatusPedido {
+  ABERTO
+  EM_PREPARO
+  FINALIZADO
+  CANCELADO
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  PIX
+}
+
+enum UnidadeMedida {
+  KG
+  G
+  LITRO
+  ML
+  UNIDADE
+}
