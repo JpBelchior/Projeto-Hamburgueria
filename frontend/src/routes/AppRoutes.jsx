@@ -12,7 +12,7 @@ const Dashboard = () => (
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<login />} />
+      <Route path="/" element={<Login />} />
       <Route path="/Dashboard" element={<Dashboard />} />
     </Routes>
   );

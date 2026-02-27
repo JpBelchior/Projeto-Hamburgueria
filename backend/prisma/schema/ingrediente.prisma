@@ -1,0 +1,18 @@
+// INGREDIENTE — estoque
+
+model Ingrediente {
+  id              Int                  @id @default(autoincrement())
+  nome            String               @unique
+  quantidadeAtual Float
+  unidade         UnidadeMedida
+  custoPorUnidade Float
+  essencial       Boolean              @default(false)
+  estoqueMinimo   Float?
+  imagem          String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  produtos        ProdutoIngrediente[]
+
+  @@map("ingredientes")
+}

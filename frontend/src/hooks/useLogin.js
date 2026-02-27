@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { authService } from "../services/auth.service";
 
 export const useLogin = () => {
@@ -15,22 +14,25 @@ export const useLogin = () => {
     try {
       const { token, refreshToken, user } = await authService.login(email, password);
 
-      // Verifica se o nível de acesso bate com o botão selecionado
-      // O role vem do banco em maiúsculas (GERENTE / ATENDENTE)
+      // Verifica se o role bate com o botão selecionado na tela
       const expectedRole = userType === "funcionario" ? "ATENDENTE" : "GERENTE";
       if (user.role !== expectedRole) {
         setError("Nível de acesso incorreto para o tipo de usuário selecionado.");
         return;
       }
 
-      // Persiste a sessão completa
+      // Persiste a sessão
       localStorage.setItem("token", token);
-      localStorage.setItem("refreshToken", refreshToken); // ← novo
+      localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
 
-      navigate("/Dashboard");
+      // Redireciona para o dashboard correto de acordo com o role
+      const destination =
+        user.role === "GERENTE" ? "/Dashboard" : "/DashboardFuncionario";
+      navigate(destination);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
+      // O interceptor do api.js já trata 401 globalmente
+      if (err.response) {
         setError(err.response.data.message || "Erro ao realizar login.");
       } else {
         setError("Não foi possível conectar ao servidor.");

@@ -5,7 +5,8 @@ import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} from "../helpers/jtw.helper"
+} from "../helpers/jtw.helper";
+import { toTokenPayload } from "../dto/auth.dto";
 
 const prisma = new PrismaClient();
 
@@ -35,33 +36,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-    };
+    // toTokenPayload monta o payload com tipagem correta via DTO
+    const payload = toTokenPayload(user);
 
-    // Gera ambos os tokens
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(user.id);
 
-    // Persiste o refresh token no banco (invalida o anterior automaticamente)
+    // Persiste o refresh token no banco 
     await prisma.user.update({
       where: { id: user.id },
       data: { refreshToken },
     });
 
     res.json({
-      token: accessToken,           // expira em 30min
-      refreshToken,                  // expira em 7 dias
-      expiresIn: 30 * 60,           // segundos → frontend usa para agendar renovação
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      token: accessToken,         
+      refreshToken,             
+      expiresIn: 30 * 60,     
+      user: payload,              // retorna o DTO
     });
   } catch (error) {
     console.error("Erro no login:", error);
@@ -70,7 +61,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 // ─────────────────────────────────────────
-// REFRESH — renova o access token silenciosamente
+// REFRESH
 // ─────────────────────────────────────────
 
 export const refresh = async (req: Request, res: Response): Promise<void> => {
@@ -87,13 +78,12 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     try {
       decoded = verifyRefreshToken(refreshToken);
     } catch {
-      res.status(401).json({ message: "Refresh token inválido ou expirado. Faça login novamente." });
+      res
+        .status(401)
+        .json({ message: "Refresh token inválido ou expirado. Faça login novamente." });
       return;
     }
 
-    // Busca usuário e verifica se o refresh token bate com o salvo no banco
-    // (Isso garante que apenas 1 sessão ativa por usuário — ao fazer novo login,
-    //  o token antigo é invalidado automaticamente)
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
 
     if (!user || !user.active || user.refreshToken !== refreshToken) {
@@ -101,13 +91,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Gera novo access token
-    const newAccessToken = generateAccessToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-    });
+    const newAccessToken = generateAccessToken(toTokenPayload(user));
 
     res.json({
       token: newAccessToken,
@@ -120,15 +104,15 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
 };
 
 // ─────────────────────────────────────────
-// LOGOUT — invalida o refresh token no banco
+// LOGOUT
 // ─────────────────────────────────────────
 
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    // req.user é AccessTokenPayloadDTO
+    const userId = req.user?.id;
 
     if (userId) {
-      // Remove o refresh token do banco — sessão encerrada
       await prisma.user.update({
         where: { id: userId },
         data: { refreshToken: null },
@@ -143,10 +127,10 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 };
 
 // ─────────────────────────────────────────
-// ME — retorna dados do usuário logado
+// ME
 // ─────────────────────────────────────────
 
-export const me = async (req: Request, res: Response): Promise<void> => {
-  const user = (req as any).user;
-  res.json({ user });
+export const me = (req: Request, res: Response): void => {
+  // req.user já é AccessTokenPayloadDTO — sem "as any"
+  res.json({ user: req.user });
 };

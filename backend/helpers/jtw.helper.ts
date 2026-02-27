@@ -1,15 +1,5 @@
 import jwt from "jsonwebtoken";
-
-// ─────────────────────────────────────────
-// TIPOS
-// ─────────────────────────────────────────
-
-export interface AccessTokenPayload {
-  id: number;
-  email: string;
-  role: string;
-  name: string;
-}
+import { AccessTokenPayloadDTO } from "../dto/auth.dto";
 
 // ─────────────────────────────────────────
 // GERAÇÃO
@@ -17,17 +7,15 @@ export interface AccessTokenPayload {
 
 /**
  * Gera o access token com validade curta.
- * Usado em toda requisição autenticada.
+ * Recebe AccessTokenPayloadDTO
  */
-export const generateAccessToken = (payload: AccessTokenPayload): string => {
+export const generateAccessToken = (payload: AccessTokenPayloadDTO): string => {
   const secret = process.env.JWT_SECRET as string;
   return jwt.sign(payload, secret, { expiresIn: "30m" });
 };
 
 /**
- * Gera o refresh token com validade longa .
- * Usa uma chave separada — um token não pode ser usado no lugar do outro.
- * Armazenado no banco e invalidado no logout.
+ * Gera o refresh token com validade longa.
  */
 export const generateRefreshToken = (userId: number): string => {
   const secret = process.env.JWT_REFRESH_SECRET as string;
@@ -40,11 +28,11 @@ export const generateRefreshToken = (userId: number): string => {
 
 /**
  * Verifica e decodifica um access token.
- * Lança erro se inválido ou expirado.
+ * Retorna AccessTokenPayloadDTO
  */
-export const verifyAccessToken = (token: string): AccessTokenPayload => {
+export const verifyAccessToken = (token: string): AccessTokenPayloadDTO => {
   const secret = process.env.JWT_SECRET as string;
-  return jwt.verify(token, secret) as AccessTokenPayload;
+  return jwt.verify(token, secret) as AccessTokenPayloadDTO;
 };
 
 /**

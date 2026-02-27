@@ -1,16 +1,24 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken, AccessTokenPayload } from "../helpers/jtw.helper"
+import { verifyAccessToken } from "../helpers/jtw.helper";
+import { AccessTokenPayloadDTO } from "../dto/auth.dto";
+import { Role } from "@prisma/client";
 
-export type JwtPayload = AccessTokenPayload;
+// ─────────────────────────────────────────
+// TIPAGEM GLOBAL DO REQUEST
+// ─────────────────────────────────────────
 
-// Extende o Request do Express para incluir o usuário
+/**
+ * Estende o Request do Express para incluir o usuário autenticado.
+ */
 declare global {
   namespace Express {
     interface Request {
-      user?: JwtPayload;
+      user?: AccessTokenPayloadDTO;
     }
   }
 }
+
+// AUTENTICAÇÃO
 
 export const authenticate = (
   req: Request,
@@ -35,13 +43,34 @@ export const authenticate = (
   }
 };
 
-export const requireManager = (
+// ─────────────────────────────────────────
+// AUTORIZAÇÃO POR ROLE
+// ─────────────────────────────────────────
+
+ // Restringe rota apenas para GERENTE.
+ 
+export const requireGerente = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  if (req.user?.role !== "GERENTE") {
+  if (req.user?.role !== Role.GERENTE) {
     res.status(403).json({ message: "Acesso restrito a gerentes." });
+    return;
+  }
+  next();
+};
+
+/**
+ * Restringe rota apenas para ATENDENTE.
+ */
+export const requireAtendente = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.user?.role !== Role.ATENDENTE) {
+    res.status(403).json({ message: "Acesso restrito a atendentes." });
     return;
   }
   next();
