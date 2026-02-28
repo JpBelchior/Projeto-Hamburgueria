@@ -9,11 +9,11 @@ import {
   Award,
 } from "lucide-react";
 import { useLogin } from "../hooks/useLogin";
-import PasswordToggle from "../hooks/buttonPassord";
-import Footer from "../components/Login/footer";
-import MetricCard from "../components/Login/MetricCard";
-import UserTypeButton from "../components/Login/UserType";
-import LogoHeader from "../components/Login/LogoHeader";
+import Footer from "../../../shared/hooks/footer";
+import MetricCard from "../components/MetricCard";
+import UserTypeButton from "../components/UserType";
+import LogoHeader from "../components/LogoHeader";
+import PasswordToggle from "../../../shared/hooks/buttonPassword";
 
 const Login = () => {
   const [email, setEmail] = useState("");
