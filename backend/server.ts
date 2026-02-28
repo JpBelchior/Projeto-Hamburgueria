@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import authRoutes from "./routes/auth.route";
+import authRoutes from "./modules/auth/http/auth.routes";
 
 dotenv.config();
 

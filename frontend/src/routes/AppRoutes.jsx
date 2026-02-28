@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import Login from "../pages/login";
+import Login from "../pages/Login";
 
 // Componente temporário para o dashboard (criaremos depois)
 const Dashboard = () => (
