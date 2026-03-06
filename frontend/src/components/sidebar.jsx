@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { GERENTE_NAV } from "../config/navigation";
+import Avatar from "./Ui/Avatar";
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -111,11 +112,7 @@ const Sidebar = () => {
       <div className="border-t border-amber-500/10 p-3 space-y-2">
         {!collapsed && (
           <div className="flex items-center gap-3 px-2 py-2 rounded-xl bg-slate-900/50">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shrink-0">
-              <span className="text-black text-xs font-bold uppercase">
-                {user?.name?.charAt(0) || "G"}
-              </span>
-            </div>
+            <Avatar name={user?.name || "Gerente"} size="sm" />
             <div className="overflow-hidden">
               <p className="text-white text-xs font-semibold truncate">
                 {user?.name || "Gerente"}

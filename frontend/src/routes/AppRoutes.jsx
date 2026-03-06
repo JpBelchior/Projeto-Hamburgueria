@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import DashboardLayout from "../components/Layouts/dashboardLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import Funcionarios from "../pages/Funcionarios";
 
 // ── placeholders — serão substituídos pelas páginas reais ──────────────────
 const DashboardHome = () => (
@@ -36,13 +37,6 @@ const Combos = () => (
   <div>
     <h1 className="text-2xl font-bold text-white">Combos</h1>
     <p className="text-slate-400 mt-2">Gestão de combos</p>
-  </div>
-);
-
-const Funcionarios = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-white">Funcionários</h1>
-    <p className="text-slate-400 mt-2">Equipe e acessos</p>
   </div>
 );
 

@@ -21,12 +21,12 @@ export const GERENTE_NAV = [
     items: [
       { label: "Produtos", icon: UtensilsCrossed, path: "/Dashboard/produtos" },
       { label: "Ingredientes", icon: Package, path: "/Dashboard/ingredientes" },
-      { label: "Combos", icon: Layers, path: "/Dashboard/combos" },
+      { label: "Combos e Promoções", icon: Layers, path: "/Dashboard/combos" },
       { label: "Funcionários", icon: Users, path: "/Dashboard/funcionarios" },
     ],
   },
   {
-    section: "ANÁLISE",
+    section: "ESTATÍSTICAS",
     items: [
       { label: "Métricas", icon: BarChart2, path: "/Dashboard/metricas" },
     ],

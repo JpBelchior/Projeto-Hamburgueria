@@ -14,6 +14,7 @@ import Footer from "../components/Login/footer";
 import MetricCard from "../components/Login/MetricCard";
 import UserTypeButton from "../components/Login/UserType";
 import LogoHeader from "../components/Login/LogoHeader";
+import Button from "../components/Ui/Button";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -92,34 +93,16 @@ const Login = () => {
               </div>
             </div>
             <div className=" flex justify-center">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="
-                  relative inline-flex items-center justify-center
-                  bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-600
-                  hover:from-amber-500 hover:via-orange-600 hover:to-yellow-700
-                  text-white font-medium
-                  py-3 px-8
-                  rounded-2xl
-                  shadow-md shadow-orange-500/10
-                  hover:shadow-lg hover:shadow-orange-500/15
-                  hover:-translate-y-[1px]
-                  active:translate-y-0 active:scale-[0.98]
-                  transition-all duration-300 ease-out
-                  disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
-                  tracking-wide
-                "
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-3"></div>
-                    Autenticando...
-                  </div>
-                ) : (
-                  "Acessar Dashboard"
-                )}
-              </button>
+              <Button type="submit" size="lg" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="flex items-center gap-3">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                      Autenticando...
+                    </div>
+                  ) : (
+                    "Acessar Dashboard"
+                  )}
+                </Button>
             </div>
           </form>
 

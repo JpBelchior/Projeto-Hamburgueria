@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.route";
+import funcionarioRoutes from "./funcionario/funcionario.routes";
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.use(express.json());
 
 // Rotas
 app.use("/api/auth", authRoutes);
+
+app.use("/api/funcionarios", funcionarioRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
