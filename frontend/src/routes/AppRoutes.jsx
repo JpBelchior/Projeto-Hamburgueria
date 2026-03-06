@@ -1,8 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import DashboardLayout from "../components/Layouts/dashboardLayout";
+import ProtectedRoute from "./ProtectedRoute";
 
-// ── placeholders de texte ──────────────────
+// ── placeholders — serão substituídos pelas páginas reais ──────────────────
 const DashboardHome = () => (
   <div>
     <h1 className="text-2xl font-bold text-white">Dashboard</h1>
@@ -52,14 +53,31 @@ const Metricas = () => (
   </div>
 );
 
+// ── placeholder do dashboard do atendente ──────────────────────────────────
+const DashboardFuncionario = () => (
+  <div>
+    <h1 className="text-2xl font-bold text-white">Dashboard — Atendente</h1>
+    <p className="text-slate-400 mt-2">Gestão de pedidos</p>
+  </div>
+);
+
+// ──────────────────────────────────────────────────────────────────────────
 
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Pública */}
       <Route path="/" element={<Login />} />
 
-      {/* Dashboard do gerente — todas as rotas compartilham o DashboardLayout */}
-      <Route path="/Dashboard" element={<DashboardLayout />}>
+      {/* Dashboard do GERENTE — todas as sub-rotas compartilham o DashboardLayout */}
+      <Route
+        path="/Dashboard"
+        element={
+          <ProtectedRoute requiredRole="GERENTE">
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<DashboardHome />} />
         <Route path="pedidos" element={<Pedidos />} />
         <Route path="produtos" element={<Produtos />} />
@@ -68,6 +86,16 @@ const AppRoutes = () => {
         <Route path="funcionarios" element={<Funcionarios />} />
         <Route path="metricas" element={<Metricas />} />
       </Route>
+
+      {/* Dashboard do ATENDENTE */}
+      <Route
+        path="/DashboardFuncionario"
+        element={
+          <ProtectedRoute requiredRole="ATENDENTE">
+            <DashboardFuncionario />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

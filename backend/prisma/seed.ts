@@ -36,6 +36,7 @@ async function main() {
     data: {
       name: "João Gerente",
       email: "gerente@teste.com",
+      cpf:"",
       password: senhaHash,
       role: Role.GERENTE,
       funcionario: {
@@ -51,6 +52,7 @@ async function main() {
     data: {
       name: "Maria Atendente",
       email: "atendente@teste.com",
+      cpf:"",
       password: senhaHash,
       role: Role.ATENDENTE,
       funcionario: {
