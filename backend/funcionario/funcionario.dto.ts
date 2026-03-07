@@ -5,6 +5,7 @@ export interface CreateFuncionarioDTO {
   name: string;
   cpf: string;
   email: string;
+  telefone?: string
   password: string;
   role: Role;
   // dados do Funcionario
@@ -18,6 +19,7 @@ export interface UpdateFuncionarioDTO {
   name?: string;
   cpf?: string;
   email?: string;
+  telefone?: string
   password?: string;
   // dados do Funcionario
   cargo?: Cargo;

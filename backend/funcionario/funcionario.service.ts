@@ -21,6 +21,7 @@ const funcionarioSelect = {
       name: true,
       cpf: true,
       email: true,
+      telefone: true,
       role: true,
       active: true,
     },
@@ -61,6 +62,7 @@ export const create = async (data: CreateFuncionarioDTO) => {
       name: data.name,
       cpf: data.cpf,
       email: data.email,
+      telefone: data.telefone,
       password: senhaHash,
       role: data.role,
       funcionario: {
@@ -105,7 +107,7 @@ export const update = async (funcionarioId: number, data: UpdateFuncionarioDTO) 
 
   if (!funcionario) return null;
 
-  const { name, cpf, email, password, cargo, salario } = data;
+  const { name, cpf, email,telefone, password, cargo, salario } = data;
 
   // Atualiza User se veio algum campo
   if (name || cpf || email || password) {
@@ -114,7 +116,7 @@ export const update = async (funcionarioId: number, data: UpdateFuncionarioDTO) 
     if (cpf) userUpdate.cpf = cpf;
     if (email) userUpdate.email = email;
     if (password) userUpdate.password = await bcrypt.hash(password, 10);
-
+    if (telefone) userUpdate.telefone = telefone;
     await prisma.user.update({
       where: { id: funcionario.userId },
       data: userUpdate,

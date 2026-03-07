@@ -5,6 +5,7 @@ model User {
   name         String
   cpf          String       @unique
   email        String       @unique
+  telefone     String?
   password     String
   role         Role         @default(GERENTE)
   active       Boolean      @default(true)
