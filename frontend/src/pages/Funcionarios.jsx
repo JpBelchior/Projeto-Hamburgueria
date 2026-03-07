@@ -100,6 +100,7 @@ const CardSkeleton = () => (
 const Funcionarios = () => {
   const {
     funcionarios,
+    stats = { total: 0, ativos: 0, inativos: 0 },
     isLoading,
     isSaving,
     error,
@@ -122,6 +123,20 @@ const Funcionarios = () => {
         title="Funcionários"
         subtitle="Gerencie a equipe e os níveis de acesso"
       />
+
+      {/* Contador */}
+      {!isLoading && (
+        <div className="flex items-center gap-1.5 mb-6 text-sm">
+          <span className="text-white font-semibold">{stats.total}</span>
+          <span className="text-slate-500">
+            {stats.total === 1 ? "funcionário" : "funcionários"}
+          </span>
+          <span className="text-slate-700 mx-1">·</span>
+          <span className="text-emerald-400 font-medium">{stats.ativos} ativos</span>
+          <span className="text-slate-700 mx-1">·</span>
+          <span className="text-slate-500 font-medium">{stats.inativos} inativos</span>
+        </div>
+      )}
 
       {/* Erro global */}
       {error && (

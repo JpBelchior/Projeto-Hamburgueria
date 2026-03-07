@@ -6,6 +6,7 @@ import { funcionarioService } from "../services/Funcionario.service";
  *
  * Retorna:
  *   funcionarios     — lista filtrada (por busca e status)
+ * stats              - lista funcionarios ativos e inativos
  *   isLoading        — carregamento inicial
  *   isSaving         — operação de criar/editar em andamento
  *   error            — mensagem de erro global
@@ -48,6 +49,13 @@ export const useFuncionarios = () => {
   useEffect(() => {
     fetchFuncionarios();
   }, []);
+
+  const stats = useMemo(() => {
+    const total    = funcionarios.length;
+    const ativos   = funcionarios.filter((f) => f.active).length;
+    const inativos = total - ativos;
+    return { total, ativos, inativos };
+  }, [funcionarios]);
 
   const fetchFuncionarios = async () => {
     try {
@@ -157,6 +165,7 @@ export const useFuncionarios = () => {
   // ─────────────────────────────────────────
   return {
     funcionarios: funcionariosFiltrados,
+    stats,
     isLoading,
     isSaving,
     error,
