@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { CreateFuncionarioDTO, UpdateFuncionarioDTO } from "./funcionario.dto";
+import { RequestContext } from "../shared/context/request-context";
 
 const prisma = new PrismaClient();
 
@@ -21,7 +22,9 @@ const funcionarioSelect = {
       name: true,
       cpf: true,
       email: true,
-      role: true,
+      roles: {
+        select: { role: { select: { name: true } } }
+      },
       active: true,
     },
   },
@@ -54,6 +57,7 @@ export const findById = async (id: number) => {
 // ─────────────────────────────────────────
 
 export const create = async (data: CreateFuncionarioDTO) => {
+  const currentUser = RequestContext.getUser();
   const senhaHash = await bcrypt.hash(data.password, 10);
 
   return prisma.user.create({
@@ -62,7 +66,12 @@ export const create = async (data: CreateFuncionarioDTO) => {
       cpf: data.cpf,
       email: data.email,
       password: senhaHash,
-      role: data.role,
+      roles: {
+        create: data.roles.map((role) => ({
+          role: { connect: { id: role.id } },
+          assignedBy: currentUser?.name ?? "system"
+        }))
+      },
       funcionario: {
         create: {
           cargo: data.cargo,
@@ -78,7 +87,9 @@ export const create = async (data: CreateFuncionarioDTO) => {
       name: true,
       cpf: true,
       email: true,
-      role: true,
+      roles: {
+        select: { role: { select: { name: true } } }
+      },
       funcionario: {
         select: {
           id: true,

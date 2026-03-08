@@ -1,0 +1,17 @@
+// PERMISSION — ações que podem ser realizadas sobre recursos
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  action      String   // "criar", "listar", "editar", "deletar"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  resourceId Int
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Restrict)
+
+  roles RolePermission[]
+
+  @@unique([action, resourceId]) // ← evita duplicar "criar" no mesmo recurso
+  @@map("permissions")
+}

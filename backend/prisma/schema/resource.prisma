@@ -1,0 +1,13 @@
+// RESOURCE — entidades do sistema que podem ser protegidas
+
+model Resource {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique // "pedido", "produto", "usuario"
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  permissions Permission[]
+
+  @@map("resources")
+}

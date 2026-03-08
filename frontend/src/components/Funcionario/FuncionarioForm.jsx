@@ -8,33 +8,29 @@
  *   isLoading    {boolean}   — desabilita o formulário durante requisição
  */
 
-import { useState } from "react";
-import PasswordToggle from "../../hooks/buttonPassord";
+import { useEffect, useState } from "react";
+import PasswordToggle from "../../hooks/buttonPassword";
 import { useRef } from "react";
+import { roleService } from "../../services/role.service";
 
 // ─────────────────────────────────────────
 // Configurações estáticas
 // ─────────────────────────────────────────
 
 const CARGO_OPTIONS = [
-  { value: "ATENDENTE",  label: "Atendente" },
-  { value: "COZINHEIRO", label: "Cozinheiro" },
-  { value: "CAIXA",      label: "Caixa" },
-];
-
-const ROLE_OPTIONS = [
   { value: "ATENDENTE", label: "Atendente" },
-  { value: "GERENTE",   label: "Gerente" },
+  { value: "COZINHEIRO", label: "Cozinheiro" },
+  { value: "CAIXA", label: "Caixa" },
 ];
 
 const EMPTY_FORM = {
-  name:     "",
-  cpf:      "",
-  email:    "",
+  name: "",
+  cpf: "",
+  email: "",
   password: "",
-  role:     "ATENDENTE",
-  cargo:    "ATENDENTE",
-  salario:  "",
+  role: "ATENDENTE",
+  cargo: "ATENDENTE",
+  salario: "",
 };
 
 // ─────────────────────────────────────────
@@ -68,19 +64,24 @@ const inputClass = `
 const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = false }) => {
   const isEditing = !!initialData;
   const passwordRef = useRef(null);
+  const [roleOptions, setRoleOptions] = useState([]);
+
+  useEffect(() => {
+    roleService.getAll().then(setRoleOptions);
+  }, []);
 
   const [form, setForm] = useState(() => {
     if (!initialData) return EMPTY_FORM;
 
     // Edição — popula com dados existentes (sem expor senha)
     return {
-      name:     initialData.user?.name  ?? "",
-      cpf:      initialData.user?.cpf   ?? "",
-      email:    initialData.user?.email ?? "",
+      name: initialData.user?.name ?? "",
+      cpf: initialData.user?.cpf ?? "",
+      email: initialData.user?.email ?? "",
       password: "",
-      role:     initialData.user?.role  ?? "ATENDENTE",
-      cargo:    initialData.cargo       ?? "ATENDENTE",
-      salario:  initialData.salario     ?? "",
+      role: initialData.user?.roles[0]?.role?.name ?? "ATENDENTE",
+      cargo: initialData.cargo ?? "ATENDENTE",
+      salario: initialData.salario ?? "",
     };
   });
 
@@ -90,9 +91,11 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const roleOption = roleOptions.find((r) => r.name === form.role);
     onSubmit({
       ...form,
       salario: Number(form.salario),
+      roles: [{ id: roleOption.id }],
     });
   };
 
@@ -182,12 +185,12 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
                 value={form.role}
                 onChange={handleChange("role")}
                 className={inputClass}
-                disabled={isLoading}
+                disabled={isLoading || roleOptions.length === 0}
                 required
               >
-                {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value} className="bg-slate-800">
-                    {opt.label}
+                {roleOptions.map((opt) => (
+                  <option key={opt.id} value={opt.name} className="bg-slate-800">
+                    {opt.name}
                   </option>
                 ))}
               </select>

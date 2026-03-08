@@ -1,7 +1,7 @@
+// auth.middleware.ts
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../helpers/jtw.helper";
 import { AccessTokenPayloadDTO } from "../dto/auth.dto";
-import { Role } from "@prisma/client";
 
 // ─────────────────────────────────────────
 // TIPAGEM GLOBAL DO REQUEST
@@ -41,37 +41,4 @@ export const authenticate = (
   } catch {
     res.status(401).json({ message: "Token inválido ou expirado." });
   }
-};
-
-// ─────────────────────────────────────────
-// AUTORIZAÇÃO POR ROLE
-// ─────────────────────────────────────────
-
- // Restringe rota apenas para GERENTE.
- 
-export const requireGerente = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  if (req.user?.role !== Role.GERENTE) {
-    res.status(403).json({ message: "Acesso restrito a gerentes." });
-    return;
-  }
-  next();
-};
-
-/**
- * Restringe rota apenas para ATENDENTE.
- */
-export const requireAtendente = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  if (req.user?.role !== Role.ATENDENTE) {
-    res.status(403).json({ message: "Acesso restrito a atendentes." });
-    return;
-  }
-  next();
 };

@@ -12,12 +12,12 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Trash2, Mail, CreditCard, Briefcase, DollarSign, User2Icon, Calendar, Clock } from "lucide-react";
 import Avatar from "../Ui/Avatar";
 import StatusBadge from "../Ui/StatusBadge";
-import { tempoNaEmpresa, formatData,formatMoeda } from "../../utils/Date.utils";
+import { tempoNaEmpresa, formatData, formatMoeda } from "../../utils/Date.utils";
 
 const CARGO_LABEL = {
-  ATENDENTE:  "Atendente",
+  ATENDENTE: "Atendente",
   COZINHEIRO: "Cozinheiro",
-  CAIXA:      "Caixa",
+  CAIXA: "Caixa",
 };
 
 const InfoRow = ({ icon: Icon, label, value }) => (
@@ -37,7 +37,9 @@ const InfoRow = ({ icon: Icon, label, value }) => (
 const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const { user, cargo, role, salario, dataAdmissao, active } = funcionario;
+  const { user, cargo, salario, dataAdmissao, active } = funcionario;
+  const primaryRole = user.roles?.[0]?.role?.name ?? "";
+  const roleLabel = primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1).toLowerCase();
 
   return (
     <div
@@ -62,7 +64,7 @@ const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
               {user.name}
             </p>
             <p className="text-slate-500 text-xs mt-0.5">
-              {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : ""}
+              {roleLabel}
             </p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <StatusBadge status={active ? "ativo" : "inativo"} />
@@ -88,12 +90,12 @@ const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
       {expanded && (
         <div className="px-5 pb-5 border-t border-slate-800/50">
           <div className="pt-1 divide-y divide-slate-800/50">
-            <InfoRow icon={User2Icon}  label="Nivel de Acesso"       value={user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : ""} />
-            <InfoRow icon={Mail}       label="E-mail"      value={user.email} />
-            <InfoRow icon={CreditCard} label="CPF"         value={user.cpf} />
-            <InfoRow icon={Briefcase}  label="Cargo"       value={CARGO_LABEL[cargo] ?? cargo} />
-            <InfoRow icon={DollarSign} label="Salário"     value={formatMoeda(salario)} />
-            <InfoRow icon={Calendar}   label="Admissão"    value={formatData(dataAdmissao)} />
+            <InfoRow icon={User2Icon} label="Nivel de Acesso" value={roleLabel} />
+            <InfoRow icon={Mail} label="E-mail" value={user.email} />
+            <InfoRow icon={CreditCard} label="CPF" value={user.cpf} />
+            <InfoRow icon={Briefcase} label="Cargo" value={CARGO_LABEL[cargo] ?? cargo} />
+            <InfoRow icon={DollarSign} label="Salário" value={formatMoeda(salario)} />
+            <InfoRow icon={Calendar} label="Admissão" value={formatData(dataAdmissao)} />
           </div>
 
           {/* Ações */}

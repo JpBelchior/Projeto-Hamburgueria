@@ -4,29 +4,25 @@ import {
   Shield,
   Target,
   TrendingUp,
-  Activity,
   Clock,
-  Award,
 } from "lucide-react";
 import { useLogin } from "../hooks/useLogin";
-import PasswordToggle from "../hooks/buttonPassord";
+import PasswordToggle from "../hooks/buttonPassword";
 import Footer from "../components/Login/footer";
 import MetricCard from "../components/Login/MetricCard";
-import UserTypeButton from "../components/Login/UserType";
 import LogoHeader from "../components/Login/LogoHeader";
 import Button from "../components/Ui/Button";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("funcionario");
   const passwordRef = useRef(null);
 
   const { login, isLoading, error } = useLogin();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(email, password, userType);
+    login(email, password);
   };
 
   return (
@@ -106,7 +102,7 @@ const Login = () => {
             </div>
           </form>
 
-          <div className="border-t border-slate-700/50 pt-6 mt-3">
+          {/* <div className="border-t border-slate-700/50 pt-6 mt-3">
               <p className="text-slate-400 text-sm text-center mb-4 font-medium">
                ESCOLHA SEU NÍVEL DE ACESSO
               </p>
@@ -122,13 +118,13 @@ const Login = () => {
                 <UserTypeButton
                   icon={Award}
                   text="GERENTE"
-                  value="gerente"
+                  value="GERENTE"
                   userType={userType}
                   setUserType={setUserType}
                   color="amber"
                 />
               </div>
-            </div> 
+            </div>  */}
             <div className="mt-10 space-y-6">
               <div className="border-t border-slate-700/50 pt-6">
                 <p className="text-slate-400 text-sm text-center mb-4 font-medium">

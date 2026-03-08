@@ -42,11 +42,11 @@ export const getById = async (req: Request, res: Response): Promise<void> => {
 
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, cpf, email, password, role, cargo, salario, dataAdmissao } =
+    const { name, cpf, email, password, roles, cargo, salario, dataAdmissao } =
       req.body;
 
     // Validação básica
-    if (!name || !cpf || !email || !password || !role || !cargo || !salario) {
+    if (!name || !cpf || !email || !password || !roles || !cargo || !salario) {
       res.status(400).json({
         message: "Campos obrigatórios: name, cpf, email, password, role, cargo, salario.",
       });
@@ -58,7 +58,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
       cpf,
       email,
       password,
-      role,
+      roles,
       cargo,
       salario: Number(salario),
       dataAdmissao,
@@ -119,8 +119,7 @@ export const toggleActive = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const status = funcionario.active ? "ativado" : "desativado";
-    res.json({ message: `Funcionário ${status} com sucesso.`, funcionario });
+    res.json(funcionario);
   } catch (error) {
     console.error("Erro ao alternar status do funcionário:", error);
     res.status(500).json({ message: "Erro interno do servidor." });

@@ -1,6 +1,5 @@
 import {
   PrismaClient,
-  Role,
   Cargo,
   CategoriaProduct,
   UnidadeMedida,
@@ -23,27 +22,90 @@ async function main() {
   await prisma.produto.deleteMany();
   await prisma.ingrediente.deleteMany();
   await prisma.funcionario.deleteMany();
+  await prisma.userRole.deleteMany();
+  await prisma.rolePermission.deleteMany();
+  await prisma.permission.deleteMany();
+  await prisma.resource.deleteMany();
+  await prisma.role.deleteMany();
   await prisma.user.deleteMany();
 
   console.log("🧹 Banco limpo.");
+
+  // ─────────────────────────────────────────
+  // RESOURCES
+  // ─────────────────────────────────────────
+  const [rPedido, rProduto, rUsuario, rCombo] = await Promise.all([
+    prisma.resource.create({ data: { name: "pedido" } }),
+    prisma.resource.create({ data: { name: "produto" } }),
+    prisma.resource.create({ data: { name: "usuario" } }),
+    prisma.resource.create({ data: { name: "combo" } }),
+  ]);
+
+  console.log("✅ Resources criados.");
+
+  // ─────────────────────────────────────────
+  // PERMISSIONS
+  // ─────────────────────────────────────────
+  const actions = ["criar", "listar", "editar", "deletar"];
+  const resources = [rPedido, rProduto, rUsuario, rCombo];
+
+  await Promise.all(
+    resources.flatMap((resource) =>
+      actions.map((action) =>
+        prisma.permission.create({
+          data: { action, resourceId: resource.id },
+        })
+      )
+    )
+  );
+
+  console.log("✅ Permissions criadas.");
+
+  // ─────────────────────────────────────────
+  // ROLES — sem permissões atribuídas inicialmente
+  // ─────────────────────────────────────────
+  const roleAdmin = await prisma.role.create({
+    data: { name: "ADMIN", description: "Acesso total com bypass de permissões" },
+  });
+
+  const roleGerente = await prisma.role.create({
+    data: { name: "GERENTE", description: "Acesso total ao sistema" },
+  });
+
+  const roleAtendente = await prisma.role.create({
+    data: { name: "ATENDENTE", description: "Acesso operacional" },
+  });
+
+  console.log("✅ Roles criadas.");
 
   // ─────────────────────────────────────────
   // USUÁRIOS
   // ─────────────────────────────────────────
   const senhaHash = await bcrypt.hash("123456", 10);
 
+  const admin = await prisma.user.create({
+    data: {
+      name: "Administrador",
+      email: "admin@teste.com",
+      cpf: "999.999.999-99",
+      password: senhaHash,
+      roles: {
+        create: { roleId: roleAdmin.id, assignedBy: "seed" },
+      },
+    },
+  });
+
   const gerente = await prisma.user.create({
     data: {
       name: "João Gerente",
       email: "gerente@teste.com",
-      cpf:"",
+      cpf: "000.000.000-00",
       password: senhaHash,
-      role: Role.GERENTE,
       funcionario: {
-        create: {
-          cargo: Cargo.CAIXA,
-          salario: 4500,
-        },
+        create: { cargo: Cargo.CAIXA, salario: 4500 },
+      },
+      roles: {
+        create: { roleId: roleGerente.id, assignedBy: "seed" },
       },
     },
   });
@@ -52,19 +114,19 @@ async function main() {
     data: {
       name: "Maria Atendente",
       email: "atendente@teste.com",
-      cpf:"",
+      cpf: "111.111.111-11",
       password: senhaHash,
-      role: Role.ATENDENTE,
       funcionario: {
-        create: {
-          cargo: Cargo.ATENDENTE,
-          salario: 2000,
-        },
+        create: { cargo: Cargo.ATENDENTE, salario: 2000 },
+      },
+      roles: {
+        create: { roleId: roleAtendente.id, assignedBy: "seed" },
       },
     },
   });
 
   console.log("✅ Usuários criados:");
+  console.log(`   Admin     → ${admin.email}     / senha: 123456`);
   console.log(`   Gerente   → ${gerente.email}   / senha: 123456`);
   console.log(`   Atendente → ${atendente.email} / senha: 123456`);
 

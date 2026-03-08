@@ -1,46 +1,21 @@
-import { useState } from "react";
+// hooks/useLogin.js
 import { useNavigate } from "react-router-dom";
-import { authService } from "../services/auth.service";
+import useAuthStore from "../store/useAuthStore";
 
 export const useLogin = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { login, loading, error } = useAuthStore();
   const navigate = useNavigate();
 
-  const login = async (email, password, userType) => {
-    setIsLoading(true);
-    setError("");
+  const handleLogin = async (email, password) => {
+    const user = await login(email, password); // authService já persiste
 
-    try {
-      const { token, refreshToken, user } = await authService.login(email, password);
+    if (!user) return; // erro já está no store
 
-      // Verifica se o role bate com o botão selecionado na tela
-      const expectedRole = userType === "funcionario" ? "ATENDENTE" : "GERENTE";
-      if (user.role !== expectedRole) {
-        setError("Nível de acesso incorreto para o tipo de usuário selecionado.");
-        return;
-      }
-
-      // Persiste a sessão
-      localStorage.setItem("token", token);
-      localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Redireciona para o dashboard correto de acordo com o role
-      const destination =
-        user.role === "GERENTE" ? "/Dashboard" : "/DashboardFuncionario";
-      navigate(destination);
-    } catch (err) {
-      // O interceptor do api.js já trata 401 globalmente
-      if (err.response) {
-        setError(err.response.data.message || "Erro ao realizar login.");
-      } else {
-        setError("Não foi possível conectar ao servidor.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    // roles agora é array — verifica se contém o role esperado
+    
+    const destination = user.roles.includes("GERENTE") ? "/Dashboard" : "/DashboardFuncionario";
+    navigate(destination);
   };
 
-  return { login, isLoading, error };
+  return { login: handleLogin, isLoading: loading, error };
 };

@@ -1,3 +1,4 @@
+// auth.controller.ts
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
@@ -9,6 +10,32 @@ import {
 import { toTokenPayload } from "../dto/auth.dto";
 
 const prisma = new PrismaClient();
+
+// ─────────────────────────────────────────
+// HELPER
+// ─────────────────────────────────────────
+
+const findUserWithPermissions = (where: { email: string } | { id: number }) =>
+  prisma.user.findUnique({
+    where,
+    include: {
+      roles: {
+        include: {
+          role: {
+            include: {
+              permissions: {
+                include: {
+                  permission: {
+                    include: { resource: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
 
 // ─────────────────────────────────────────
 // LOGIN
@@ -23,7 +50,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await findUserWithPermissions({ email }); // ✅ já traz permissões
 
     if (!user || !user.active) {
       res.status(401).json({ message: "Credenciais inválidas." });
@@ -36,23 +63,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // toTokenPayload monta o payload com tipagem correta via DTO
-    const payload = toTokenPayload(user);
+    const roles = user.roles.map((ur) => ur.role.name);
+    const permissions = user.roles.flatMap((ur) =>
+      ur.role.permissions.map(
+        (rp) => `${rp.permission.resource.name}:${rp.permission.action}`
+      )
+    );
 
+    const payload = toTokenPayload(user, roles);
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(user.id);
 
-    // Persiste o refresh token no banco 
     await prisma.user.update({
       where: { id: user.id },
       data: { refreshToken },
     });
 
     res.json({
-      token: accessToken,         
-      refreshToken,             
-      expiresIn: 30 * 60,     
-      user: payload,              // retorna o DTO
+      token: accessToken,
+      refreshToken,
+      expiresIn: 30 * 60,
+      user: { ...payload, permissions }, // ✅ ["funcionario:create", ...]
     });
   } catch (error) {
     console.error("Erro no login:", error);
@@ -84,14 +115,18 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      include: { roles: { include: { role: true } } }
+    });
 
     if (!user || !user.active || user.refreshToken !== refreshToken) {
       res.status(401).json({ message: "Sessão inválida. Faça login novamente." });
       return;
     }
 
-    const newAccessToken = generateAccessToken(toTokenPayload(user));
+    const roles = user.roles.map(ur => ur.role.name);
+    const newAccessToken = generateAccessToken(toTokenPayload(user, roles));
 
     res.json({
       token: newAccessToken,
@@ -130,7 +165,25 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 // ME
 // ─────────────────────────────────────────
 
-export const me = (req: Request, res: Response): void => {
-  // req.user já é AccessTokenPayloadDTO — sem "as any"
-  res.json({ user: req.user });
+  export const me = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await findUserWithPermissions({ id: req.user!.id }); // ✅ sempre atualizado
+
+    if (!user || !user.active) {
+      res.status(401).json({ message: "Usuário não encontrado." });
+      return;
+    }
+
+    const roles = user.roles.map((ur) => ur.role.name);
+    const permissions = user.roles.flatMap((ur) =>
+      ur.role.permissions.map(
+        (rp) => `${rp.permission.resource.name}:${rp.permission.action}`
+      )
+    );
+
+    res.json({ user: { ...toTokenPayload(user, roles), permissions } });
+  } catch (error) {
+    console.error("Erro no me:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
 };

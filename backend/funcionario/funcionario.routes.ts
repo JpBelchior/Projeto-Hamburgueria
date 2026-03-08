@@ -1,11 +1,7 @@
 import { Router } from "express";
 import * as FuncionarioController from "./funcionario.controller";
-import { authenticate, requireGerente } from "../middleware/auth.middleware";
 
 const router = Router();
-
-// Todas as rotas de funcionário exigem autenticação + role GERENTE
-router.use(authenticate, requireGerente);
 
 // GET    /api/funcionarios        → listar todos
 router.get("/", FuncionarioController.getAll);

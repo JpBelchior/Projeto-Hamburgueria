@@ -27,20 +27,20 @@ export const useFuncionarios = () => {
   // ─────────────────────────────────────────
   // Estado base
   // ─────────────────────────────────────────
-  const [funcionarios, setFuncionarios]   = useState([]);
-  const [isLoading, setIsLoading]         = useState(true);
-  const [isSaving, setIsSaving]           = useState(false);
-  const [error, setError]                 = useState("");
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
 
   // Filtros
-  const [search, setSearch]               = useState("");
-  const [filterStatus, setFilterStatus]   = useState("todos");
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("todos");
 
   // Modal
-  const [modalState, setModalState]       = useState({
+  const [modalState, setModalState] = useState({
     isOpen: false,
-    mode:   "create",
-    data:   null,
+    mode: "create",
+    data: null,
   });
 
   // ─────────────────────────────────────────
@@ -51,8 +51,8 @@ export const useFuncionarios = () => {
   }, []);
 
   const stats = useMemo(() => {
-    const total    = funcionarios.length;
-    const ativos   = funcionarios.filter((f) => f.active).length;
+    const total = funcionarios.length;
+    const ativos = funcionarios.filter((f) => f.active).length;
     const inativos = total - ativos;
     return { total, ativos, inativos };
   }, [funcionarios]);
@@ -81,7 +81,7 @@ export const useFuncionarios = () => {
 
       const matchStatus =
         filterStatus === "todos" ||
-        (filterStatus === "ativo"   &&  f.active) ||
+        (filterStatus === "ativo" && f.active) ||
         (filterStatus === "inativo" && !f.active);
 
       return matchSearch && matchStatus;
@@ -134,9 +134,7 @@ export const useFuncionarios = () => {
   const handleToggle = async (funcionario) => {
     try {
       setError("");
-      const { funcionario: atualizado } = await funcionarioService.toggleActive(
-        funcionario.id
-      );
+      const atualizado = await funcionarioService.toggleActive(funcionario.id);
       setFuncionarios((prev) =>
         prev.map((f) => (f.id === atualizado.id ? atualizado : f))
       );

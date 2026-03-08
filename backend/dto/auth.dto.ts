@@ -1,4 +1,5 @@
-import { Role, User } from "@prisma/client";
+// auth.dto.ts
+import { User } from "@prisma/client";
 
 // ─────────────────────────────────────────
 // PAYLOAD DO ACCESS TOKEN
@@ -12,7 +13,7 @@ import { Role, User } from "@prisma/client";
 export interface AccessTokenPayloadDTO {
   id: number;
   email: string;
-  role: Role;
+  roles: string[];
   name: string;
 }
 
@@ -22,10 +23,10 @@ export interface AccessTokenPayloadDTO {
  * no token no futuro, só muda aqui.
  */
 export const toTokenPayload = (
-  user: Pick<User, "id" | "email" | "role" | "name">
+  user: Pick<User, "id" | "email" | "name">, roles: string[]
 ): AccessTokenPayloadDTO => ({
   id: user.id,
   email: user.email,
-  role: user.role,
+  roles: roles,
   name: user.name,
 });

@@ -1,5 +1,6 @@
+// src/routes/ProtectedRoute.jsx
 import { Navigate } from "react-router-dom";
-
+import useAuthStore from "../store/useAuthStore";
 /**
  * ProtectedRoute — guarda rotas por autenticação e role.
  *
@@ -13,18 +14,17 @@ import { Navigate } from "react-router-dom";
  *   3. Tudo ok → renderiza children
  */
 const ProtectedRoute = ({ requiredRole, children }) => {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const { user, isAuthenticated } = useAuthStore();
 
   // 1. Não autenticado
-  if (!token || !user) {
+  if (!isAuthenticated()) {
     return <Navigate to="/" replace />;
   }
 
   // 2. Role incorreto para esta rota
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && !user.roles.includes(requiredRole) && !user.roles.includes("ADMIN")) {
     const fallback =
-      user.role === "GERENTE" ? "/Dashboard" : "/DashboardFuncionario";
+      user.roles.includes("GERENTE") ? "/Dashboard" : "/DashboardFuncionario";
     return <Navigate to={fallback} replace />;
   }
 

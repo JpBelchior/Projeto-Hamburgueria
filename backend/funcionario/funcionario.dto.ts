@@ -6,7 +6,7 @@ export interface CreateFuncionarioDTO {
   cpf: string;
   email: string;
   password: string;
-  role: Role;
+  roles: {id: number}[]; // array de IDs de Roles
   // dados do Funcionario
   cargo: Cargo;
   salario: number;
@@ -19,6 +19,7 @@ export interface UpdateFuncionarioDTO {
   cpf?: string;
   email?: string;
   password?: string;
+  roles?: {id: number}[];
   // dados do Funcionario
   cargo?: Cargo;
   salario?: number;
