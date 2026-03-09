@@ -8,9 +8,9 @@
  *   isLoading    {boolean}   — desabilita o formulário durante requisição
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PasswordToggle from "../../hooks/buttonPassword";
-import { useRef } from "react";
+import { formatTelefone } from "../../utils/Date.utils";
 import { roleService } from "../../services/role.service";
 
 // ─────────────────────────────────────────
@@ -27,6 +27,7 @@ const EMPTY_FORM = {
   name: "",
   cpf: "",
   email: "",
+  telefone:"",
   password: "",
   role: "ATENDENTE",
   cargo: "ATENDENTE",
@@ -78,6 +79,7 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
       name: initialData.user?.name ?? "",
       cpf: initialData.user?.cpf ?? "",
       email: initialData.user?.email ?? "",
+      telefone: initialData.user?.telefone ?? "",
       password: "",
       role: initialData.user?.roles[0]?.role?.name ?? "ATENDENTE",
       cargo: initialData.cargo ?? "ATENDENTE",
@@ -86,7 +88,8 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
   });
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = field === "telefone" ? formatTelefone(e.target.value) : e.target.value;
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e) => {
@@ -166,6 +169,17 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
               </div>
             </Field>
           </div>
+            <Field label="Telefone" required>
+            <input
+              type="tel"
+              value={form.telefone}
+              onChange={handleChange("telefone")}
+              placeholder="(XX) 99999-9999"
+              className={inputClass}
+              disabled={isLoading}
+              required
+            />
+          </Field>
         </div>
       </div>
 

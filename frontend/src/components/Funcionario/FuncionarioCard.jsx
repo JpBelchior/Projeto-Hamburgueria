@@ -12,7 +12,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Trash2, Mail, CreditCard, Briefcase, DollarSign, User2Icon, Calendar, Clock } from "lucide-react";
 import Avatar from "../Ui/Avatar";
 import StatusBadge from "../Ui/StatusBadge";
-import { tempoNaEmpresa, formatData, formatMoeda } from "../../utils/Date.utils";
+import { tempoNaEmpresa, formatData, formatMoeda, formatTelefone } from "../../utils/Date.utils";
 
 const CARGO_LABEL = {
   ATENDENTE: "Atendente",
@@ -37,7 +37,7 @@ const InfoRow = ({ icon: Icon, label, value }) => (
 const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const { user, cargo, salario, dataAdmissao, active } = funcionario;
+  const { user, cargo, salario, dataAdmissao, active, telefone } = funcionario;
   const primaryRole = user.roles?.[0]?.role?.name ?? "";
   const roleLabel = primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1).toLowerCase();
 
@@ -94,6 +94,7 @@ const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
             <InfoRow icon={Mail} label="E-mail" value={user.email} />
             <InfoRow icon={CreditCard} label="CPF" value={user.cpf} />
             <InfoRow icon={Briefcase} label="Cargo" value={CARGO_LABEL[cargo] ?? cargo} />
+            <InfoRow icon={Briefcase}  label="Telefone"       value={formatTelefone(user.telefone)} />
             <InfoRow icon={DollarSign} label="Salário" value={formatMoeda(salario)} />
             <InfoRow icon={Calendar} label="Admissão" value={formatData(dataAdmissao)} />
           </div>
