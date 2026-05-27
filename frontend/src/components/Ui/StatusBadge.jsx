@@ -1,31 +1,4 @@
-/**
- * StatusBadge — tag de status reutilizável
- *
- * Props:
- *   status  {string} — valor do status (ver STATUS_CONFIG abaixo)
- *
- * Suporta:
- *   Funcionário/Produto/Combo → true/false, "ativo", "inativo", "disponivel", "indisponivel"
- *   Pedido                    → "ABERTO", "EM_PREPARO", "FINALIZADO", "CANCELADO"
- */
-
-const STATUS_CONFIG = {
-  // ── Booleano / genérico ───────────────────────────────
-  true:          { label: "Ativo",        style: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
-  false:         { label: "Inativo",      style: "bg-slate-500/15 text-slate-400 border-slate-500/25" },
-
-  // ── Funcionário / Produto / Combo ─────────────────────
-  ativo:         { label: "Ativo",        style: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
-  inativo:       { label: "Inativo",      style: "bg-slate-500/15 text-slate-400 border-slate-500/25" },
-  disponivel:    { label: "Disponível",   style: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
-  indisponivel:  { label: "Indisponível", style: "bg-red-500/15 text-red-400 border-red-500/25" },
-
-  // ── Pedido ────────────────────────────────────────────
-  ABERTO:        { label: "Aberto",       style: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
-  EM_PREPARO:    { label: "Em preparo",   style: "bg-amber-500/15 text-amber-400 border-amber-500/25" },
-  FINALIZADO:    { label: "Finalizado",   style: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
-  CANCELADO:     { label: "Cancelado",    style: "bg-red-500/15 text-red-400 border-red-500/25" },
-};
+import { STATUS_CONFIG } from "../../constants";
 
 const StatusBadge = ({ status }) => {
   const key = typeof status === "boolean" ? String(status) : status;

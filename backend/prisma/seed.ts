@@ -28,8 +28,23 @@ async function main() {
   await prisma.resource.deleteMany();
   await prisma.role.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.restaurante.deleteMany();
 
   console.log("🧹 Banco limpo.");
+
+  // ─────────────────────────────────────────
+  // RESTAURANTE DEMO
+  // ─────────────────────────────────────────
+  const restaurante = await prisma.restaurante.create({
+    data: {
+      nome: "Hamburgueria Demo",
+      cnpj: "00.000.000/0001-00",
+      email: "contato@hamburgueriademo.com",
+      telefone: "(11) 99999-9999",
+    },
+  });
+
+  console.log("✅ Restaurante criado.");
 
   // ─────────────────────────────────────────
   // RESOURCES
@@ -62,18 +77,22 @@ async function main() {
   console.log("✅ Permissions criadas.");
 
   // ─────────────────────────────────────────
-  // ROLES — sem permissões atribuídas inicialmente
+  // ROLES
   // ─────────────────────────────────────────
   const roleAdmin = await prisma.role.create({
-    data: { name: "ADMIN", description: "Acesso total com bypass de permissões" },
+    data: { name: "ADMIN", description: "Administrador global do SaaS — acesso irrestrito" },
+  });
+
+  const roleAdminRestaurante = await prisma.role.create({
+    data: { name: "ADMIN_RESTAURANTE", description: "Proprietário do restaurante — acesso irrestrito ao próprio restaurante" },
   });
 
   const roleGerente = await prisma.role.create({
-    data: { name: "GERENTE", description: "Acesso total ao sistema" },
+    data: { name: "GERENTE", description: "Gerência operacional do restaurante" },
   });
 
   const roleAtendente = await prisma.role.create({
-    data: { name: "ATENDENTE", description: "Acesso operacional" },
+    data: { name: "ATENDENTE", description: "Acesso operacional — registra pedidos" },
   });
 
   console.log("✅ Roles criadas.");
@@ -83,6 +102,7 @@ async function main() {
   // ─────────────────────────────────────────
   const senhaHash = await bcrypt.hash("123456", 10);
 
+  // ADMIN global — sem restaurante
   const admin = await prisma.user.create({
     data: {
       name: "Administrador",
@@ -95,14 +115,31 @@ async function main() {
     },
   });
 
-  const gerente = await prisma.user.create({
+  // Dono do restaurante demo
+  const dono = await prisma.user.create({
     data: {
-      name: "João Gerente",
-      email: "gerente@teste.com",
+      name: "João Proprietário",
+      email: "dono@hamburgueriademo.com",
       cpf: "000.000.000-00",
       password: senhaHash,
       funcionario: {
-        create: { cargo: Cargo.CAIXA, salario: 4500 },
+        create: { cargo: Cargo.CAIXA, salario: 6000, restauranteId: restaurante.id },
+      },
+      roles: {
+        create: { roleId: roleAdminRestaurante.id, assignedBy: "seed" },
+      },
+    },
+  });
+
+  // Gerente do restaurante demo
+  const gerente = await prisma.user.create({
+    data: {
+      name: "Maria Gerente",
+      email: "gerente@hamburgueriademo.com",
+      cpf: "111.111.111-11",
+      password: senhaHash,
+      funcionario: {
+        create: { cargo: Cargo.CAIXA, salario: 4500, restauranteId: restaurante.id },
       },
       roles: {
         create: { roleId: roleGerente.id, assignedBy: "seed" },
@@ -110,14 +147,15 @@ async function main() {
     },
   });
 
+  // Atendente do restaurante demo
   const atendente = await prisma.user.create({
     data: {
-      name: "Maria Atendente",
-      email: "atendente@teste.com",
-      cpf: "111.111.111-11",
+      name: "Carlos Atendente",
+      email: "atendente@hamburgueriademo.com",
+      cpf: "222.222.222-22",
       password: senhaHash,
       funcionario: {
-        create: { cargo: Cargo.ATENDENTE, salario: 2000 },
+        create: { cargo: Cargo.ATENDENTE, salario: 2000, restauranteId: restaurante.id },
       },
       roles: {
         create: { roleId: roleAtendente.id, assignedBy: "seed" },
@@ -126,13 +164,16 @@ async function main() {
   });
 
   console.log("✅ Usuários criados:");
-  console.log(`   Admin     → ${admin.email}     / senha: 123456`);
-  console.log(`   Gerente   → ${gerente.email}   / senha: 123456`);
-  console.log(`   Atendente → ${atendente.email} / senha: 123456`);
+  console.log(`   Admin      → ${admin.email}                    / senha: 123456`);
+  console.log(`   Dono       → ${dono.email}   / senha: 123456`);
+  console.log(`   Gerente    → ${gerente.email} / senha: 123456`);
+  console.log(`   Atendente  → ${atendente.email} / senha: 123456`);
 
   // ─────────────────────────────────────────
-  // INGREDIENTES
+  // INGREDIENTES (vinculados ao restaurante)
   // ─────────────────────────────────────────
+  const rid = restaurante.id;
+
   const [
     paoBrioche,
     carneBovina,
@@ -143,76 +184,20 @@ async function main() {
     molhoEspecial,
     batataPalito,
   ] = await Promise.all([
-    prisma.ingrediente.create({
-      data: {
-        nome: "Pão Brioche",
-        quantidadeAtual: 100,
-        unidade: UnidadeMedida.UNIDADE,
-        custoPorUnidade: 1.5,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Carne Bovina 150g",
-        quantidadeAtual: 50,
-        unidade: UnidadeMedida.UNIDADE,
-        custoPorUnidade: 8.0,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Queijo Cheddar",
-        quantidadeAtual: 200,
-        unidade: UnidadeMedida.G,
-        custoPorUnidade: 0.08,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Alface",
-        quantidadeAtual: 30,
-        unidade: UnidadeMedida.UNIDADE,
-        custoPorUnidade: 0.3,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Tomate",
-        quantidadeAtual: 40,
-        unidade: UnidadeMedida.UNIDADE,
-        custoPorUnidade: 0.5,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Bacon",
-        quantidadeAtual: 100,
-        unidade: UnidadeMedida.G,
-        custoPorUnidade: 0.12,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Molho Especial",
-        quantidadeAtual: 2,
-        unidade: UnidadeMedida.LITRO,
-        custoPorUnidade: 3.0,
-      },
-    }),
-    prisma.ingrediente.create({
-      data: {
-        nome: "Batata Palito",
-        quantidadeAtual: 10,
-        unidade: UnidadeMedida.KG,
-        custoPorUnidade: 4.0,
-      },
-    }),
+    prisma.ingrediente.create({ data: { nome: "Pão Brioche", quantidadeAtual: 100, unidade: UnidadeMedida.UNIDADE, custoPorUnidade: 1.5, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Carne Bovina 150g", quantidadeAtual: 50, unidade: UnidadeMedida.UNIDADE, custoPorUnidade: 8.0, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Queijo Cheddar", quantidadeAtual: 200, unidade: UnidadeMedida.G, custoPorUnidade: 0.08, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Alface", quantidadeAtual: 30, unidade: UnidadeMedida.UNIDADE, custoPorUnidade: 0.3, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Tomate", quantidadeAtual: 40, unidade: UnidadeMedida.UNIDADE, custoPorUnidade: 0.5, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Bacon", quantidadeAtual: 100, unidade: UnidadeMedida.G, custoPorUnidade: 0.12, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Molho Especial", quantidadeAtual: 2, unidade: UnidadeMedida.LITRO, custoPorUnidade: 3.0, restauranteId: rid } }),
+    prisma.ingrediente.create({ data: { nome: "Batata Palito", quantidadeAtual: 10, unidade: UnidadeMedida.KG, custoPorUnidade: 4.0, restauranteId: rid } }),
   ]);
 
   console.log("✅ Ingredientes criados.");
 
   // ─────────────────────────────────────────
-  // PRODUTOS
+  // PRODUTOS (vinculados ao restaurante)
   // ─────────────────────────────────────────
   const classicBurger = await prisma.produto.create({
     data: {
@@ -221,7 +206,7 @@ async function main() {
       categoria: CategoriaProduct.PRINCIPAL,
       precoVenda: 28.9,
       tempoPreparoEstimado: 12,
-      ativo: true,
+      restauranteId: rid,
       ingredientes: {
         create: [
           { ingredienteId: paoBrioche.id, quantidadeUsada: 1 },
@@ -241,7 +226,7 @@ async function main() {
       categoria: CategoriaProduct.PRINCIPAL,
       precoVenda: 35.9,
       tempoPreparoEstimado: 15,
-      ativo: true,
+      restauranteId: rid,
       ingredientes: {
         create: [
           { ingredienteId: paoBrioche.id, quantidadeUsada: 1 },
@@ -261,11 +246,9 @@ async function main() {
       categoria: CategoriaProduct.ACOMPANHAMENTO,
       precoVenda: 14.9,
       tempoPreparoEstimado: 8,
-      ativo: true,
+      restauranteId: rid,
       ingredientes: {
-        create: [
-          { ingredienteId: batataPalito.id, quantidadeUsada: 0.2 },
-        ],
+        create: [{ ingredienteId: batataPalito.id, quantidadeUsada: 0.2 }],
       },
     },
   });
@@ -276,7 +259,7 @@ async function main() {
       descricao: "350ml gelada",
       categoria: CategoriaProduct.BEBIDA,
       precoVenda: 6.0,
-      ativo: true,
+      restauranteId: rid,
     },
   });
 
@@ -287,20 +270,20 @@ async function main() {
       categoria: CategoriaProduct.BEBIDA,
       precoVenda: 8.0,
       tempoPreparoEstimado: 3,
-      ativo: true,
+      restauranteId: rid,
     },
   });
 
   console.log("✅ Produtos criados.");
 
   // ─────────────────────────────────────────
-  // COMBOS
+  // COMBOS (vinculados ao restaurante)
   // ─────────────────────────────────────────
   await prisma.combo.create({
     data: {
       nome: "Combo Classic",
       preco: 39.9,
-      ativo: true,
+      restauranteId: rid,
       produtos: {
         create: [
           { produtoId: classicBurger.id, quantidade: 1 },
@@ -315,7 +298,7 @@ async function main() {
     data: {
       nome: "Combo Cheese Bacon",
       preco: 49.9,
-      ativo: true,
+      restauranteId: rid,
       produtos: {
         create: [
           { produtoId: cheeseBacon.id, quantidade: 1 },

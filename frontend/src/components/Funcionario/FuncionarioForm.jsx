@@ -12,16 +12,7 @@ import { useEffect, useState, useRef } from "react";
 import PasswordToggle from "../../hooks/buttonPassword";
 import { formatTelefone } from "../../utils/Date.utils";
 import { roleService } from "../../services/role.service";
-
-// ─────────────────────────────────────────
-// Configurações estáticas
-// ─────────────────────────────────────────
-
-const CARGO_OPTIONS = [
-  { value: "ATENDENTE", label: "Atendente" },
-  { value: "COZINHEIRO", label: "Cozinheiro" },
-  { value: "CAIXA", label: "Caixa" },
-];
+import { CARGO_OPTIONS } from "../../constants";
 
 const EMPTY_FORM = {
   name: "",

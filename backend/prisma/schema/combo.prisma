@@ -8,9 +8,12 @@ model Combo {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  produtos    ComboProduto[]
-  pedidoItens PedidoItem[]
+  restauranteId Int
+  restaurante   Restaurante    @relation(fields: [restauranteId], references: [id])
+  produtos      ComboProduto[]
+  pedidoItens   PedidoItem[]
 
+  @@unique([nome, restauranteId])
   @@map("combos")
 }
 

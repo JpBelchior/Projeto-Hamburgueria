@@ -19,16 +19,7 @@ import Modal from "../components/Ui/Modal";
 import Button from "../components/Ui/Button";
 import FuncionarioCard from "../components/Funcionario/FuncionarioCard";
 import FuncionarioForm from "../components/Funcionario/FuncionarioForm";
-
-// ─────────────────────────────────────────
-// Sub-componente — filtro de status
-// ─────────────────────────────────────────
-
-const STATUS_FILTERS = [
-  { value: "todos",   label: "Todos"   },
-  { value: "ativo",   label: "Ativos"  },
-  { value: "inativo", label: "Inativos"},
-];
+import { STATUS_FILTERS } from "../constants";
 
 const FilterStatus = ({ value, onChange }) => (
   <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1">
@@ -166,7 +157,7 @@ const Funcionarios = () => {
       </div>
 
       {/* Grid de cards */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         {isLoading ? (
           <>
             <CardSkeleton />

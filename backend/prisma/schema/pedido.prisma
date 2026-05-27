@@ -2,7 +2,7 @@
 
 model Pedido {
   id                 Int             @id @default(autoincrement())
-  numeroPedido       String          @unique
+  numeroPedido       String
   nomeCliente        String?
   status             StatusPedido    @default(ABERTO)
   formaPagamento     FormaPagamento?
@@ -13,9 +13,12 @@ model Pedido {
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
+  restauranteId      Int
+  restaurante        Restaurante     @relation(fields: [restauranteId], references: [id])
   funcionario        Funcionario     @relation(fields: [funcionarioId], references: [id])
   itens              PedidoItem[]
 
+  @@unique([numeroPedido, restauranteId])
   @@map("pedidos")
 }
 

@@ -1,0 +1,21 @@
+// RESTAURANTE — tenant raiz do sistema SaaS
+
+model Restaurante {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  cnpj         String   @unique
+  email        String   @unique
+  telefone     String?
+  endereco     String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  funcionarios Funcionario[]
+  pedidos      Pedido[]
+  produtos     Produto[]
+  ingredientes Ingrediente[]
+  combos       Combo[]
+
+  @@map("restaurantes")
+}

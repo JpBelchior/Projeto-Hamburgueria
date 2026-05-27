@@ -10,7 +10,9 @@ model Funcionario {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  user         User      @relation(fields: [userId], references: [id])
+  restauranteId Int
+  restaurante  Restaurante @relation(fields: [restauranteId], references: [id])
+  user         User        @relation(fields: [userId], references: [id])
   pedidos      Pedido[]
 
   @@map("funcionarios")

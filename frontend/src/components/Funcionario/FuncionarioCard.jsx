@@ -13,12 +13,8 @@ import { ChevronDown, ChevronUp, Pencil, Trash2, Mail, CreditCard, Briefcase, Do
 import Avatar from "../Ui/Avatar";
 import StatusBadge from "../Ui/StatusBadge";
 import { tempoNaEmpresa, formatData, formatMoeda, formatTelefone } from "../../utils/Date.utils";
-
-const CARGO_LABEL = {
-  ATENDENTE: "Atendente",
-  COZINHEIRO: "Cozinheiro",
-  CAIXA: "Caixa",
-};
+import useAuthStore from "../../store/useAuthStore";
+import { ROLE_RANK, getRoleRank, CARGO_LABEL } from "../../constants";
 
 const InfoRow = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-3 py-2">
@@ -36,10 +32,18 @@ const InfoRow = ({ icon: Icon, label, value }) => (
 
 const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
   const [expanded, setExpanded] = useState(false);
+  const loggedUser = useAuthStore((s) => s.user);
 
-  const { user, cargo, salario, dataAdmissao, active, telefone } = funcionario;
+  const { user, cargo, salario, dataAdmissao, active } = funcionario;
   const primaryRole = user.roles?.[0]?.role?.name ?? "";
   const roleLabel = primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1).toLowerCase();
+
+  // Mostra ações apenas se o usuário logado tem rank estritamente maior que o alvo
+  const loggedRank = getRoleRank(loggedUser?.roles ?? []);
+  const targetRank = getRoleRank(
+    user.roles?.map((ur) => ur.role?.name ?? ur) ?? []
+  );
+  const canAct = loggedRank > targetRank;
 
   return (
     <div
@@ -99,37 +103,39 @@ const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
             <InfoRow icon={Calendar} label="Admissão" value={formatData(dataAdmissao)} />
           </div>
 
-          {/* Ações */}
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50">
-            <button
-              onClick={() => onToggle(funcionario)}
-              className={`
-                flex-1 py-2 px-3 rounded-xl text-xs font-medium border transition-all duration-200
-                ${active
-                  ? "text-slate-400 border-slate-700/50 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5"
-                  : "text-slate-400 border-slate-700/50 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5"
-                }
-              `}
-            >
-              {active ? "Desativar" : "Ativar"}
-            </button>
+          {/* Ações — visíveis apenas para quem tem rank superior ao funcionário */}
+          {canAct && (
+            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50">
+              <button
+                onClick={() => onToggle(funcionario)}
+                className={`
+                  flex-1 py-2 px-3 rounded-xl text-xs font-medium border transition-all duration-200
+                  ${active
+                    ? "text-slate-400 border-slate-700/50 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5"
+                    : "text-slate-400 border-slate-700/50 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                  }
+                `}
+              >
+                {active ? "Desativar" : "Ativar"}
+              </button>
 
-            <button
-              onClick={() => onEdit(funcionario)}
-              className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-amber-400 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-200"
-            >
-              <Pencil size={12} />
-              Editar
-            </button>
+              <button
+                onClick={() => onEdit(funcionario)}
+                className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-amber-400 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-200"
+              >
+                <Pencil size={12} />
+                Editar
+              </button>
 
-            <button
-              onClick={() => onDelete(funcionario)}
-              className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-200"
-            >
-              <Trash2 size={12} />
-              Excluir
-            </button>
-          </div>
+              <button
+                onClick={() => onDelete(funcionario)}
+                className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-200"
+              >
+                <Trash2 size={12} />
+                Excluir
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
