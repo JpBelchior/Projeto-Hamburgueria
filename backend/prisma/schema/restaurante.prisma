@@ -11,11 +11,13 @@ model Restaurante {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  funcionarios Funcionario[]
-  pedidos      Pedido[]
-  produtos     Produto[]
-  ingredientes Ingrediente[]
-  combos       Combo[]
+  funcionarios       Funcionario[]
+  pedidos            Pedido[]
+  produtos           Produto[]
+  ingredientes       Ingrediente[]
+  combos             Combo[]
+  gastosIngredientes GastoIngrediente[]
+  gastosMensais      GastoMensal[]
 
   @@map("restaurantes")
 }

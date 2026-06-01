@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as FuncionarioController from "../controllers/funcionario.controller";
+import * as FuncionarioController from "../../controllers/funcionario.controller";
 
 const router = Router();
 

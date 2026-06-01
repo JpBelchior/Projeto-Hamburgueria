@@ -57,7 +57,7 @@ const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
       `}
     >
       {/* Linha decorativa superior */}
-      <div className={`h-0.5 w-full ${active ? "bg-gradient-to-r from-amber-500/50 via-amber-500/20 to-transparent" : "bg-slate-800"}`} />
+      <div className={`h-0.5 w-full ${active ? "bg-gradient-to-r from-orange-500  via-amber-400 to-transparent  " : "bg-slate-800"}`} />
 
       {/* Corpo principal do crachá */}
       <div className="p-5">

@@ -1,8 +1,11 @@
 import { Router } from "express";
-import authRoutes from "./auth.routes";
-import funcionarioRoutes from "./funcionario.routes";
-import restauranteRoutes from "./restaurante.routes";
-import rolesRoutes from "./roles.routes";
+import authRoutes from "./autentficacao/auth.routes";
+import funcionarioRoutes from "./funcionario/funcionario.routes";
+import restauranteRoutes from "./restaurante/restaurante.routes";
+import rolesRoutes from "./roles/roles.routes";
+import pedidoRoutes from "./pedido/pedido.routes";
+import gastoIngredienteRoutes from "./gasto_ingrediente/gasto_ingrediente.routes";
+import financeiroRoutes from "./financeiro/financeiro.routes";
 
 export const publicRoutes = Router();
 publicRoutes.use("/auth", authRoutes);
@@ -10,4 +13,7 @@ publicRoutes.use("/roles", rolesRoutes);
 publicRoutes.use("/restaurantes", restauranteRoutes);
 
 export const protectedRoutes = Router();
-protectedRoutes.use("/funcionarios", funcionarioRoutes);
+protectedRoutes.use("/funcionarios",       funcionarioRoutes);
+protectedRoutes.use("/pedidos",            pedidoRoutes);
+protectedRoutes.use("/gasto-ingredientes", gastoIngredienteRoutes);
+protectedRoutes.use("/financeiro",         financeiroRoutes);

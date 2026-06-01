@@ -4,14 +4,7 @@ import Login from "../pages/Login";
 import DashboardLayout from "../components/Layouts/dashboardLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import Funcionarios from "../pages/Funcionarios";
-
-// ── placeholders — serão substituídos pelas páginas reais ──────────────────
-const DashboardHome = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-    <p className="text-slate-400 mt-2">Visão geral do negócio</p>
-  </div>
-);
+import Dashboard from "../pages/Dashboard";
 
 const Pedidos = () => (
   <div>
@@ -73,7 +66,7 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<DashboardHome />} />
+        <Route index element={<Dashboard />} />
         <Route path="pedidos" element={<Pedidos />} />
         <Route path="produtos" element={<Produtos />} />
         <Route path="ingredientes" element={<Ingredientes />} />

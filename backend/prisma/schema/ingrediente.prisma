@@ -5,7 +5,6 @@ model Ingrediente {
   nome            String
   quantidadeAtual Float
   unidade         UnidadeMedida
-  custoPorUnidade Float
   essencial       Boolean              @default(false)
   estoqueMinimo   Float?
   imagem          String?

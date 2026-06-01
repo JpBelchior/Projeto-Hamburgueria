@@ -6,7 +6,8 @@ model Produto {
   descricao            String?              @db.Text
   categoria            CategoriaProduct
   precoVenda           Float
-  desconto             Float                @default(0) 
+  precoProducao        Float?
+  desconto             Float                @default(0)
   tempoPreparoEstimado Int?
   ativo                Boolean              @default(true)
   disponivel           Boolean              @default(true)

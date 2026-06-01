@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { cadastrarRestaurante } from "../controllers/restaurante.controller";
+import { cadastrarRestaurante } from "../../controllers/restaurante.controller";
 
 const router = Router();
 

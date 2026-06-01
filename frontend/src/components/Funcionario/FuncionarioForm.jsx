@@ -13,6 +13,7 @@ import PasswordToggle from "../../hooks/buttonPassword";
 import { formatTelefone } from "../../utils/Date.utils";
 import { roleService } from "../../services/role.service";
 import { CARGO_OPTIONS } from "../../constants";
+import Button from "../Ui/Button";
 
 const EMPTY_FORM = {
   name: "",
@@ -237,22 +238,13 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
 
       {/* Ações */}
       <div className="flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isLoading}
-          className="px-5 py-2.5 rounded-xl text-sm font-medium text-slate-400 border border-slate-700/50 hover:text-white hover:border-slate-600 hover:bg-slate-800/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button variant="ghost" onClick={onCancel} disabled={isLoading}>
           Cancelar
-        </button>
+        </Button>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-6 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-black font-semibold shadow-md shadow-amber-500/10 hover:-translate-y-px active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button type="submit" disabled={isLoading}>
           {isLoading ? "Salvando..." : isEditing ? "Salvar alterações" : "Criar funcionário"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -13,33 +13,14 @@
 
 import { UserPlus, Users } from "lucide-react";
 import { useFuncionarios } from "../hooks/useFuncionario";
-import PageHeader from "../components/Ui/PageHeader";
+import HeaderBar from "../components/Ui/HeaderBar";
 import SearchBar from "../components/Ui/SearchBar";
 import Modal from "../components/Ui/Modal";
 import Button from "../components/Ui/Button";
+import TabSelector from "../components/Ui/TabSelector";
 import FuncionarioCard from "../components/Funcionario/FuncionarioCard";
 import FuncionarioForm from "../components/Funcionario/FuncionarioForm";
 import { STATUS_FILTERS } from "../constants";
-
-const FilterStatus = ({ value, onChange }) => (
-  <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1">
-    {STATUS_FILTERS.map((f) => (
-      <button
-        key={f.value}
-        onClick={() => onChange(f.value)}
-        className={`
-          px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-          ${value === f.value
-            ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-            : "text-slate-400 hover:text-white border border-transparent"
-          }
-        `}
-      >
-        {f.label}
-      </button>
-    ))}
-  </div>
-);
 
 // ─────────────────────────────────────────
 // Sub-componente — estado vazio
@@ -110,7 +91,7 @@ const Funcionarios = () => {
 
   return (
     <div>
-      <PageHeader
+      <HeaderBar
         title="Funcionários"
         subtitle="Gerencie a equipe e os níveis de acesso"
       />
@@ -149,7 +130,7 @@ const Funcionarios = () => {
           />
         </div>
 
-        <FilterStatus value={filterStatus} onChange={setFilterStatus} />
+        <TabSelector options={STATUS_FILTERS} value={filterStatus} onChange={setFilterStatus} />
 
         <Button icon={UserPlus} onClick={openCreate}>
           Novo funcionário
