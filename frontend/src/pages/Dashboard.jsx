@@ -4,6 +4,8 @@ import KpiCard from "../components/Ui/KpiCard";
 import HeaderBar from "../components/Ui/HeaderBar";
 import FinanceiroCard from "../components/Dashboard/FinanceiroCard";
 import SalesChart from "../components/Dashboard/SalesChart";
+import TopItens from "../components/Dashboard/TopItens";
+import CategoriaMix from "../components/Dashboard/CategoriaMix";
 import { useDashboard } from "../hooks/useDashboard";
 import { formatMoeda } from "../utils/Date.utils";
 
@@ -122,6 +124,12 @@ const Dashboard = () => {
 
       {/* Gráfico de vendas */}
       <SalesChart period={periodo} refreshing={loading} />
+
+      {/* Ranking e mix de categorias */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TopItens period={periodo} />
+        <CategoriaMix period={periodo} />
+      </div>
     </div>
   );
 };

@@ -175,6 +175,67 @@ export const getVendas = async (periodo: Periodo) => {
   });
 };
 
+export const getCategoriaMix = async (periodo: Periodo) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const { atual } = getRanges(periodo);
+  const status = StatusPedido.FINALIZADO;
+
+  type Row = { categoria: string; qtd: bigint | number };
+
+  const rows = await prisma.$queryRaw<Row[]>`
+    SELECT p.categoria,
+           SUM(pi.quantidade) AS qtd
+    FROM pedido_itens pi
+    JOIN produtos     p   ON p.id   = pi.produtoId
+    JOIN pedidos      ped ON ped.id = pi.pedidoId
+    WHERE ped.restauranteId = ${restauranteId}
+      AND ped.status        = ${status}
+      AND ped.createdAt    >= ${atual.inicio}
+      AND ped.createdAt     < ${atual.fim}
+      AND pi.produtoId IS NOT NULL
+    GROUP BY p.categoria
+    ORDER BY qtd DESC
+  `;
+
+  return rows.map((r) => ({
+    categoria: r.categoria,
+    qtd:       Number(r.qtd),
+  }));
+};
+
+export const getTopItens = async (periodo: Periodo) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const { atual } = getRanges(periodo);
+  const status = StatusPedido.FINALIZADO;
+
+  type Row = { id: bigint | number; nome: string; categoria: string; qtd: bigint | number; receita: number | string };
+
+  const rows = await prisma.$queryRaw<Row[]>`
+    SELECT p.id, p.nome, p.categoria,
+           SUM(pi.quantidade) AS qtd,
+           CAST(SUM(pi.quantidade * pi.precoUnitario) AS DECIMAL(10,2)) AS receita
+    FROM pedido_itens pi
+    JOIN produtos     p   ON p.id   = pi.produtoId
+    JOIN pedidos      ped ON ped.id = pi.pedidoId
+    WHERE ped.restauranteId = ${restauranteId}
+      AND ped.status        = ${status}
+      AND ped.createdAt    >= ${atual.inicio}
+      AND ped.createdAt     < ${atual.fim}
+      AND pi.produtoId IS NOT NULL
+    GROUP BY p.id, p.nome, p.categoria
+    ORDER BY qtd DESC
+    LIMIT 5
+  `;
+
+  return rows.map((r) => ({
+    id:        Number(r.id),
+    nome:      r.nome,
+    categoria: r.categoria,
+    qtd:       Number(r.qtd),
+    receita:   Number(r.receita),
+  }));
+};
+
 export const getMetricas = async (periodo: Periodo) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const { atual, anterior } = getRanges(periodo);

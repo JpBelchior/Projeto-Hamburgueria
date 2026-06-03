@@ -5,6 +5,7 @@ import {
 import { ACCENT, fmtBRL, fmtBRLShort, fmtNum } from "../../utils/format";
 import TabSelector from "../Ui/TabSelector";
 import { useSalesChart } from "../../hooks/useSalesChart";
+import { ChartAreaIcon } from "lucide-react";
 
 const METRIC_OPTIONS = [
   { value: "faturamento", label: "Faturamento" },
@@ -52,7 +53,8 @@ export default function SalesChart({ period, refreshing }) {
       <div className="p-5 pb-2">
         <div className="flex items-start justify-between mb-1 flex-wrap gap-2">
           <div>
-            <h3 className="text-white font-semibold text-sm">
+            <h3 className="text-white font-semibold text-sm flex">
+              <ChartAreaIcon size={16 } style={{ color: ACCENT.text }} className="mr-1 mt-1" />
               Vendas {TITULO[period] ?? ""}
             </h3>
 
