@@ -6,8 +6,8 @@ import { useState, useEffect, useCallback } from "react";
  * @param {() => Promise<any>} fetchFn  Função estável (memoizada com useCallback no caller)
  * @param {string}             errMsg   Mensagem exibida em caso de erro
  */
-export const usePeriodFetch = (fetchFn, errMsg) => {
-  const [dados,   setDados]   = useState([]);
+export const usePeriodFetch = (fetchFn, errMsg, initialValue = []) => {
+  const [dados,   setDados]   = useState(initialValue);
   const [loading, setLoading] = useState(true);
   const [erro,    setErro]    = useState(null);
 
@@ -25,5 +25,5 @@ export const usePeriodFetch = (fetchFn, errMsg) => {
 
   useEffect(() => { run(); }, [run]);
 
-  return { dados, loading, erro };
+  return { dados, loading, erro, refetch: run };
 };

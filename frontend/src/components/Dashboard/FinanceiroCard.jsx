@@ -4,23 +4,11 @@ import { ACCENT, fmtBRL } from "../../utils/format";
 import TabSelector from "../Ui/TabSelector";
 import Modal from "../Ui/Modal";
 import TooltipPopover from "../Ui/TooltipPopover";
+import CardContainer from "../Ui/CardContainer";
+import ErrorAlert from "../Ui/ErrorAlert";
 import { useFinanceiro } from "../../hooks/useFinanceiro";
 import { useGastoIngrediente } from "../../hooks/useGastoIngrediente";
-
-const MESES = [
-  { value: 1,  label: "Janeiro"   },
-  { value: 2,  label: "Fevereiro" },
-  { value: 3,  label: "Março"     },
-  { value: 4,  label: "Abril"     },
-  { value: 5,  label: "Maio"      },
-  { value: 6,  label: "Junho"     },
-  { value: 7,  label: "Julho"     },
-  { value: 8,  label: "Agosto"    },
-  { value: 9,  label: "Setembro"  },
-  { value: 10, label: "Outubro"   },
-  { value: 11, label: "Novembro"  },
-  { value: 12, label: "Dezembro"  },
-];
+import { MESES } from "../../constants";
 
 const anoAtual = new Date().getFullYear();
 const ANOS = Array.from({ length: 5 }, (_, i) => anoAtual - i);
@@ -56,9 +44,7 @@ export default function FinanceiroCard() {
   const mesSelecionado = MESES.find((m) => m.value === mes)?.label ?? "";
 
   return (
-    <div className="bg-slate-900/60 border border-slate-700/50 rounded-2xl overflow-hidden">
-      <div className="  top-0 left-0 w-full h-0.5 bg-gradient-to-r from-orange-500 via-amber-400 to-transparent" />
-
+    <CardContainer>
       <div className="p-5">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
@@ -127,12 +113,7 @@ export default function FinanceiroCard() {
           </div>
         )}
 
-        {/* Erro */}
-        {!loading && erro && (
-          <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-xs">
-            {erro}
-          </div>
-        )}
+        {!loading && erro && <ErrorAlert message={erro} />}
 
         {/* Dados */}
         {!loading && !erro && (
@@ -216,7 +197,7 @@ export default function FinanceiroCard() {
           totalSalarios={custoSalarios}
         />
       )}
-    </div>
+    </CardContainer>
   );
 }
 

@@ -1,8 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { PieChart as PieIcon } from "lucide-react";
 import { ACCENT, CAT_LABEL, CAT_COLOR, fmtNum } from "../../utils/format";
-import { useCategoriaMix } from "../../hooks/useCategoriaMix";
+import { usePeriodFetch } from "../../hooks/usePeriodFetch";
+import { dashboardService } from "../../services/dashboard.service";
+import CardContainer from "../Ui/CardContainer";
+import ErrorAlert from "../Ui/ErrorAlert";
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -20,7 +23,8 @@ function CustomTooltip({ active, payload }) {
 }
 
 export default function CategoriaMix({ period }) {
-  const { dados, loading, erro } = useCategoriaMix(period);
+  const fn = useCallback(() => dashboardService.getCategoriaMix(period), [period]);
+  const { dados, loading, erro } = usePeriodFetch(fn, "Não foi possível carregar o mix de categorias.");
 
   const data = useMemo(() => {
     const totalQtd = dados.reduce((s, d) => s + d.qtd, 0) || 1;
@@ -36,9 +40,7 @@ export default function CategoriaMix({ period }) {
   const lider = data[0];
 
   return (
-    <div className="bg-slate-900/60 border border-slate-700/50 rounded-2xl overflow-hidden">
-      <div className="top-0 left-0 w-full h-0.5 bg-gradient-to-r from-orange-500 via-amber-400 to-transparent" />
-
+    <CardContainer>
       <div className="p-5">
         <h3 className="text-white font-semibold text-sm flex items-center gap-2">
           <PieIcon size={14} style={{ color: ACCENT.text }} />
@@ -61,11 +63,7 @@ export default function CategoriaMix({ period }) {
         )}
 
         {/* Erro */}
-        {!loading && erro && (
-          <div className="mt-3 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-xs">
-            {erro}
-          </div>
-        )}
+        {!loading && erro && <ErrorAlert message={erro} className="mt-3" />}
 
         {/* Sem dados */}
         {!loading && !erro && data.length === 0 && (
@@ -123,6 +121,6 @@ export default function CategoriaMix({ period }) {
           </>
         )}
       </div>
-    </div>
+    </CardContainer>
   );
 }

@@ -8,13 +8,7 @@ import TopItens from "../components/Dashboard/TopItens";
 import CategoriaMix from "../components/Dashboard/CategoriaMix";
 import { useDashboard } from "../hooks/useDashboard";
 import { formatMoeda } from "../utils/Date.utils";
-
-const PERIODOS = [
-  { key: "hoje",   label: "Hoje",    vsLabel: "vs ontem"        },
-  { key: "7dias",  label: "7 dias",  vsLabel: "vs sem. passada" },
-  { key: "30dias", label: "30 dias", vsLabel: "vs mês passado"  },
-  { key: "anual",  label: "Anual",   vsLabel: "vs ano passado"  },
-];
+import { PERIODOS } from "../constants";
 
 // ── Skeletons de loading ──────────────────────────────────────────────────
 
@@ -43,7 +37,7 @@ const Dashboard = () => {
     await refetch();
   }, [refetch]);
 
-  const deltaLabel = PERIODOS.find((p) => p.key === periodo)?.vsLabel ?? "";
+  const deltaLabel = PERIODOS.find((p) => p.value === periodo)?.vsLabel ?? "";
 
   const kpis = dados
     ? [
@@ -87,7 +81,7 @@ const Dashboard = () => {
         title="Dashboard"
         period={periodo}
         setPeriod={setPeriodo}
-        periods={PERIODOS.map((p) => ({ value: p.key, label: p.label }))}
+        periods={PERIODOS}
         onRefresh={handleRefresh}
         refreshing={loading}
       />

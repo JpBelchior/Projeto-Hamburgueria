@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { ACCENT } from "../../utils/format";
 import TooltipPopover from "./TooltipPopover";
+import CardContainer from "./CardContainer";
 
 /**
  * KpiCard — card de KPI
@@ -24,10 +25,7 @@ export default function KpiCard({ icon: Icon, label, value, delta, deltaLabel, h
   const DeltaIcon  = (invertido ? !positive : positive) ? ArrowUp : ArrowDown;
 
   return (
-  <div className="relative bg-slate-900/60 border border-slate-700/50 rounded-2xl hover:border-slate-600 transition-all overflow-hidden">
-
-  <div className="h-0.5 bg-gradient-to-r from-orange-500 via-amber-400 to-transparent" />
-
+  <CardContainer className="relative hover:border-slate-600 transition-all">
   <div className="p-5">
     <div className="flex items-start justify-between mb-3">
       <div
@@ -56,6 +54,6 @@ export default function KpiCard({ icon: Icon, label, value, delta, deltaLabel, h
 
     <p className="text-slate-500 text-[11px] mt-1">{deltaLabel}</p>
   </div>
-</div>
+  </CardContainer>
   );
 }

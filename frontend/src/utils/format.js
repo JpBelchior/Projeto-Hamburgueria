@@ -41,3 +41,57 @@ export const CAT_COLOR = {
   BEBIDA:         "#38bdf8",  // sky-400 — fresco, contraste frio
   SOBREMESA:      "#a78bfa",  // violet-400 — suave, diferenciado
 };
+
+// ── Pedidos ─────────────────────────────────────────────────────────────────
+
+export const STATUS_LABEL = {
+  ABERTO:     "Aberto",
+  EM_PREPARO: "Em Preparo",
+  FINALIZADO: "Finalizado",
+  CANCELADO:  "Cancelado",
+};
+
+export const STATUS_COLOR = {
+  ABERTO:     "#38bdf8",
+  EM_PREPARO: "#fbbf24",
+  FINALIZADO: "#34d399",
+  CANCELADO:  "#f87171",
+};
+
+export const PAGAMENTO_LABEL = {
+  PIX:            "PIX",
+  DINHEIRO:       "Dinheiro",
+  CARTAO_CREDITO: "Crédito",
+  CARTAO_DEBITO:  "Débito",
+};
+
+const SLA_MIN = 15;
+
+export function getSLAStatus(pedido) {
+  const ref = pedido.status === "EM_PREPARO" && pedido.tempoInicioPreparo
+    ? new Date(pedido.tempoInicioPreparo)
+    : new Date(pedido.createdAt);
+  const ratio = (Date.now() - ref.getTime()) / 60_000 / SLA_MIN;
+  if (ratio < 0.6)  return { color: "#34d399", label: "no prazo" };
+  if (ratio < 0.85) return { color: "#fbbf24", label: "atenção"  };
+  return { color: "#f87171", label: "atrasado" };
+}
+
+export function getSLAProgress(pedido) {
+  const ref = pedido.status === "EM_PREPARO" && pedido.tempoInicioPreparo
+    ? new Date(pedido.tempoInicioPreparo)
+    : new Date(pedido.createdAt);
+  const elapsed = (Date.now() - ref.getTime()) / 60_000;
+  return Math.min(100, (elapsed / SLA_MIN) * 100);
+}
+
+export function fmtElapsedP(segundos) {
+  const m = Math.floor(segundos / 60);
+  const s = segundos % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${String(s).padStart(2, "0")}s`;
+}
+
+export function elapsedSeconds(from) {
+  return Math.floor((Date.now() - new Date(from).getTime()) / 1000);
+}

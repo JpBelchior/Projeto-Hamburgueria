@@ -14,6 +14,7 @@ import { formatTelefone } from "../../utils/Date.utils";
 import { roleService } from "../../services/role.service";
 import { CARGO_OPTIONS } from "../../constants";
 import Button from "../Ui/Button";
+import FormField from "../Ui/FormField";
 
 const EMPTY_FORM = {
   name: "",
@@ -25,20 +26,6 @@ const EMPTY_FORM = {
   cargo: "ATENDENTE",
   salario: "",
 };
-
-// ─────────────────────────────────────────
-// Sub-componentes internos
-// ─────────────────────────────────────────
-
-const Field = ({ label, required, children }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-slate-400 text-xs font-medium tracking-wide uppercase">
-      {label}
-      {required && <span className="text-amber-400 ml-1">*</span>}
-    </label>
-    {children}
-  </div>
-);
 
 const inputClass = `
   w-full px-3.5 py-2.5 rounded-xl text-sm text-white
@@ -104,7 +91,7 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
         </p>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <Field label="Nome completo" required>
+            <FormField label="Nome completo" required>
               <input
                 type="text"
                 value={form.name}
@@ -114,10 +101,10 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
                 disabled={isLoading}
                 required
               />
-            </Field>
+            </FormField>
           </div>
 
-          <Field label="CPF" required>
+          <FormField label="CPF" required>
             <input
               type="text"
               value={form.cpf}
@@ -128,9 +115,9 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
               disabled={isLoading}
               required
             />
-          </Field>
+          </FormField>
 
-          <Field label="E-mail" required>
+          <FormField label="E-mail" required>
             <input
               type="email"
               value={form.email}
@@ -140,10 +127,10 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
               disabled={isLoading}
               required
             />
-          </Field>
+          </FormField>
 
           <div className="col-span-2">
-            <Field label={isEditing ? "Nova senha (deixe vazio para manter)" : "Senha"} required={!isEditing}>
+            <FormField label={isEditing ? "Nova senha (deixe vazio para manter)" : "Senha"} required={!isEditing}>
               <div className="relative">
                 <input
                   ref={passwordRef}
@@ -159,9 +146,9 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
                   <PasswordToggle inputRef={passwordRef} />
                 </div>
               </div>
-            </Field>
+            </FormField>
           </div>
-            <Field label="Telefone" required>
+            <FormField label="Telefone" required>
             <input
               type="tel"
               value={form.telefone}
@@ -171,7 +158,7 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
               disabled={isLoading}
               required
             />
-          </Field>
+          </FormField>
         </div>
       </div>
 
@@ -186,7 +173,7 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
         <div className="grid grid-cols-2 gap-4">
 
           {!isEditing && (
-            <Field label="Nível de acesso" required>
+            <FormField label="Nível de acesso" required>
               <select
                 value={form.role}
                 onChange={handleChange("role")}
@@ -200,10 +187,10 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
                   </option>
                 ))}
               </select>
-            </Field>
+            </FormField>
           )}
 
-          <Field label="Cargo" required>
+          <FormField label="Cargo" required>
             <select
               value={form.cargo}
               onChange={handleChange("cargo")}
@@ -217,9 +204,9 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
                 </option>
               ))}
             </select>
-          </Field>
+          </FormField>
 
-          <Field label="Salário (R$)" required>
+          <FormField label="Salário (R$)" required>
             <input
               type="number"
               value={form.salario}
@@ -231,7 +218,7 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
               disabled={isLoading}
               required
             />
-          </Field>
+          </FormField>
 
         </div>
       </div>

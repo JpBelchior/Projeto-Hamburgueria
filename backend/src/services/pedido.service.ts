@@ -1,10 +1,10 @@
 import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { StatusPedido, CategoriaProduct } from "@prisma/client";
+import { CreatePedidoDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
+import { DateRange } from "../utils/dateRange";
 
 type Periodo = "hoje" | "7dias" | "30dias" | "anual";
-
-interface DateRange { inicio: Date; fim: Date }
 
 function getRanges(periodo: Periodo): { atual: DateRange; anterior: DateRange } {
   const now  = new Date();
@@ -235,6 +235,173 @@ export const getTopItens = async (periodo: Periodo) => {
     receita:   Number(r.receita),
   }));
 };
+
+// ── CRUD ──────────────────────────────────────────────────────────────────────
+
+const pedidoInclude = {
+  itens: {
+    include: {
+      produto: { select: { id: true, nome: true, categoria: true } },
+      combo: {
+        select: {
+          id:   true,
+          nome: true,
+          produtos: {
+            select: {
+              quantidade: true,
+              produto: { select: { nome: true } },
+            },
+          },
+        },
+      },
+    },
+  },
+  funcionario: { select: { id: true, user: { select: { name: true } } } },
+};
+
+export const listarPedidos = async (filtros: ListPedidosDTO) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const { periodo = "hoje", status, formaPagamento } = filtros;
+
+  const { atual } = getRanges(periodo as Periodo);
+
+  const where: Record<string, unknown> = {
+    restauranteId,
+    createdAt: { gte: atual.inicio },
+  };
+
+  if (status)         where.status         = status;
+  if (formaPagamento) where.formaPagamento = formaPagamento;
+
+  return prisma.pedido.findMany({
+    where,
+    include:  pedidoInclude,
+    orderBy:  { createdAt: "desc" },
+  });
+};
+
+export const buscarPedido = async (id: number) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  return prisma.pedido.findFirst({
+    where:   { id, restauranteId },
+    include: pedidoInclude,
+  });
+};
+
+export const criarPedido = async (dto: CreatePedidoDTO) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const funcionario   = RequestContext.getUser()!;
+
+  const func = dto.funcionarioId
+    ? await prisma.funcionario.findFirst({
+        where:  { id: dto.funcionarioId, restauranteId },
+        select: { id: true },
+      })
+    : await prisma.funcionario.findFirst({
+        where:  { user: { id: funcionario.id }, restauranteId },
+        select: { id: true },
+      });
+  if (!func) throw new Error("Funcionário não encontrado para este restaurante.");
+
+  const count = await prisma.pedido.count({ where: { restauranteId } });
+  const numeroPedido = `P${String(count + 1).padStart(4, "0")}`;
+
+  const valorTotal = dto.itens.reduce(
+    (acc, item) => acc + item.quantidade * item.precoUnitario,
+    0,
+  );
+
+  return prisma.pedido.create({
+    data: {
+      numeroPedido,
+      restauranteId,
+      funcionarioId:  func.id,
+      nomeCliente:    dto.nomeCliente,
+      formaPagamento: dto.formaPagamento,
+      valorTotal,
+      itens: {
+        create: dto.itens.map((item) => ({
+          produtoId:     item.produtoId,
+          comboId:       item.comboId,
+          quantidade:    item.quantidade,
+          precoUnitario: item.precoUnitario,
+          observacao:    item.observacao,
+        })),
+      },
+    },
+    include: pedidoInclude,
+  });
+};
+
+export const editarPedido = async (id: number, dto: UpdatePedidoDTO) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+
+  const existente = await prisma.pedido.findFirst({ where: { id, restauranteId } });
+  if (!existente) return null;
+
+  const valorTotal = dto.itens
+    ? dto.itens.reduce((acc, item) => acc + item.quantidade * item.precoUnitario, 0)
+    : undefined;
+
+  return prisma.pedido.update({
+    where: { id },
+    data: {
+      nomeCliente:    dto.nomeCliente,
+      formaPagamento: dto.formaPagamento,
+      ...(valorTotal !== undefined && { valorTotal }),
+      ...(dto.itens && {
+        itens: {
+          deleteMany: {},
+          create: dto.itens.map((item) => ({
+            produtoId:     item.produtoId,
+            comboId:       item.comboId,
+            quantidade:    item.quantidade,
+            precoUnitario: item.precoUnitario,
+            observacao:    item.observacao,
+          })),
+        },
+      }),
+    },
+    include: pedidoInclude,
+  });
+};
+
+export const atualizarStatus = async (id: number, dto: UpdateStatusDTO) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+
+  const pedido = await prisma.pedido.findFirst({ where: { id, restauranteId } });
+  if (!pedido) return null;
+
+  const now  = new Date();
+  const data: Record<string, unknown> = { status: dto.status };
+
+  if (dto.status === StatusPedido.EM_PREPARO && !pedido.tempoInicioPreparo) {
+    data.tempoInicioPreparo = now;
+  }
+  if (dto.status === StatusPedido.FINALIZADO && !pedido.tempoFimPreparo) {
+    data.tempoFimPreparo = now;
+  }
+
+  return prisma.pedido.update({
+    where:   { id },
+    data,
+    include: pedidoInclude,
+  });
+};
+
+export const cancelarPedido = async (id: number) => {
+  return atualizarStatus(id, { status: StatusPedido.CANCELADO });
+};
+
+export const deletarPedido = async (id: number) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const pedido = await prisma.pedido.findFirst({ where: { id, restauranteId } });
+  if (!pedido) return null;
+  await prisma.pedido.delete({ where: { id } });
+  return true;
+};
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
 
 export const getMetricas = async (periodo: Periodo) => {
   const restauranteId = RequestContext.getRestauranteId()!;

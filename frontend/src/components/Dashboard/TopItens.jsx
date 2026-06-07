@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Flame } from "lucide-react";
 import {
   ACCENT, CAT_LABEL, CAT_COLOR, withAlpha,
   fmtBRL, fmtBRLShort, fmtNum,
 } from "../../utils/format";
 import TabSelector from "../Ui/TabSelector";
-import { useTopItens } from "../../hooks/useTopItens";
+import { usePeriodFetch } from "../../hooks/usePeriodFetch";
+import { dashboardService } from "../../services/dashboard.service";
+import CardContainer from "../Ui/CardContainer";
+import ErrorAlert from "../Ui/ErrorAlert";
 
 const CATS = [
   { value: "TODOS",          label: "Todas"      },
@@ -16,7 +19,8 @@ const CATS = [
 ];
 
 export default function TopItens({ period }) {
-  const { dados, loading, erro } = useTopItens(period);
+  const fn = useCallback(() => dashboardService.getTopItens(period), [period]);
+  const { dados, loading, erro } = usePeriodFetch(fn, "Não foi possível carregar os itens mais pedidos.");
   const [filtro, setFiltro] = useState("TODOS");
 
   const itens = useMemo(
@@ -29,9 +33,7 @@ export default function TopItens({ period }) {
   const totalRec   = itens.reduce((s, i) => s + i.receita, 0);
 
   return (
-    <div className="bg-slate-900/60 border border-slate-700/50 rounded-2xl overflow-hidden">
-      <div className="top-0 left-0 w-full h-0.5 bg-gradient-to-r from-orange-500 via-amber-400 to-transparent" />
-
+    <CardContainer>
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start justify-between mb-1 flex-wrap gap-2">
@@ -69,11 +71,7 @@ export default function TopItens({ period }) {
         )}
 
         {/* Erro */}
-        {!loading && erro && (
-          <div className="rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-xs">
-            {erro}
-          </div>
-        )}
+        {!loading && erro && <ErrorAlert message={erro} />}
 
         {/* Lista */}
         {!loading && !erro && (
@@ -136,6 +134,6 @@ export default function TopItens({ period }) {
           </>
         )}
       </div>
-    </div>
+    </CardContainer>
   );
 }

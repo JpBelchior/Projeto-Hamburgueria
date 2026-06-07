@@ -1,10 +1,9 @@
 import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { StatusPedido } from "@prisma/client";
+import { DateRange } from "../utils/dateRange";
 
 type TipoFinanceiro = "mensal" | "anual";
-
-interface DateRange { inicio: Date; fim: Date }
 
 function getRange(tipo: TipoFinanceiro, mes: number, ano: number): DateRange {
   if (tipo === "mensal") {

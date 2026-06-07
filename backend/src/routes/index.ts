@@ -4,6 +4,8 @@ import funcionarioRoutes from "./funcionario/funcionario.routes";
 import restauranteRoutes from "./restaurante/restaurante.routes";
 import rolesRoutes from "./roles/roles.routes";
 import pedidoRoutes from "./pedido/pedido.routes";
+import produtoRoutes from "./produto/produto.routes";
+import comboRoutes   from "./combo/combo.routes";
 import gastoIngredienteRoutes from "./gasto_ingrediente/gasto_ingrediente.routes";
 import financeiroRoutes from "./financeiro/financeiro.routes";
 
@@ -14,6 +16,8 @@ publicRoutes.use("/restaurantes", restauranteRoutes);
 
 export const protectedRoutes = Router();
 protectedRoutes.use("/funcionarios",       funcionarioRoutes);
+protectedRoutes.use("/produtos",           produtoRoutes);
+protectedRoutes.use("/combos",             comboRoutes);
 protectedRoutes.use("/pedidos",            pedidoRoutes);
 protectedRoutes.use("/gasto-ingredientes", gastoIngredienteRoutes);
 protectedRoutes.use("/financeiro",         financeiroRoutes);

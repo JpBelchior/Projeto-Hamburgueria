@@ -24,6 +24,54 @@ export const CARGO_OPTIONS = [
   { value: "CAIXA", label: "Caixa" },
 ];
 
+// Períodos de análise (compartilhado entre Dashboard e Pedidos)
+export const PERIODOS = [
+  { value: "hoje",   label: "Hoje",    vsLabel: "vs ontem"        },
+  { value: "7dias",  label: "7 dias",  vsLabel: "vs sem. passada" },
+  { value: "30dias", label: "30 dias", vsLabel: "vs mês passado"  },
+  { value: "anual",  label: "Anual",   vsLabel: "vs ano passado"  },
+];
+
+// Colunas de status do kanban de pedidos
+export const STATUS_COLS = ["ABERTO", "EM_PREPARO", "FINALIZADO", "CANCELADO"];
+
+// Status que não permitem mais alterações
+export const STATUS_BLOQUEADO = ["FINALIZADO", "CANCELADO"];
+
+// Progressão de status de pedido
+export const PROXIMO_STATUS = {
+  ABERTO:     "EM_PREPARO",
+  EM_PREPARO: "FINALIZADO",
+};
+export const PROXIMO_LABEL = {
+  ABERTO:     "Iniciar Preparo",
+  EM_PREPARO: "Finalizar",
+};
+
+// Formas de pagamento (sem opção vazia — cada contexto adiciona a sua)
+export const FORMAS_PAGAMENTO = [
+  { value: "PIX",            label: "PIX"            },
+  { value: "DINHEIRO",       label: "Dinheiro"       },
+  { value: "CARTAO_CREDITO", label: "Cartão Crédito" },
+  { value: "CARTAO_DEBITO",  label: "Cartão Débito"  },
+];
+
+// Meses do ano
+export const MESES = [
+  { value: 1,  label: "Janeiro"   },
+  { value: 2,  label: "Fevereiro" },
+  { value: 3,  label: "Março"     },
+  { value: 4,  label: "Abril"     },
+  { value: 5,  label: "Maio"      },
+  { value: 6,  label: "Junho"     },
+  { value: 7,  label: "Julho"     },
+  { value: 8,  label: "Agosto"    },
+  { value: 9,  label: "Setembro"  },
+  { value: 10, label: "Outubro"   },
+  { value: 11, label: "Novembro"  },
+  { value: 12, label: "Dezembro"  },
+];
+
 // Filtros de status para listagens
 export const STATUS_FILTERS = [
   { value: "todos",   label: "Todos"    },

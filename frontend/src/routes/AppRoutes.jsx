@@ -5,13 +5,7 @@ import DashboardLayout from "../components/Layouts/dashboardLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import Funcionarios from "../pages/Funcionarios";
 import Dashboard from "../pages/Dashboard";
-
-const Pedidos = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-white">Pedidos</h1>
-    <p className="text-slate-400 mt-2">Gerenciamento de pedidos</p>
-  </div>
-);
+import Pedidos from "../pages/Pedidos";
 
 const Produtos = () => (
   <div>

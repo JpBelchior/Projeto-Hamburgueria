@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip,
 } from "recharts";
 import { ACCENT, fmtBRL, fmtBRLShort, fmtNum } from "../../utils/format";
 import TabSelector from "../Ui/TabSelector";
-import { useSalesChart } from "../../hooks/useSalesChart";
+import { usePeriodFetch } from "../../hooks/usePeriodFetch";
+import { dashboardService } from "../../services/dashboard.service";
 import { ChartAreaIcon } from "lucide-react";
+import CardContainer from "../Ui/CardContainer";
+import ErrorAlert from "../Ui/ErrorAlert";
 
 const METRIC_OPTIONS = [
   { value: "faturamento", label: "Faturamento" },
@@ -37,7 +40,8 @@ function CustomTooltip({ active, payload, label, metric }) {
 
 export default function SalesChart({ period, refreshing }) {
   const [metric, setMetric] = useState("faturamento");
-  const { dados, loading, erro } = useSalesChart(period);
+  const fn = useCallback(() => dashboardService.getVendas(period), [period]);
+  const { dados, loading, erro } = usePeriodFetch(fn, "Não foi possível carregar os dados de vendas.");
 
   const data  = dados ?? [];
   const total = data.reduce((s, d) => s + d[metric], 0);
@@ -46,8 +50,7 @@ export default function SalesChart({ period, refreshing }) {
     : null;
 
   return (
-    <div className="bg-slate-900/60 border border-slate-700/50 rounded-2xl overflow-hidden">
-    <div className=" top-0 left-0 w-full h-0.5 bg-gradient-to-r from-orange-500  via-amber-400 to-transparent" />
+    <CardContainer>
 
 
       <div className="p-5 pb-2">
@@ -97,12 +100,7 @@ export default function SalesChart({ period, refreshing }) {
         </div>
       )}
 
-      {/* Erro */}
-      {!loading && erro && (
-        <div className="mx-5 mb-5 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-red-400 text-xs">
-          {erro}
-        </div>
-      )}
+      {!loading && erro && <ErrorAlert message={erro} className="mx-5 mb-5" />}
 
       {/* Gráfico */}
       {!loading && !erro && (
@@ -167,6 +165,6 @@ export default function SalesChart({ period, refreshing }) {
           </ResponsiveContainer>
         </div>
       )}
-    </div>
+    </CardContainer>
   );
 }
