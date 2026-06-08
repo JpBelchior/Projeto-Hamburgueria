@@ -10,4 +10,7 @@ export const produtoService = {
 
   getById: (id) =>
     api.get(`/produtos/${id}`).then((r) => r.data),
+
+  getMetricas: (periodo) =>
+    api.get(`/produtos/metricas?periodo=${periodo}`).then((r) => r.data),
 };

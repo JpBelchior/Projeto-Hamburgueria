@@ -7,11 +7,12 @@ import {
   Clock,
 } from "lucide-react";
 import { useLogin } from "../hooks/useLogin";
-import PasswordToggle from "../hooks/buttonPassword";
+import PasswordToggle from "../components/Ui/PasswordToggle";
 import Footer from "../components/Login/footer";
 import MetricCard from "../components/Login/MetricCard";
 import LogoHeader from "../components/Login/LogoHeader";
 import Button from "../components/Ui/Button";
+import ErrorAlert from "../components/Ui/ErrorAlert";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -32,14 +33,7 @@ const Login = () => {
           <LogoHeader />
 
           <form onSubmit={handleSubmit} className="space-y-7 ">
-            {error && (
-              <div className="bg-red-500/10 border border-red-400/30 rounded-xl p-4">
-                <p className="text-red-300 text-sm text-center flex items-center justify-center">
-                  <span className="mr-2">⚠️</span>
-                  {error}
-                </p>
-              </div>
-            )}
+            {error && <ErrorAlert message={error} />}
 
             <div className="space-y-3">
               <label className="block text-white  text-sm tracking-wider">

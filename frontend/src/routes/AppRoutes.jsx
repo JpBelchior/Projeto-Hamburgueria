@@ -6,13 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Funcionarios from "../pages/Funcionarios";
 import Dashboard from "../pages/Dashboard";
 import Pedidos from "../pages/Pedidos";
-
-const Produtos = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-white">Produtos</h1>
-    <p className="text-slate-400 mt-2">Cadastro e gestão de produtos</p>
-  </div>
-);
+import Produtos from "../pages/Produtos";
 
 const Ingredientes = () => (
   <div>

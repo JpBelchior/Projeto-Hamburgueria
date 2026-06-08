@@ -1,31 +1,8 @@
 import { DollarSign, ClipboardList, TrendingUp } from "lucide-react";
 import { fmtBRL, STATUS_COLOR, STATUS_LABEL } from "../../utils/format";
 import CardContainer from "../Ui/CardContainer";
+import KpiCard from "../Ui/KpiCard";
 import { STATUS_COLS } from "../../constants";
-
-function StatCard({ icon: Icon, label, value, sub, color = "#fbbf24" }) {
-  return (
-    <CardContainer className="hover:border-slate-600 transition-all relative">
-      <div className="px-5 py-4 flex items-center gap-4">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: `${color}20`, border: `1px solid ${color}30` }}
-        >
-          <Icon size={16} style={{ color }} />
-        </div>
-        <div className="min-w-0">
-          <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold truncate">
-            {label}
-          </p>
-          <p className="text-white text-xl font-bold leading-tight tabular-nums truncate">
-            {value}
-          </p>
-          <p className="text-slate-500 text-[11px] truncate">{sub}</p>
-        </div>
-      </div>
-    </CardContainer>
-  );
-}
 
 export default function PedidosStats({ pedidos }) {
   const ativos      = pedidos.filter((p) => p.status !== "CANCELADO");
@@ -38,28 +15,11 @@ export default function PedidosStats({ pedidos }) {
     return acc;
   }, {});
 
-  const maxCount = Math.max(...Object.values(contagem), 1);
-
   return (
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-      <StatCard
-        icon={ClipboardList}
-        label="Pedidos no período"
-        value={String(total)}
-        sub={`${ativos.length} ativos`}
-      />
-      <StatCard
-        icon={DollarSign}
-        label="Faturamento"
-        value={fmtBRL(faturamento)}
-        sub="exclui cancelados"
-      />
-      <StatCard
-        icon={TrendingUp}
-        label="Ticket Médio"
-        value={fmtBRL(ticketMedio)}
-        sub="por pedido"
-      />
+      <KpiCard size="compact" icon={ClipboardList} label="Pedidos no período" value={String(total)}     deltaLabel={`${ativos.length} ativos`} />
+      <KpiCard size="compact" icon={DollarSign}    label="Faturamento"        value={fmtBRL(faturamento)} deltaLabel="exclui cancelados" />
+      <KpiCard size="compact" icon={TrendingUp}    label="Ticket Médio"       value={fmtBRL(ticketMedio)} deltaLabel="por pedido" />
 
       {/* Mix por status */}
       <CardContainer className="hover:border-slate-600 transition-all relative">

@@ -16,6 +16,7 @@ const CATS = [
   { value: "ACOMPANHAMENTO", label: "Acomp."     },
   { value: "BEBIDA",         label: "Bebidas"    },
   { value: "SOBREMESA",      label: "Sobremesas" },
+  { value: "COMBO",          label: "Combos"     },
 ];
 
 export default function TopItens({ period }) {

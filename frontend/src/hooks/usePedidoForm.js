@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { funcionarioService } from "../services/Funcionario.service";
+import { funcionarioService } from "../services/funcionario.service";
 
 export function usePedidoForm(drawer, actions) {
   const isEditar = drawer.modo === "editar";

@@ -9,9 +9,9 @@
  */
 
 import { useEffect, useState, useRef } from "react";
-import PasswordToggle from "../../hooks/buttonPassword";
+import PasswordToggle from "../Ui/PasswordToggle";
 import { formatTelefone } from "../../utils/Date.utils";
-import { roleService } from "../../services/role.service";
+import { roleService } from "../../services/funcionario.service";
 import { CARGO_OPTIONS } from "../../constants";
 import Button from "../Ui/Button";
 import FormField from "../Ui/FormField";

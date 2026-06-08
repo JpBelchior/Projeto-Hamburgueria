@@ -1,5 +1,5 @@
-import { AlertCircle } from "lucide-react";
 import HeaderBar from "../components/Ui/HeaderBar";
+import ErrorAlert from "../components/Ui/ErrorAlert";
 import PedidosStats from "../components/Pedidos/PedidosStats";
 import PedidosFilters from "../components/Pedidos/PedidosFilters";
 import PedidosKanban from "../components/Pedidos/PedidosKanban";
@@ -23,12 +23,7 @@ export default function Pedidos() {
         refreshing={loading}
       />
 
-      {error && !loading && (
-        <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-          <AlertCircle size={14} className="text-red-400 shrink-0" />
-          <p className="text-xs text-red-300">{error}</p>
-        </div>
-      )}
+      {error && !loading && <ErrorAlert message={error} />}
 
       <PedidosStats pedidos={filtered} />
 

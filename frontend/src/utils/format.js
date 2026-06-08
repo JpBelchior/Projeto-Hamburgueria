@@ -33,13 +33,15 @@ export const CAT_LABEL = {
   ACOMPANHAMENTO: "Acomp.",
   BEBIDA:         "Bebida",
   SOBREMESA:      "Sobremesa",
+  COMBO:          "Combo",
 };
 
 export const CAT_COLOR = {
-  PRINCIPAL:      "#fbbf24",  // amber-400 — coincide com ACCENT
-  ACOMPANHAMENTO: "#f97316",  // orange-500 — quente, vizinho do âmbar
-  BEBIDA:         "#38bdf8",  // sky-400 — fresco, contraste frio
-  SOBREMESA:      "#a78bfa",  // violet-400 — suave, diferenciado
+  PRINCIPAL:      "#fbbf24",  
+  ACOMPANHAMENTO: "#f97316", 
+  BEBIDA:         "#38bdf8",  
+  SOBREMESA:      "#584a80",  
+  COMBO:          "#147c56",  
 };
 
 // ── Pedidos ─────────────────────────────────────────────────────────────────

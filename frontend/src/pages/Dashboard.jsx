@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { DollarSign, ClipboardList, TrendingUp, Timer, Zap, AlertCircle } from "lucide-react";
+import { DollarSign, ClipboardList, TrendingUp, Timer, Zap } from "lucide-react";
+import ErrorAlert from "../components/Ui/ErrorAlert";
 import KpiCard from "../components/Ui/KpiCard";
 import HeaderBar from "../components/Ui/HeaderBar";
 import FinanceiroCard from "../components/Dashboard/FinanceiroCard";
@@ -98,12 +99,7 @@ const Dashboard = () => {
       </div>
 
       {/* Erro */}
-      {erro && !loading && (
-        <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
-          <AlertCircle size={14} className="text-red-400 shrink-0" />
-          <p className="text-xs text-red-300">{erro}</p>
-        </div>
-      )}
+      {erro && !loading && <ErrorAlert message={erro} />}
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

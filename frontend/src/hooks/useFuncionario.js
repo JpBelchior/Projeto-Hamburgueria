@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { funcionarioService } from "../services/Funcionario.service";
+import { funcionarioService } from "../services/funcionario.service";
 
 /**
  * useFuncionarios — gerencia estado e operações da página de funcionários

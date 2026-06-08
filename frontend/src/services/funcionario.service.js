@@ -31,3 +31,10 @@ export const funcionarioService = {
     return response.data;
   },
 };
+
+export const roleService = {
+  getAll: async () => {
+    const { data } = await api.get("/roles");
+    return data;
+  },
+};

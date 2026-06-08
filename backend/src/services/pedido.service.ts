@@ -2,38 +2,7 @@ import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { StatusPedido, CategoriaProduct } from "@prisma/client";
 import { CreatePedidoDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
-import { DateRange } from "../utils/dateRange";
-
-type Periodo = "hoje" | "7dias" | "30dias" | "anual";
-
-function getRanges(periodo: Periodo): { atual: DateRange; anterior: DateRange } {
-  const now  = new Date();
-  const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const ms   = (d: number) => d * 86_400_000;
-
-  switch (periodo) {
-    case "hoje":
-      return {
-        atual:    { inicio: hoje,                              fim: now  },
-        anterior: { inicio: new Date(hoje.getTime() - ms(1)), fim: hoje },
-      };
-    case "7dias":
-      return {
-        atual:    { inicio: new Date(hoje.getTime() - ms(7)),  fim: now },
-        anterior: { inicio: new Date(hoje.getTime() - ms(14)), fim: new Date(hoje.getTime() - ms(7)) },
-      };
-    case "30dias":
-      return {
-        atual:    { inicio: new Date(hoje.getTime() - ms(30)), fim: now },
-        anterior: { inicio: new Date(hoje.getTime() - ms(60)), fim: new Date(hoje.getTime() - ms(30)) },
-      };
-    case "anual":
-      return {
-        atual:    { inicio: new Date(now.getFullYear(), 0, 1),     fim: now },
-        anterior: { inicio: new Date(now.getFullYear() - 1, 0, 1), fim: new Date(now.getFullYear(), 0, 1) },
-      };
-  }
-}
+import { DateRange, Periodo, getRanges } from "../utils/dateRange";
 
 function calcVariacao(atual: number, anterior: number): number {
   if (anterior === 0) return 0;
@@ -183,17 +152,35 @@ export const getCategoriaMix = async (periodo: Periodo) => {
   type Row = { categoria: string; qtd: bigint | number };
 
   const rows = await prisma.$queryRaw<Row[]>`
-    SELECT p.categoria,
-           SUM(pi.quantidade) AS qtd
-    FROM pedido_itens pi
-    JOIN produtos     p   ON p.id   = pi.produtoId
-    JOIN pedidos      ped ON ped.id = pi.pedidoId
-    WHERE ped.restauranteId = ${restauranteId}
-      AND ped.status        = ${status}
-      AND ped.createdAt    >= ${atual.inicio}
-      AND ped.createdAt     < ${atual.fim}
-      AND pi.produtoId IS NOT NULL
-    GROUP BY p.categoria
+    SELECT categoria, SUM(qtd) AS qtd FROM (
+      SELECT p.categoria,
+             SUM(pi.quantidade) AS qtd
+      FROM pedido_itens pi
+      JOIN produtos     p   ON p.id   = pi.produtoId
+      JOIN pedidos      ped ON ped.id = pi.pedidoId
+      WHERE ped.restauranteId = ${restauranteId}
+        AND ped.status        = ${status}
+        AND ped.createdAt    >= ${atual.inicio}
+        AND ped.createdAt     < ${atual.fim}
+        AND pi.produtoId IS NOT NULL
+      GROUP BY p.categoria
+
+      UNION ALL
+
+      SELECT p.categoria,
+             SUM(pi.quantidade * cp.quantidade) AS qtd
+      FROM pedido_itens  pi
+      JOIN combo_produtos cp  ON cp.comboId  = pi.comboId
+      JOIN produtos       p   ON p.id        = cp.produtoId
+      JOIN pedidos        ped ON ped.id      = pi.pedidoId
+      WHERE ped.restauranteId = ${restauranteId}
+        AND ped.status        = ${status}
+        AND ped.createdAt    >= ${atual.inicio}
+        AND ped.createdAt     < ${atual.fim}
+        AND pi.comboId IS NOT NULL
+      GROUP BY p.categoria
+    ) combined
+    GROUP BY categoria
     ORDER BY qtd DESC
   `;
 
@@ -211,18 +198,39 @@ export const getTopItens = async (periodo: Periodo) => {
   type Row = { id: bigint | number; nome: string; categoria: string; qtd: bigint | number; receita: number | string };
 
   const rows = await prisma.$queryRaw<Row[]>`
-    SELECT p.id, p.nome, p.categoria,
-           SUM(pi.quantidade) AS qtd,
-           CAST(SUM(pi.quantidade * pi.precoUnitario) AS DECIMAL(10,2)) AS receita
-    FROM pedido_itens pi
-    JOIN produtos     p   ON p.id   = pi.produtoId
-    JOIN pedidos      ped ON ped.id = pi.pedidoId
-    WHERE ped.restauranteId = ${restauranteId}
-      AND ped.status        = ${status}
-      AND ped.createdAt    >= ${atual.inicio}
-      AND ped.createdAt     < ${atual.fim}
-      AND pi.produtoId IS NOT NULL
-    GROUP BY p.id, p.nome, p.categoria
+    SELECT id, nome, categoria, qtd, receita FROM (
+      SELECT p.id,
+             p.nome,
+             p.categoria,
+             SUM(pi.quantidade) AS qtd,
+             CAST(SUM(pi.quantidade * pi.precoUnitario) AS DECIMAL(10,2)) AS receita
+      FROM pedido_itens pi
+      JOIN produtos     p   ON p.id   = pi.produtoId
+      JOIN pedidos      ped ON ped.id = pi.pedidoId
+      WHERE ped.restauranteId = ${restauranteId}
+        AND ped.status        = ${status}
+        AND ped.createdAt    >= ${atual.inicio}
+        AND ped.createdAt     < ${atual.fim}
+        AND pi.produtoId IS NOT NULL
+      GROUP BY p.id, p.nome, p.categoria
+
+      UNION ALL
+
+      SELECT c.id,
+             c.nome,
+             'COMBO' AS categoria,
+             SUM(pi.quantidade) AS qtd,
+             CAST(SUM(pi.quantidade * pi.precoUnitario) AS DECIMAL(10,2)) AS receita
+      FROM pedido_itens pi
+      JOIN combos       c   ON c.id   = pi.comboId
+      JOIN pedidos      ped ON ped.id = pi.pedidoId
+      WHERE ped.restauranteId = ${restauranteId}
+        AND ped.status        = ${status}
+        AND ped.createdAt    >= ${atual.inicio}
+        AND ped.createdAt     < ${atual.fim}
+        AND pi.comboId IS NOT NULL
+      GROUP BY c.id, c.nome
+    ) combined
     ORDER BY qtd DESC
     LIMIT 5
   `;
@@ -303,8 +311,13 @@ export const criarPedido = async (dto: CreatePedidoDTO) => {
       });
   if (!func) throw new Error("Funcionário não encontrado para este restaurante.");
 
-  const count = await prisma.pedido.count({ where: { restauranteId } });
-  const numeroPedido = `P${String(count + 1).padStart(4, "0")}`;
+  type MaxRow = { maxNum: bigint | number | null };
+  const [row] = await prisma.$queryRaw<MaxRow[]>`
+    SELECT MAX(CAST(SUBSTRING(numeroPedido, 2) AS UNSIGNED)) AS maxNum
+    FROM pedidos
+    WHERE restauranteId = ${restauranteId}
+  `;
+  const numeroPedido = `P${String(Number(row?.maxNum ?? 0) + 1).padStart(4, "0")}`;
 
   const valorTotal = dto.itens.reduce(
     (acc, item) => acc + item.quantidade * item.precoUnitario,

@@ -26,3 +26,14 @@ export const buscarProduto = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
+
+export const getMetricas = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const periodo = (req.query.periodo as string) || "hoje";
+    const dados = await ProdutoService.getMetricas(periodo as any);
+    res.json(dados);
+  } catch (error) {
+    console.error("Erro ao buscar métricas de produtos:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};

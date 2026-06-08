@@ -3,12 +3,6 @@ import { ACCENT } from "../../utils/format";
 import Button from "./Button";
 import TabSelector from "./TabSelector";
 
-const DEFAULT_PERIODS = [
-  { value: "hoje",  label: "Hoje"    },
-  { value: "7d",    label: "7 dias"  },
-  { value: "30d",   label: "30 dias" },
-  { value: "ano",   label: "Anual"   },
-];
 
 /**
  * HeaderBar — cabeçalho padronizado de página
@@ -27,7 +21,7 @@ export default function HeaderBar({
   subtitle,
   period,
   setPeriod,
-  periods = DEFAULT_PERIODS,
+  periods = [],
   onRefresh,
   refreshing,
 }) {

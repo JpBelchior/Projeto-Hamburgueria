@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Timer } from "lucide-react";
 import ConfirmDialog from "../Ui/ConfirmDialog";
 import {
@@ -7,38 +6,17 @@ import {
   getSLAStatus, getSLAProgress, fmtElapsedP, elapsedSeconds,
 } from "../../utils/format";
 import { STATUS_COLS, STATUS_BLOQUEADO } from "../../constants";
+import { useKanban } from "../../hooks/useKanban";
 
 export default function PedidosKanban({ pedidos, tick, actions }) {
-  const [dragId,      setDragId]      = useState(null);
-  const [dragOver,    setDragOver]    = useState(null);
-  const [pendingDrop, setPendingDrop] = useState(null); // { id, novoStatus } aguardando confirmação
-
-  const grouped = STATUS_COLS.reduce((acc, s) => {
-    acc[s] = pedidos.filter((p) => p.status === s);
-    return acc;
-  }, {});
-
-  const handleDrop = (novoStatus) => {
-    if (!dragId) return;
-    const ped = pedidos.find((p) => p.id === dragId);
-    setDragId(null);
-    setDragOver(null);
-    if (!ped || ped.status === novoStatus) return;
-    // Bloqueia mover FINALIZADO ou CANCELADO para qualquer lugar
-    if (STATUS_BLOQUEADO.includes(ped.status)) return;
-    // Confirmação ao mover para CANCELADO
-    if (novoStatus === "CANCELADO") {
-      setPendingDrop({ id: dragId, numeroPedido: ped.numeroPedido, novoStatus });
-      return;
-    }
-    actions.updateStatus(dragId, novoStatus);
-  };
-
-  const confirmarDrop = async () => {
-    if (!pendingDrop) return;
-    await actions.updateStatus(pendingDrop.id, pendingDrop.novoStatus);
-    setPendingDrop(null);
-  };
+  const {
+    grouped,
+    dragId,    setDragId,
+    dragOver,  setDragOver,
+    pendingDrop, setPendingDrop,
+    handleDrop,
+    confirmarDrop,
+  } = useKanban(pedidos, actions.updateStatus);
 
   return (
     <>
