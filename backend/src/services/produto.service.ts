@@ -134,3 +134,67 @@ export const getMetricas = async (periodo: Periodo) => {
     campeaoVendas: { nome: campeaoAtual[0]?.nome ?? "—", qtd: qtdAtual, variacao },
   };
 };
+
+export const getTopPorCategoria = async (periodo: Periodo) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const { atual } = getRanges(periodo);
+  const status = StatusPedido.FINALIZADO;
+
+  type Row = { id: bigint | number; nome: string; categoria: string; precoVenda: number | string; imagem: string | null; qtd: bigint | number; receita: number | string };
+
+  const rows = await prisma.$queryRaw<Row[]>`
+    SELECT id, nome, categoria, precoVenda, imagem, qtd, receita
+    FROM (
+      SELECT id, nome, categoria, precoVenda, imagem, qtd, receita,
+             ROW_NUMBER() OVER (PARTITION BY categoria ORDER BY qtd DESC) AS rn
+      FROM (
+        SELECT p.id, p.nome, p.categoria, p.precoVenda, p.imagem,
+               SUM(qtd)     AS qtd,
+               CAST(SUM(receita) AS DECIMAL(10,2)) AS receita
+        FROM (
+          SELECT pi.produtoId AS id,
+                 SUM(pi.quantidade)                                   AS qtd,
+                 CAST(SUM(pi.quantidade * pi.precoUnitario) AS DECIMAL(10,2)) AS receita
+          FROM pedido_itens pi
+          JOIN pedidos ped ON ped.id = pi.pedidoId
+          WHERE ped.restauranteId = ${restauranteId}
+            AND ped.status        = ${status}
+            AND ped.createdAt    >= ${atual.inicio}
+            AND ped.createdAt     < ${atual.fim}
+            AND pi.produtoId IS NOT NULL
+          GROUP BY pi.produtoId
+
+          UNION ALL
+
+          SELECT cp.produtoId AS id,
+                 SUM(pi.quantidade * cp.quantidade)                              AS qtd,
+                 CAST(SUM(pi.quantidade * cp.quantidade * p2.precoVenda) AS DECIMAL(10,2)) AS receita
+          FROM pedido_itens   pi
+          JOIN combo_produtos  cp  ON cp.comboId  = pi.comboId
+          JOIN produtos        p2  ON p2.id       = cp.produtoId
+          JOIN pedidos         ped ON ped.id       = pi.pedidoId
+          WHERE ped.restauranteId = ${restauranteId}
+            AND ped.status        = ${status}
+            AND ped.createdAt    >= ${atual.inicio}
+            AND ped.createdAt     < ${atual.fim}
+            AND pi.comboId IS NOT NULL
+          GROUP BY cp.produtoId
+        ) combined
+        JOIN produtos p ON p.id = combined.id
+        GROUP BY p.id, p.nome, p.categoria, p.precoVenda, p.imagem
+      ) aggregated
+    ) ranked
+    WHERE rn = 1
+    ORDER BY FIELD(categoria, 'PRINCIPAL', 'ACOMPANHAMENTO', 'BEBIDA', 'SOBREMESA')
+  `;
+
+  return rows.map((r) => ({
+    id:         Number(r.id),
+    nome:       r.nome,
+    categoria:  r.categoria,
+    precoVenda: Number(r.precoVenda),
+    imagem:     r.imagem ?? null,
+    qtd:        Number(r.qtd),
+    receita:    Number(r.receita),
+  }));
+};

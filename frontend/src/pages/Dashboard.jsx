@@ -30,7 +30,7 @@ const KpiSkeleton = () => (
 // ── Página ─────────────────────────────────────────────────────────────────
 
 const Dashboard = () => {
-  const [periodo, setPeriodo] = useState("hoje");
+  const [periodo, setPeriodo] = useState("30dias");
 
   const { dados, loading, erro, refetch } = useDashboard(periodo);
 

@@ -37,3 +37,14 @@ export const getMetricas = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ message: "Erro interno do servidor." });
   }
 };
+
+export const getTopPorCategoria = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const periodo = (req.query.periodo as string) || "hoje";
+    const dados = await ProdutoService.getTopPorCategoria(periodo as any);
+    res.json(dados);
+  } catch (error) {
+    console.error("Erro ao buscar top por categoria:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};

@@ -2,10 +2,14 @@ import { useState } from "react";
 import { PackagePlus, LayoutGrid, TrendingUp, DollarSign, Flame } from "lucide-react";
 import HeaderBar from "../components/Ui/HeaderBar";
 import KpiCard from "../components/Ui/KpiCard";
+import CampeaoCard from "../components/Ui/CampeaoCard";
 import ErrorAlert from "../components/Ui/ErrorAlert";
 import { useProdutosMetricas } from "../hooks/useProdutosMetricas";
+import { useProdutosTopCategoria } from "../hooks/useProdutosTopCategoria";
 import { fmtBRL } from "../utils/format";
 import { PERIODOS } from "../constants";
+
+const CATEGORIAS = ["PRINCIPAL", "ACOMPANHAMENTO", "BEBIDA", "SOBREMESA"];
 
 const KpiSkeleton = () => (
   <div className="bg-slate-900/60 border border-slate-700/50 rounded-2xl overflow-hidden animate-pulse">
@@ -23,7 +27,8 @@ const KpiSkeleton = () => (
 
 export default function Produtos() {
   const [periodo, setPeriodo] = useState("7dias");
-  const { dados, loading, erro } = useProdutosMetricas(periodo);
+  const { dados, loading, erro }                   = useProdutosMetricas(periodo);
+  const { dados: topCat, loading: topCatLoading, erro: topCatErro } = useProdutosTopCategoria(periodo);
 
   const deltaLabel = PERIODOS.find((p) => p.value === periodo)?.vsLabel ?? "";
 
@@ -74,6 +79,30 @@ export default function Produtos() {
           ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
           : cards.map((c) => <KpiCard key={c.label} size="compact" {...c} />)
         }
+      </div>
+
+      {/* Campeões por categoria */}
+      <div>
+        <div className="flex items-center gap-3 mb-3">
+          <h2 className="text-white text-[11px] uppercase tracking-widest font-semibold ml-4 shrink-0">
+            Campeões por categoria
+          </h2>
+          <span className="text-slate-500 text-[11px]">· mais vendidos no período</span>
+          <div className="flex-1 h-px bg-slate-800" />
+        </div>
+        {topCatErro && !topCatLoading && <ErrorAlert message={topCatErro} />}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {topCatLoading
+            ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
+            : CATEGORIAS.map((cat) => (
+                <CampeaoCard
+                  key={cat}
+                  categoria={cat}
+                  produto={topCat?.find((p) => p.categoria === cat) ?? null}
+                />
+              ))
+          }
+        </div>
       </div>
     </div>
   );

@@ -13,4 +13,7 @@ export const produtoService = {
 
   getMetricas: (periodo) =>
     api.get(`/produtos/metricas?periodo=${periodo}`).then((r) => r.data),
+
+  getTopPorCategoria: (periodo) =>
+    api.get(`/produtos/top-por-categoria?periodo=${periodo}`).then((r) => r.data),
 };

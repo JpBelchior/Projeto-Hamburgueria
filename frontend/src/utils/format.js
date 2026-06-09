@@ -38,8 +38,8 @@ export const CAT_LABEL = {
 
 export const CAT_COLOR = {
   PRINCIPAL:      "#fbbf24",  
-  ACOMPANHAMENTO: "#f97316", 
-  BEBIDA:         "#38bdf8",  
+  ACOMPANHAMENTO: "#dca075", 
+  BEBIDA:         "#41a2cb",  
   SOBREMESA:      "#584a80",  
   COMBO:          "#147c56",  
 };
