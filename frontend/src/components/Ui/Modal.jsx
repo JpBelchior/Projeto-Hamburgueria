@@ -1,13 +1,4 @@
-/**
- * Modal — wrapper genérico reutilizável
- *
- * Props:
- *   isOpen    {boolean}   — controla visibilidade
- *   onClose   {function}  — chamado ao fechar (botão X ou clique no backdrop)
- *   title     {string}    — título do modal
- *   children  {ReactNode} — conteúdo interno
- *   size      {string}    — "sm" | "md" | "lg" (padrão: "md")
- */
+import { X } from "lucide-react";
 
 const SIZE_CONFIG = {
   sm: "max-w-sm",
@@ -44,7 +35,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
             onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-all duration-200"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
 

@@ -8,6 +8,7 @@ import produtoRoutes from "./produto/produto.routes";
 import comboRoutes   from "./combo/combo.routes";
 import gastoIngredienteRoutes from "./gasto_ingrediente/gasto_ingrediente.routes";
 import financeiroRoutes from "./financeiro/financeiro.routes";
+import ingredienteRoutes from "./ingrediente/ingrediente.routes";
 
 export const publicRoutes = Router();
 publicRoutes.use("/auth", authRoutes);
@@ -21,3 +22,4 @@ protectedRoutes.use("/combos",             comboRoutes);
 protectedRoutes.use("/pedidos",            pedidoRoutes);
 protectedRoutes.use("/gasto-ingredientes", gastoIngredienteRoutes);
 protectedRoutes.use("/financeiro",         financeiroRoutes);
+protectedRoutes.use("/ingredientes",       ingredienteRoutes);

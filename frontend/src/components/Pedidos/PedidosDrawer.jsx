@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from "react";
-import { X, Trash2, ChevronRight, Pencil, Ban, CheckCircle2, Clock, Search } from "lucide-react";
+import { Trash2, ChevronRight, Pencil, Ban, CheckCircle2, Clock, Search } from "lucide-react";
+import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerRow } from "../Ui/Drawer";
 import StatusBadge from "../Ui/StatusBadge";
 import Button from "../Ui/Button";
 import FormField from "../Ui/FormField";
@@ -135,24 +136,20 @@ function DetalheView({ pedido }) {
 
       {/* Cliente + Pagamento */}
       <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex flex-col gap-2">
-        <Row label="Cliente"    value={pedido.nomeCliente || "Não informado"} />
-        <Row label="Pagamento"  value={pedido.formaPagamento ? (PAGAMENTO_LABEL[pedido.formaPagamento] ?? pedido.formaPagamento) : "Não informado"} />
-        <Row label="Responsável" value={nomeFunc} highlight />
+        <DrawerRow label="Cliente"     value={pedido.nomeCliente || "Não informado"} />
+        <DrawerRow label="Pagamento"   value={pedido.formaPagamento ? (PAGAMENTO_LABEL[pedido.formaPagamento] ?? pedido.formaPagamento) : "Não informado"} />
+        <DrawerRow label="Responsável" value={nomeFunc} highlight />
       </div>
 
       {/* Linha do tempo */}
       <div>
-        <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-3">
-          Linha do Tempo
-        </p>
+        <DrawerSection>Linha do Tempo</DrawerSection>
         <Timeline pedido={pedido} />
       </div>
 
       {/* Itens */}
       <div>
-        <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-3">
-          Itens
-        </p>
+        <DrawerSection>Itens</DrawerSection>
         <div className="flex flex-col gap-1.5">
           {(pedido.itens ?? []).map((item, idx) => {
             const nome = item.produto?.nome ?? item.combo?.nome ?? `Item ${idx + 1}`;
@@ -179,17 +176,6 @@ function DetalheView({ pedido }) {
         <span className="text-slate-400 text-sm">Total</span>
         <span className="text-white text-lg font-bold tabular-nums">{fmtBRL(pedido.valorTotal)}</span>
       </div>
-    </div>
-  );
-}
-
-function Row({ label, value, highlight }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-slate-500 text-xs">{label}</span>
-      <span className={`text-xs font-medium ${highlight ? "text-amber-400" : "text-white"}`}>
-        {value}
-      </span>
     </div>
   );
 }
@@ -392,7 +378,7 @@ function FormView({ drawer, actions }) {
         {erro && <p className="text-red-400 text-xs">{erro}</p>}
       </div>
 
-      <div className="px-5 py-4 border-t border-slate-700/50 flex items-center justify-between gap-3">
+      <DrawerFooter className="flex items-center justify-between gap-3">
         <span className="text-white font-bold tabular-nums text-sm">
           Total: {fmtBRL(valorTotal)}
         </span>
@@ -402,7 +388,7 @@ function FormView({ drawer, actions }) {
             {saving ? "Salvando…" : isEditar ? "Salvar" : "Criar Pedido"}
           </Button>
         </div>
-      </div>
+      </DrawerFooter>
     </>
   );
 }
@@ -429,63 +415,53 @@ export default function PedidosDrawer({ state, actions }) {
   const podeCancelar = pedido && pedido.status !== "CANCELADO" && pedido.status !== "FINALIZADO";
   const podeAvancar  = pedido && PROXIMO_STATUS[pedido.status];
 
+  const headerTitle = showDetalhe ? (
+    "Detalhes do Pedido"
+  ) : (
+    <h2
+      className="text-base font-bold bg-clip-text text-transparent"
+      style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
+    >
+      {drawer.modo === "criar" ? "Novo Pedido" : "Editar Pedido"}
+    </h2>
+  );
+
+  const headerActions = (
+    <>
+      {showDetalhe && pedido.status !== "FINALIZADO" && pedido.status !== "CANCELADO" && (
+        <button
+          onClick={() => setEditMode(true)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-amber-400 border border-slate-700/50 hover:border-amber-500/30 transition-all"
+        >
+          <Pencil size={12} /> Editar
+        </button>
+      )}
+      {editMode && drawer.modo === "editar" && (
+        <button
+          onClick={() => setEditMode(false)}
+          className="text-xs text-slate-500 hover:text-white px-2 transition-colors"
+        >
+          Ver detalhes
+        </button>
+      )}
+    </>
+  );
+
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-40" onClick={actions.closeDrawer} />
+      <Drawer onClose={actions.closeDrawer}>
+        <DrawerHeader
+          title={headerTitle}
+          actions={headerActions}
+          onClose={actions.closeDrawer}
+          accentColor={pedido ? cor : undefined}
+        />
 
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900 border-l border-slate-700/50 z-50 flex flex-col shadow-2xl">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 shrink-0">
-          <div className="flex items-center gap-2">
-            {showDetalhe ? (
-              <h2 className="text-base font-bold text-white">Detalhes do Pedido</h2>
-            ) : (
-              <h2
-                className="text-base font-bold bg-clip-text text-transparent"
-                style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
-              >
-                {drawer.modo === "criar" ? "Novo Pedido" : "Editar Pedido"}
-              </h2>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1">
-            {showDetalhe && pedido.status !== "FINALIZADO" && pedido.status !== "CANCELADO" && (
-              <button
-                onClick={() => setEditMode(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-amber-400 border border-slate-700/50 hover:border-amber-500/30 transition-all"
-              >
-                <Pencil size={12} /> Editar
-              </button>
-            )}
-            {editMode && drawer.modo === "editar" && (
-              <button
-                onClick={() => setEditMode(false)}
-                className="text-xs text-slate-500 hover:text-white px-2 transition-colors"
-              >
-                Ver detalhes
-              </button>
-            )}
-            <button onClick={actions.closeDrawer} className="ml-1 text-slate-500 hover:text-white transition-colors p-1">
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Barra de status colorida */}
-        {pedido && (
-          <div className="h-0.5 shrink-0" style={{ background: `linear-gradient(to right, ${cor}, transparent)` }} />
-        )}
-
-        {/* Conteúdo */}
         {showDetalhe ? (
           <>
             <DetalheView pedido={pedido} />
 
-            {/* Footer de ações */}
-            <div className="px-5 py-4 border-t border-slate-700/50 flex items-center gap-2 shrink-0">
-              {/* Excluir — sempre disponível */}
+            <DrawerFooter>
               <button
                 onClick={() => setConfirma("excluir")}
                 title="Excluir pedido"
@@ -505,18 +481,17 @@ export default function PedidosDrawer({ state, actions }) {
                     size="sm"
                     icon={pedido.status === "EM_PREPARO" ? CheckCircle2 : ChevronRight}
                     onClick={async () => { await actions.updateStatus(pedido.id, PROXIMO_STATUS[pedido.status]); actions.closeDrawer(); }}
-                    className="flex-1"
                   >
                     {PROXIMO_LABEL[pedido.status]}
                   </Button>
                 )}
               </div>
-            </div>
+            </DrawerFooter>
           </>
         ) : (
           <FormView drawer={drawer} actions={actions} />
         )}
-      </div>
+      </Drawer>
 
       {/* Modais de confirmação — z-index acima do drawer (z-50) */}
       <ConfirmDialog

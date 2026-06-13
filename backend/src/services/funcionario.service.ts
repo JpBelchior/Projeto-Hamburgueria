@@ -118,15 +118,15 @@ export const update = async (funcionarioId: number, data: UpdateFuncionarioDTO) 
 
   await assertOutranks(funcionario.userId);
 
-  const { name, cpf, email, telefone, password, cargo, salario } = data;
+  const { name, cpf, email, telefone, password, cargo, salario, roles } = data;
 
-  if (name || cpf || email || password) {
+  if (name || cpf || email || telefone || password) {
     const userUpdate: Record<string, unknown> = {};
     if (name) userUpdate.name = name;
     if (cpf) userUpdate.cpf = cpf;
     if (email) userUpdate.email = email;
-    if (password) userUpdate.password = await bcrypt.hash(password, 10);
     if (telefone) userUpdate.telefone = telefone;
+    if (password) userUpdate.password = await bcrypt.hash(password, 10);
     await prisma.user.update({ where: { id: funcionario.userId }, data: userUpdate });
   }
 
@@ -135,6 +135,38 @@ export const update = async (funcionarioId: number, data: UpdateFuncionarioDTO) 
     if (cargo) funcUpdate.cargo = cargo;
     if (salario !== undefined) funcUpdate.salario = salario;
     await prisma.funcionario.update({ where: { id: funcionarioId }, data: funcUpdate });
+  }
+
+  if (roles && roles.length > 0) {
+    const actingUser = RequestContext.getUser()!;
+
+    if (funcionario.userId === actingUser.id) {
+      throw new InsufficientRankError();
+    }
+
+    const actingRank = getRoleRank(actingUser.roles);
+
+    const newRoles = await prisma.role.findMany({
+      where: { id: { in: roles.map((r) => r.id) } },
+      select: { name: true },
+    });
+
+    if (getRoleRank(newRoles.map((r) => r.name)) > actingRank) {
+      throw new InsufficientRankError();
+    }
+
+    await prisma.$transaction([
+      prisma.userRole.deleteMany({ where: { userId: funcionario.userId } }),
+      ...roles.map((role) =>
+        prisma.userRole.create({
+          data: {
+            userId: funcionario.userId,
+            roleId: role.id,
+            assignedBy: actingUser.name ?? "system",
+          },
+        })
+      ),
+    ]);
   }
 
   return findById(funcionarioId);

@@ -9,7 +9,7 @@ import { ACCENT } from "../../utils/format";
  *   onChange {(v: string) => void}
  */
 const TabSelector = ({ options, value, onChange }) => (
-  <div className="flex items-center gap-1 bg-slate-800/50 border border-slate-700/50 rounded-xl p-1">
+  <div className="flex items-center gap-1 bg-slate-800/50 rounded-xl px-1 py-1">
     {options.map((opt) => {
       const active = opt.value === value;
       return (
@@ -17,12 +17,12 @@ const TabSelector = ({ options, value, onChange }) => (
           key={opt.value}
           onClick={() => onChange(opt.value)}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-            active ? "" : "text-slate-400 hover:text-white border border-transparent"
+            active ? "" : "text-slate-400 hover:text-white"
           }`}
           style={
             active
               ? { background: ACCENT.tint, color: ACCENT.text, border: `1px solid ${ACCENT.border}` }
-              : undefined
+              : { border: "1px solid transparent" }
           }
         >
           {opt.label}

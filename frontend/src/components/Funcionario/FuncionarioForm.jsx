@@ -172,23 +172,21 @@ const FuncionarioForm = ({ initialData = null, onSubmit, onCancel, isLoading = f
         </p>
         <div className="grid grid-cols-2 gap-4">
 
-          {!isEditing && (
-            <FormField label="Nível de acesso" required>
-              <select
-                value={form.role}
-                onChange={handleChange("role")}
-                className={inputClass}
-                disabled={isLoading || roleOptions.length === 0}
-                required
-              >
-                {roleOptions.map((opt) => (
-                  <option key={opt.id} value={opt.name} className="bg-slate-800">
-                    {opt.name}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-          )}
+          <FormField label="Nível de acesso" required>
+            <select
+              value={form.role}
+              onChange={handleChange("role")}
+              className={inputClass}
+              disabled={isLoading || roleOptions.length === 0}
+              required
+            >
+              {roleOptions.map((opt) => (
+                <option key={opt.id} value={opt.name} className="bg-slate-800">
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </FormField>
 
           <FormField label="Cargo" required>
             <select

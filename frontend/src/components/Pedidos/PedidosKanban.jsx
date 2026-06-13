@@ -123,7 +123,7 @@ function KanbanCard({ pedido, tick, actions, onDragStart, onDragEnd, dragging, b
       onClick={() => actions.openEdit(pedido)}
       className={`bg-slate-900/70 border rounded-xl p-3 transition-all select-none ${
         bloqueado ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
-      } hover:border-slate-600 ${dragging ? "opacity-40 scale-95" : ""}`}
+      } hover:border-slate-600 hover:scale-[1.01] ${dragging ? "opacity-40 scale-95" : ""}`}
       style={{
         borderColor: showTimer ? `${sla.color}40` : "rgba(51,65,85,0.5)",
       }}

@@ -1,54 +1,20 @@
-/**
- * FuncionarioCard — crachá de funcionário
- *
- * Props:
- *   funcionario  {object}    — dados do funcionário
- *   onEdit       {function}  — callback ao clicar em editar
- *   onDelete     {function}  — callback ao clicar em excluir
- *   onToggle     {function}  — callback ao clicar em ativar/desativar
- */
-
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Pencil, Trash2, Mail, CreditCard, Briefcase, DollarSign, User2Icon, Calendar, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import Avatar from "../Ui/Avatar";
 import StatusBadge from "../Ui/StatusBadge";
-import { tempoNaEmpresa, formatData, formatMoeda, formatTelefone } from "../../utils/Date.utils";
-import useAuthStore from "../../store/useAuthStore";
-import { ROLE_RANK, getRoleRank, CARGO_LABEL } from "../../constants";
+import { tempoNaEmpresa } from "../../utils/Date.utils";
 
-const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-3 py-2">
-    <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
-      <Icon size={13} className="text-amber-400/70" />
-    </div>
-    <div className="min-w-0">
-      <p className="text-slate-500 text-[10px] uppercase tracking-wider leading-none mb-0.5">
-        {label}
-      </p>
-      <p className="text-slate-200 text-sm truncate">{value}</p>
-    </div>
-  </div>
-);
-
-const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
-  const [expanded, setExpanded] = useState(false);
-  const loggedUser = useAuthStore((s) => s.user);
-
-  const { user, cargo, salario, dataAdmissao, active } = funcionario;
+const FuncionarioCard = ({ funcionario, onClick }) => {
+  const { user, dataAdmissao, active } = funcionario;
   const primaryRole = user.roles?.[0]?.role?.name ?? "";
-  const roleLabel = primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1).toLowerCase();
-
-  // Mostra ações apenas se o usuário logado tem rank estritamente maior que o alvo
-  const loggedRank = getRoleRank(loggedUser?.roles ?? []);
-  const targetRank = getRoleRank(
-    user.roles?.map((ur) => ur.role?.name ?? ur) ?? []
-  );
-  const canAct = loggedRank > targetRank;
+  const roleLabel = primaryRole
+    ? primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1).toLowerCase()
+    : "";
 
   return (
     <div
+      onClick={onClick}
       className={`
-        relative bg-slate-900/60 border rounded-2xl overflow-hidden
+        relative bg-slate-900/60 border rounded-2xl overflow-hidden cursor-pointer
         transition-all duration-300 ease-in-out
         ${active
           ? "border-slate-700/50 hover:border-amber-500/20"
@@ -56,88 +22,24 @@ const FuncionarioCard = ({ funcionario, onEdit, onDelete, onToggle }) => {
         }
       `}
     >
-      {/* Linha decorativa superior */}
-      <div className={`h-0.5 w-full ${active ? "bg-gradient-to-r from-orange-500  via-amber-400 to-transparent  " : "bg-slate-800"}`} />
+      <div className={`h-0.5 w-full ${active ? "bg-gradient-to-r from-orange-500 via-amber-400 to-transparent" : "bg-slate-800"}`} />
 
-      {/* Corpo principal do crachá */}
       <div className="p-5">
         <div className="flex items-center gap-4">
           <Avatar name={user.name} size="lg" />
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm truncate">
-              {user.name}
-            </p>
-            <p className="text-slate-500 text-xs mt-0.5">
-              {roleLabel}
-            </p>
+            <p className="text-white font-semibold text-sm truncate">{user.name}</p>
+            <p className="text-slate-500 text-xs mt-0.5">{roleLabel}</p>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <StatusBadge status={active ? "ativo" : "inativo"} />
               <span className="flex items-center gap-1 text-slate-500 text-[12px]">
                 <Clock size={10} />
-                Tempo de serviço : {tempoNaEmpresa(dataAdmissao)}
+                Tempo de serviço: {tempoNaEmpresa(dataAdmissao)}
               </span>
             </div>
           </div>
-
-          {/* Botão de expandir */}
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-amber-400 flex items-center justify-center transition-all duration-200 shrink-0"
-            title={expanded ? "Recolher" : "Expandir"}
-          >
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
         </div>
       </div>
-
-      {/* Painel expandido */}
-      {expanded && (
-        <div className="px-5 pb-5 border-t border-slate-800/50">
-          <div className="pt-1 divide-y divide-slate-800/50">
-            <InfoRow icon={User2Icon} label="Nivel de Acesso" value={roleLabel} />
-            <InfoRow icon={Mail} label="E-mail" value={user.email} />
-            <InfoRow icon={CreditCard} label="CPF" value={user.cpf} />
-            <InfoRow icon={Briefcase} label="Cargo" value={CARGO_LABEL[cargo] ?? cargo} />
-            <InfoRow icon={Briefcase}  label="Telefone"       value={formatTelefone(user.telefone)} />
-            <InfoRow icon={DollarSign} label="Salário" value={formatMoeda(salario)} />
-            <InfoRow icon={Calendar} label="Admissão" value={formatData(dataAdmissao)} />
-          </div>
-
-          {/* Ações — visíveis apenas para quem tem rank superior ao funcionário */}
-          {canAct && (
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-800/50">
-              <button
-                onClick={() => onToggle(funcionario)}
-                className={`
-                  flex-1 py-2 px-3 rounded-xl text-xs font-medium border transition-all duration-200
-                  ${active
-                    ? "text-slate-400 border-slate-700/50 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5"
-                    : "text-slate-400 border-slate-700/50 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5"
-                  }
-                `}
-              >
-                {active ? "Desativar" : "Ativar"}
-              </button>
-
-              <button
-                onClick={() => onEdit(funcionario)}
-                className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-amber-400 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-200"
-              >
-                <Pencil size={12} />
-                Editar
-              </button>
-
-              <button
-                onClick={() => onDelete(funcionario)}
-                className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl text-xs font-medium text-slate-400 border border-slate-700/50 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all duration-200"
-              >
-                <Trash2 size={12} />
-                Excluir
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };

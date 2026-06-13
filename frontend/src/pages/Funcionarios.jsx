@@ -1,30 +1,11 @@
-/**
- * Funcionarios — página de gerenciamento de funcionários (GERENTE)
- *
- * Orquestra:
- *   useFuncionarios  → toda a lógica de estado e operações
- *   PageHeader       → título + separador
- *   SearchBar        → busca por nome
- *   StatusBadge      → filtro por status
- *   FuncionarioCard  → crachá com expansão
- *   Modal            → wrapper do formulário
- *   FuncionarioForm  → formulário de criar/editar
- */
-
+import { useState } from "react";
 import { UserPlus, Users } from "lucide-react";
 import { useFuncionarios } from "../hooks/useFuncionario";
 import HeaderBar from "../components/Ui/HeaderBar";
-import SearchBar from "../components/Ui/SearchBar";
-import Modal from "../components/Ui/Modal";
-import Button from "../components/Ui/Button";
-import TabSelector from "../components/Ui/TabSelector";
+import Filter from "../components/Ui/Filter";
 import FuncionarioCard from "../components/Funcionario/FuncionarioCard";
-import FuncionarioForm from "../components/Funcionario/FuncionarioForm";
+import FuncionarioDrawer from "../components/Funcionario/FuncionarioDrawer";
 import { STATUS_FILTERS } from "../constants";
-
-// ─────────────────────────────────────────
-// Sub-componente — estado vazio
-// ─────────────────────────────────────────
 
 const EmptyState = ({ search, onClear }) => (
   <div className="col-span-2 flex flex-col items-center justify-center py-20 text-center">
@@ -47,10 +28,6 @@ const EmptyState = ({ search, onClear }) => (
   </div>
 );
 
-// ─────────────────────────────────────────
-// Sub-componente — skeleton de loading
-// ─────────────────────────────────────────
-
 const CardSkeleton = () => (
   <div className="bg-slate-900/60 border border-slate-800/50 rounded-2xl overflow-hidden animate-pulse">
     <div className="h-0.5 w-full bg-slate-800" />
@@ -65,28 +42,20 @@ const CardSkeleton = () => (
   </div>
 );
 
-// ─────────────────────────────────────────
-// Página principal
-// ─────────────────────────────────────────
-
+// null = fechado, 'new' = criar, number = ver/editar
 const Funcionarios = () => {
+  const [drawerState, setDrawerState] = useState(null);
+
   const {
     funcionarios,
+    setFuncionarios,
     stats = { total: 0, ativos: 0, inativos: 0 },
     isLoading,
-    isSaving,
     error,
     search,
     setSearch,
     filterStatus,
     setFilterStatus,
-    modalState,
-    openCreate,
-    openEdit,
-    closeModal,
-    handleSubmit,
-    handleToggle,
-    handleDelete,
   } = useFuncionarios();
 
   return (
@@ -96,7 +65,6 @@ const Funcionarios = () => {
         subtitle="Gerencie a equipe e os níveis de acesso"
       />
 
-      {/* Contador */}
       {!isLoading && (
         <div className="flex items-center gap-1.5 mb-6 text-sm">
           <span className="text-white font-semibold">{stats.total}</span>
@@ -110,7 +78,6 @@ const Funcionarios = () => {
         </div>
       )}
 
-      {/* Erro global */}
       {error && (
         <div className="mb-6 bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3">
           <p className="text-red-300 text-sm flex items-center gap-2">
@@ -120,24 +87,14 @@ const Funcionarios = () => {
         </div>
       )}
 
-      {/* Barra de ações */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <div className="flex-1 min-w-[200px]">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar funcionário pelo nome..."
-          />
-        </div>
-
-        <TabSelector options={STATUS_FILTERS} value={filterStatus} onChange={setFilterStatus} />
-
-        <Button icon={UserPlus} onClick={openCreate}>
-          Novo funcionário
-        </Button>
+      <div className="mb-6">
+        <Filter
+          search={{ value: search, onChange: setSearch, placeholder: "Buscar funcionário pelo nome..." }}
+          tabs={[{ options: STATUS_FILTERS, value: filterStatus, onChange: setFilterStatus }]}
+          action={{ label: "Novo funcionário", icon: UserPlus, onClick: () => setDrawerState("new") }}
+        />
       </div>
 
-      {/* Grid de cards */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         {isLoading ? (
           <>
@@ -153,28 +110,32 @@ const Funcionarios = () => {
             <FuncionarioCard
               key={funcionario.id}
               funcionario={funcionario}
-              onEdit={openEdit}
-              onDelete={handleDelete}
-              onToggle={handleToggle}
+              onClick={() => setDrawerState(funcionario.id)}
             />
           ))
         )}
       </div>
 
-      {/* Modal — criar / editar */}
-      <Modal
-        isOpen={modalState.isOpen}
-        onClose={closeModal}
-        title={modalState.mode === "create" ? "Novo funcionário" : "Editar funcionário"}
-        size="lg"
-      >
-        <FuncionarioForm
-          initialData={modalState.data}
-          onSubmit={handleSubmit}
-          onCancel={closeModal}
-          isLoading={isSaving}
+      {drawerState !== null && (
+        <FuncionarioDrawer
+          funcionarioId={drawerState === "new" ? null : drawerState}
+          createMode={drawerState === "new"}
+          onClose={() => setDrawerState(null)}
+          onFuncionarioCriado={(novo) => {
+            setFuncionarios((prev) => [novo, ...prev]);
+            setDrawerState(null);
+          }}
+          onFuncionarioAtualizado={(atualizado) =>
+            setFuncionarios((prev) =>
+              prev.map((f) => (f.id === atualizado.id ? atualizado : f))
+            )
+          }
+          onFuncionarioDeletado={(id) => {
+            setFuncionarios((prev) => prev.filter((f) => f.id !== id));
+            setDrawerState(null);
+          }}
         />
-      </Modal>
+      )}
     </div>
   );
 };

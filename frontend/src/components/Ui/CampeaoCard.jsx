@@ -9,14 +9,14 @@ const CAT_ICON = {
   SOBREMESA:      IceCream2,
 };
 
-export default function CampeaoCard({ categoria, produto }) {
+export default function CampeaoCard({ categoria, produto, onVerProduto }) {
   const CatIcon = CAT_ICON[categoria] ?? Flame;
   const color   = CAT_COLOR[categoria] ?? "#fbbf24";
   const label   = CAT_LABEL[categoria] ?? categoria;
 
   return (
     <div
-      className="bg-slate-900/60 rounded-2xl overflow-hidden"
+      className="bg-slate-900/60 rounded-2xl overflow-hidden transition-transform duration-200 hover:scale-[1.02]"
       style={{
         border:     "1px solid rgba(251,191,36,0.30)",
         boxShadow:  "0 0 12px rgba(251,191,36,0.04), 0 2px 6px rgba(0,0,0,0.25)",
@@ -40,7 +40,10 @@ export default function CampeaoCard({ categoria, produto }) {
           </div>
 
           {produto && (
-            <button className="flex items-center gap-0.5 text-slate-500 text-[11px] hover:text-slate-300 transition-colors">
+            <button
+              onClick={() => onVerProduto?.(produto.id)}
+              className="flex items-center gap-0.5 text-slate-500 text-[11px] hover:text-slate-300 transition-colors"
+            >
               ver <ArrowRight size={10} />
             </button>
           )}
@@ -62,13 +65,14 @@ export default function CampeaoCard({ categoria, produto }) {
             <div className="h-px bg-gradient-to-r from-transparent via-slate-700/70 to-transparent my-2" />
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3 ">
               <div>
                 <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1">
                   Vendidos:
                 </p>
                 <p className="text-white text-base font-bold tabular-nums">{produto.qtd}</p>
               </div>
+              <div></div>
               <div>
                 <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1">
                   Receita:

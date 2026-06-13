@@ -8,196 +8,247 @@ O sistema usa **Role-Based Access Control (RBAC)** dinâmico — perfis e permis
 User → UserRole → Role → RolePermission → Permission → Resource
 ```
 
-Exemplo: `João → GERENTE → dashboard:acessar, funcionario:criar`
+Exemplo: `João → GERENTE → pedido:criar, pedido:listar`
 
 ---
 
-## Estrutura do Banco
+## Roles existentes e hierarquia de rank
+
+| Role | Rank | Descrição |
+|------|------|-----------|
+| `ADMIN` | 100 | Administrador global do SaaS — bypass total |
+| `ADMIN_RESTAURANTE` | 80 | Proprietário do restaurante — bypass total |
+| `GERENTE` | 60 | Gerência operacional — verificado por permissions |
+| `ATENDENTE` | 20 | Acesso operacional — verificado por permissions |
+| `COZINHEIRO` | 20 | (rank igual a ATENDENTE) |
+| `CAIXA` | 20 | (rank igual a ATENDENTE) |
+
+> **Cargo ≠ Role.** `Cargo` (enum: `ATENDENTE`, `COZINHEIRO`, `CAIXA`) é dado de RH do funcionário — não determina acesso ao sistema. `Role` é o papel de acesso, atribuído explicitamente via `user_roles`.
+
+---
+
+## Regras de autoridade sobre roles
+
+1. Um usuário **não pode alterar a própria role**.
+2. Um usuário só pode **editar** funcionários com rank **estritamente menor** que o seu.
+3. Um usuário só pode **atribuir** a outro uma role com rank **menor ou igual** ao seu — não pode promover alguém além do próprio nível.
+
+---
+
+## Estrutura do banco
 
 | Tabela | Descrição |
-|---|---|
+|--------|-----------|
 | `users` | Usuários do sistema |
-| `roles` | Perfis (ADMIN, GERENTE, ATENDENTE, etc.) |
-| `permissions` | Ações possíveis (criar, listar, editar, deletar) |
-| `resources` | Recursos do sistema (dashboard, funcionario, pedido, etc.) |
-| `user_roles` | Relaciona usuário ↔ perfil |
-| `role_permissions` | Relaciona perfil ↔ permissão |
+| `roles` | Perfis (ADMIN, ADMIN_RESTAURANTE, GERENTE, ATENDENTE…) |
+| `resources` | Entidades protegidas: `pedido`, `produto`, `usuario`, `combo` |
+| `permissions` | Ação sobre recurso: `{ action, resourceId }` |
+| `user_roles` | Relaciona usuário ↔ role |
+| `role_permissions` | Relaciona role ↔ permission |
 
 ### Formato da permissão
 ```
 {resource.name}:{permission.action}
-ex: "funcionario:criar", "dashboard:acessar", "pedido:deletar"
+ex: "pedido:criar", "produto:listar", "usuario:deletar"
 ```
+
+Actions disponíveis: `criar`, `listar`, `editar`, `deletar`
+
+---
+
+## Como a role é montada no login
+
+No login, o backend busca o usuário com roles e permissions aninhadas:
+
+```typescript
+// auth.controller.ts — login
+const roles = user.roles.map((ur) => ur.role.name);
+const permissions = user.roles.flatMap((ur) =>
+  ur.role.permissions.map(
+    (rp) => `${rp.permission.resource.name}:${rp.permission.action}`
+  )
+);
+
+// JWT carrega: { id, email, name, roles, restauranteId }
+// Resposta inclui permissions separado (não vai no token)
+res.json({ token, refreshToken, user: { ...payload, permissions } });
+```
+
+O frontend salva `token`, `refreshToken` e `user` (com `roles` e `permissions`) no `localStorage`. O Zustand store (`useAuthStore`) inicializa lendo do `localStorage`.
 
 ---
 
 ## Backend
 
-### 1. Criando um novo Resource + Permission no seed
+### 1. Bypass automático
 
-```typescript
-// prisma/seed.ts
-const rDashboard = await prisma.resource.create({ 
-  data: { name: "dashboard" } 
-});
-
-await prisma.permission.create({ 
-  data: { action: "acessar", resourceId: rDashboard.id } 
-});
-```
-
-### 2. Atribuindo permissão a um Role
-
-```typescript
-const perm = await prisma.permission.findFirst({
-  where: { action: "acessar", resource: { name: "dashboard" } }
-});
-
-await prisma.rolePermission.create({
-  data: {
-    roleId: roleGerente.id,
-    permissionId: perm.id,
-    assignedBy: "seed"
-  }
-});
-```
-
-### 3. Protegendo uma rota com `requirePermission`
-
-```typescript
-// funcionario.routes.ts
-import { requirePermission } from "../middleware/permission.middleware";
-
-router.get("/",    requirePermission("funcionario", "listar"), FuncionarioController.getAll);
-router.post("/",   requirePermission("funcionario", "criar"),  FuncionarioController.create);
-router.put("/:id", requirePermission("funcionario", "editar"), FuncionarioController.update);
-router.delete("/:id", requirePermission("funcionario", "deletar"), FuncionarioController.hardDelete);
-```
-
-### 4. Bypass do ADMIN
-
-O ADMIN bypassa **automaticamente** todas as verificações de permissão no middleware:
+`ADMIN` e `ADMIN_RESTAURANTE` passam por todas as rotas sem verificação de permission:
 
 ```typescript
 // permission.middleware.ts
-if (userRoles.includes("ADMIN")) {
-  next(); // pula a verificação
+if (userRoles.includes("ADMIN") || userRoles.includes("ADMIN_RESTAURANTE")) {
+  next();
   return;
 }
 ```
 
-Não é necessário nenhuma configuração extra para o ADMIN.
+Para os demais roles, o middleware consulta `role_permissions` no banco.
 
-### 5. Adicionando novos recursos
+### 2. Protegendo uma rota
 
-1. Crie o resource no banco
-2. Crie as permissions desejadas
-3. Atribua ao role via `rolePermission`
-4. Use `requirePermission("recurso", "acao")` na rota
+Toda rota protegida precisa de `authenticate` **antes** de `requirePermission`:
+
+```typescript
+// exemplo: funcionario.routes.ts
+import { authenticate } from "../../middleware/auth.middleware";
+import { requirePermission } from "../../middleware/permission.middleware";
+
+router.get("/",       authenticate, requirePermission("usuario", "listar"), FuncionarioController.getAll);
+router.post("/",      authenticate, requirePermission("usuario", "criar"),  FuncionarioController.create);
+router.put("/:id",    authenticate, requirePermission("usuario", "editar"), FuncionarioController.update);
+router.delete("/:id", authenticate, requirePermission("usuario", "deletar"), FuncionarioController.hardDelete);
+```
+
+### 3. Criando resource + permissions no seed
+
+```typescript
+// prisma/seed.ts
+const rPedido = await prisma.resource.create({ data: { name: "pedido" } });
+
+await Promise.all(
+  ["criar", "listar", "editar", "deletar"].map((a) =>
+    prisma.permission.create({ data: { action: a, resourceId: rPedido.id } })
+  )
+);
+```
+
+### 4. Atribuindo permissions a uma role
+
+```typescript
+const perm = await prisma.permission.findFirst({
+  where: { action: "criar", resource: { name: "pedido" } }
+});
+
+await prisma.rolePermission.create({
+  data: { roleId: roleGerente.id, permissionId: perm.id, assignedBy: "seed" }
+});
+```
+
+### 5. Atribuindo role a um usuário (criação de funcionário)
+
+```typescript
+await prisma.user.create({
+  data: {
+    name: "Ana",
+    email: "ana@loja.com",
+    cpf: "111.111.111-11",
+    password: await bcrypt.hash("senha", 10),
+    roles: {
+      create: { roleId: roleGerente.id, assignedBy: "admin" }
+    },
+    funcionario: {
+      create: { cargo: Cargo.CAIXA, salario: 4000, restauranteId }
+    }
+  }
+});
+```
+
+Via API: `POST /funcionarios` com body `{ ..., roles: [{ id: 3 }] }`.
+
+### 6. Atualizando a role de um funcionário
+
+`PUT /funcionarios/:id` com body `{ roles: [{ id: novaRoleId }] }`.
+
+O service valida:
+- Não é o próprio usuário
+- Nova role tem rank ≤ rank do ator
+- Deleta `user_roles` antigos e cria os novos em transaction
 
 ---
 
 ## Frontend
 
-### 1. O que vem no login
-
-Após o login, o objeto `user` contém:
-
-```json
-{
-  "id": 1,
-  "name": "João Gerente",
-  "email": "gerente@teste.com",
-  "roles": ["GERENTE"],
-  "permissions": ["dashboard:acessar", "funcionario:criar", "funcionario:listar"]
-}
-```
-
-### 2. Verificando permissão em componentes
+### 1. Redirecionamento após login
 
 ```javascript
-import useAuthStore from "../store/useAuthStore";
-
-const { hasPermission } = useAuthStore();
-
-// Esconder botão sem permissão
-{hasPermission("funcionario:criar") && (
-  <Button onClick={openCreate}>Novo funcionário</Button>
-)}
-
-// Esconder coluna de ações
-{hasPermission("funcionario:deletar") && (
-  <button onClick={() => handleDelete(item)}>Excluir</button>
-)}
+// useLogin.js
+const destination = user.roles.includes("GERENTE") ? "/Dashboard" : "/DashboardFuncionario";
+navigate(destination);
 ```
 
-### 3. Protegendo rotas com `ProtectedRoute`
+### 2. Protegendo rotas com `ProtectedRoute`
+
+`ProtectedRoute` verifica **role**, não permission:
 
 ```jsx
 // AppRoutes.jsx
 <Route
   path="/Dashboard"
   element={
-    <ProtectedRoute requiredPermission="dashboard:acessar">
+    <ProtectedRoute requiredRole="GERENTE">
       <DashboardLayout />
     </ProtectedRoute>
   }
 >
 ```
 
-### 4. Redirecionamento automático no login
+Lógica interna:
+- Sem token → redireciona para `/`
+- Role incorreta → redireciona para o dashboard correto do usuário (`GERENTE` → `/Dashboard`, outros → `/DashboardFuncionario`)
+- `ADMIN` sempre passa
 
-O usuário é redirecionado com base nas permissões:
+### 3. Verificando permission em componentes
 
 ```javascript
-// useLogin.js
-const destination = user.permissions.includes("dashboard:acessar")
-  ? "/Dashboard"
-  : "/DashboardFuncionario";
+const { hasPermission } = useAuthStore();
+
+{hasPermission("pedido:criar") && (
+  <Button onClick={openCreate}>Novo pedido</Button>
+)}
+
+{hasPermission("usuario:deletar") && (
+  <button onClick={() => handleDelete(item)}>Excluir</button>
+)}
 ```
 
-### 5. Adicionando proteção a uma nova página
+### 4. Buscando roles disponíveis (formulário de funcionário)
 
-1. Crie o resource e permission no banco (ex: `relatorio:acessar`)
-2. Atribua ao role desejado
-3. Proteja a rota:
-
-```jsx
-<Route
-  path="/relatorios"
-  element={
-    <ProtectedRoute requiredPermission="relatorio:acessar">
-      <Relatorios />
-    </ProtectedRoute>
-  }
-/>
+```javascript
+// funcionario.service.js
+export const roleService = {
+  getAll: async () => {
+    const { data } = await api.get("/roles");
+    return data; // [{ id, name, description }]
+  },
+};
 ```
 
-4. Esconda elementos na UI:
-```jsx
-{hasPermission("relatorio:acessar") && <NavItem to="/relatorios" label="Relatórios" />}
-```
+Usado no `FuncionarioForm` para popular o select de "Nível de acesso" tanto na criação quanto na edição.
 
 ---
 
-## Fluxo Completo
+## Fluxo completo
 
 ```
 Login
-  → backend retorna permissions[] no payload
-  → frontend salva no localStorage + Zustand store
-  → ProtectedRoute verifica permission antes de renderizar
+  → backend monta roles[] e permissions[] a partir do banco
+  → JWT carrega roles no payload (verificado a cada request)
+  → frontend salva user completo no localStorage + Zustand
+  → useLogin redireciona por role
+  → ProtectedRoute bloqueia rotas por role
   → hasPermission() controla visibilidade de botões/menus
-  → requirePermission() bloqueia chamadas não autorizadas na API
+  → authenticate middleware valida JWT em toda rota protegida
+  → requirePermission() consulta role_permissions no banco
 ```
 
 ---
 
-## Adicionando um Novo Perfil (via ADMIN)
+## Adicionando um novo recurso protegido
 
-1. Criar o role no banco
-2. Atribuir as permissions desejadas via `rolePermission`
-3. Atribuir o role ao usuário via `userRole`
-4. No próximo login (ou chamada ao `/auth/me`), o frontend já reflete as novas permissões
+1. Criar o `resource` no banco (seed ou migration)
+2. Criar as `permissions` desejadas sobre ele
+3. Atribuir via `rolePermission` aos roles que devem ter acesso
+4. Adicionar `authenticate` + `requirePermission("recurso", "acao")` na rota
+5. Usar `hasPermission("recurso:acao")` no frontend para esconder elementos
 
-Nenhuma alteração de código é necessária.
+Nenhuma alteração de middleware ou store é necessária.

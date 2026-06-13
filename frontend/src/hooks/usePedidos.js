@@ -3,7 +3,6 @@ import { pedidoService } from "../services/pedido.service";
 
 const FILTROS_INICIAIS = { periodo: "hoje", status: "", formaPagamento: "", busca: "" };
 const DRAWER_FECHADO   = { aberto: false, modo: "criar", dados: null };
-const COMANDA_FECHADO  = { aberto: false, pedido: null };
 
 export function usePedidos() {
   const [pedidos,  setPedidos]  = useState([]);
@@ -11,7 +10,6 @@ export function usePedidos() {
   const [error,    setError]    = useState(null);
   const [filters,  setFilters]  = useState(FILTROS_INICIAIS);
   const [drawer,   setDrawer]   = useState(DRAWER_FECHADO);
-  const [comanda,  setComanda]  = useState(COMANDA_FECHADO);
   const [tick,     setTick]     = useState(0);
 
   const timerRef   = useRef(null);
@@ -81,12 +79,6 @@ export function usePedidos() {
     closeDrawer: () =>
       setDrawer(DRAWER_FECHADO),
 
-    openComanda: (pedido) =>
-      setComanda({ aberto: true, pedido }),
-
-    closeComanda: () =>
-      setComanda(COMANDA_FECHADO),
-
     updateStatus: async (id, status) => {
       try {
         const atualizado = await pedidoService.updateStatus(id, status);
@@ -127,7 +119,6 @@ export function usePedidos() {
     error,
     filters,
     drawer,
-    comanda,
     tick,
     refetch: () => fetchPedidos(filters),
     actions,

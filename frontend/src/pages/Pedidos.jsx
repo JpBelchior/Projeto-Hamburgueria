@@ -4,12 +4,11 @@ import PedidosStats from "../components/Pedidos/PedidosStats";
 import PedidosFilters from "../components/Pedidos/PedidosFilters";
 import PedidosKanban from "../components/Pedidos/PedidosKanban";
 import PedidosDrawer from "../components/Pedidos/PedidosDrawer";
-import ComandaModal from "../components/Pedidos/ComandaModal";
 import { usePedidos } from "../hooks/usePedidos";
 import { PERIODOS } from "../constants";
 
 export default function Pedidos() {
-  const { filtered, loading, error, filters, drawer, comanda, tick, refetch, actions } = usePedidos();
+  const { filtered, loading, error, filters, drawer, tick, refetch, actions } = usePedidos();
 
   return (
     <div className="flex flex-col gap-5">
@@ -41,7 +40,6 @@ export default function Pedidos() {
       </p>
 
       <PedidosDrawer state={{ drawer }} actions={actions} />
-      <ComandaModal  state={{ comanda }} actions={actions} />
     </div>
   );
 }

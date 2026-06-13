@@ -1,0 +1,121 @@
+import { X } from "lucide-react";
+
+/**
+ * Drawer — componentes estruturais para painéis laterais deslizantes.
+ *
+ * Exports:
+ *   default Drawer       — overlay + painel fixo à direita
+ *   DrawerHeader         — cabeçalho com título, badge, ações e botão X (+ barra de cor)
+ *   DrawerFooter         — rodapé com border-t para botões de ação
+ *   DrawerSection        — rótulo de seção (texto pequeno uppercase)
+ *   DrawerRow            — linha label / valor usada em blocos de detalhes
+ */
+
+// ── Shell ─────────────────────────────────────────────────────────────────────
+
+export default function Drawer({ onClose, children }) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900 border-l border-slate-700/50 z-50 flex flex-col shadow-2xl">
+        {children}
+      </div>
+    </>
+  );
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+/**
+ * DrawerHeader
+ *
+ * Props:
+ *   title        {ReactNode}  — título principal (string ou JSX para gradient text)
+ *   badge        {ReactNode}  — badge opcional ao lado do título
+ *   actions      {ReactNode}  — botões/links à direita, antes do X
+ *   onClose      {function}   — fecha o drawer
+ *   accentColor  {string}     — cor hex/css para a barra gradiente abaixo do header
+ */
+export function DrawerHeader({ title, badge, actions, onClose, accentColor }) {
+  return (
+    <>
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700/50 shrink-0">
+        {/* Título + badge */}
+        <div className="flex items-center gap-2 min-w-0">
+          {typeof title === "string" ? (
+            <h2 className="text-base font-bold text-white truncate">{title}</h2>
+          ) : (
+            title
+          )}
+          {badge}
+        </div>
+
+        {/* Ações + fechar */}
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+          {actions}
+          <button
+            onClick={onClose}
+            className="ml-1 text-slate-500 hover:text-white transition-colors p-1"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+
+      {accentColor && (
+        <div
+          className="h-0.5 shrink-0"
+          style={{ background: `linear-gradient(to right, ${accentColor}, transparent)` }}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────────
+
+/**
+ * DrawerFooter — rodapé com border-t.
+ * Usa flex row + gap-2 por padrão; passe className para sobrescrever.
+ */
+export function DrawerFooter({ children, className = "flex items-center gap-2" }) {
+  return (
+    <div className={`px-5 py-4 border-t border-slate-700/50 shrink-0 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// ── Section label ─────────────────────────────────────────────────────────────
+
+/**
+ * DrawerSection — rótulo de seção com estilo padrão uppercase tracking-widest.
+ */
+export function DrawerSection({ children }) {
+  return (
+    <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-3">
+      {children}
+    </p>
+  );
+}
+
+// ── Row ───────────────────────────────────────────────────────────────────────
+
+/**
+ * DrawerRow — linha label / valor para blocos de informação.
+ *
+ * Props:
+ *   label      {string}
+ *   value      {ReactNode}
+ *   highlight  {boolean}  — realça o valor com cor âmbar
+ */
+export function DrawerRow({ label, value, highlight }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-slate-500 text-xs">{label}</span>
+      <span className={`text-xs font-medium ${highlight ? "text-amber-400" : "text-white"}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
