@@ -1,11 +1,11 @@
 ﻿import { useState, useEffect } from "react";
 import { Trash2, ChevronRight, Pencil, Ban, CheckCircle2, Clock, Search } from "lucide-react";
-import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerRow } from "../Ui/Drawer";
+import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerRow, DrawerGradientTitle } from "../Ui/Drawer";
 import StatusBadge from "../Ui/StatusBadge";
 import Button from "../Ui/Button";
 import FormField from "../Ui/FormField";
 import ConfirmDialog from "../Ui/ConfirmDialog";
-import { ACCENT, fmtBRL, CAT_LABEL, CAT_COLOR, STATUS_COLOR, STATUS_LABEL, PAGAMENTO_LABEL, fmtElapsedP } from "../../utils/format";
+import { INPUT_CLS as inputCls, fmtBRL, CAT_LABEL, CAT_COLOR, STATUS_COLOR, STATUS_LABEL, PAGAMENTO_LABEL, fmtElapsedP } from "../../utils/format";
 import { usePedidoForm }    from "../../hooks/usePedidoForm";
 import { useItemSelector }  from "../../hooks/useItemSelector";
 import { FORMAS_PAGAMENTO, PROXIMO_STATUS, PROXIMO_LABEL } from "../../constants";
@@ -393,8 +393,7 @@ function FormView({ drawer, actions }) {
   );
 }
 
-const inputCls    = "w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/40 transition-all";
-const inputSmCls  = "bg-slate-700/50 border border-slate-600/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all";
+const inputSmCls = "bg-slate-700/50 border border-slate-600/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all";
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
@@ -418,12 +417,9 @@ export default function PedidosDrawer({ state, actions }) {
   const headerTitle = showDetalhe ? (
     "Detalhes do Pedido"
   ) : (
-    <h2
-      className="text-base font-bold bg-clip-text text-transparent"
-      style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
-    >
+    <DrawerGradientTitle>
       {drawer.modo === "criar" ? "Novo Pedido" : "Editar Pedido"}
-    </h2>
+    </DrawerGradientTitle>
   );
 
   const headerActions = (

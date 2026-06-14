@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Pencil, Trash2, Power } from "lucide-react";
-import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerRow } from "../Ui/Drawer";
+import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerRow, DrawerSkeleton, DrawerGradientTitle } from "../Ui/Drawer";
 import Avatar from "../Ui/Avatar";
 import Button from "../Ui/Button";
 import ConfirmDialog from "../Ui/ConfirmDialog";
@@ -12,30 +12,6 @@ import { getRoleRank, CARGO_LABEL } from "../../constants";
 import { ACCENT } from "../../utils/format";
 import useAuthStore from "../../store/useAuthStore";
 
-function LoadingSkeleton() {
-  return (
-    <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5 animate-pulse">
-      <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-slate-800 shrink-0" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3 bg-slate-800 rounded w-3/4" />
-          <div className="h-2 bg-slate-800 rounded w-1/2" />
-          <div className="h-5 bg-slate-800 rounded-full w-16" />
-        </div>
-      </div>
-      <div className="h-px bg-slate-800" />
-      <div className="space-y-3">
-        <div className="h-2.5 bg-slate-800 rounded w-1/4" />
-        {[1, 2, 3].map((i) => <div key={i} className="h-8 bg-slate-800 rounded" />)}
-      </div>
-      <div className="h-px bg-slate-800" />
-      <div className="space-y-3">
-        <div className="h-2.5 bg-slate-800 rounded w-1/3" />
-        {[1, 2, 3].map((i) => <div key={i} className="h-8 bg-slate-800 rounded" />)}
-      </div>
-    </div>
-  );
-}
 
 export default function FuncionarioDrawer({
   funcionarioId,
@@ -127,21 +103,12 @@ export default function FuncionarioDrawer({
 
   // ── Header ───────────────────────────────────────────────────────────────────
 
-  const gradientTitle = (text) => (
-    <h2
-      className="text-base font-bold bg-clip-text text-transparent"
-      style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
-    >
-      {text}
-    </h2>
-  );
-
   const showForm = createMode || editMode;
 
   const headerTitle = createMode
-    ? gradientTitle("Novo Funcionário")
+    ? <DrawerGradientTitle>Novo Funcionário</DrawerGradientTitle>
     : editMode
-    ? gradientTitle("Editar Funcionário")
+    ? <DrawerGradientTitle>Editar Funcionário</DrawerGradientTitle>
     : (funcionario?.user.name ?? "Carregando…");
 
   const headerBadge = !showForm && funcionario ? (
@@ -182,7 +149,7 @@ export default function FuncionarioDrawer({
         />
 
         {loading ? (
-          <LoadingSkeleton />
+          <DrawerSkeleton />
         ) : erro ? (
           <div className="flex-1 flex items-center justify-center p-5">
             <p className="text-red-400 text-sm text-center">{erro}</p>

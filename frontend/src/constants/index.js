@@ -26,10 +26,10 @@ export const CARGO_OPTIONS = [
 
 // Períodos de análise (compartilhado entre Dashboard e Pedidos)
 export const PERIODOS = [
-  { value: "hoje",   label: "Hoje",    vsLabel: "vs ontem"        },
-  { value: "7dias",  label: "7 dias",  vsLabel: "vs sem. passada" },
-  { value: "30dias", label: "30 dias", vsLabel: "vs mês passado"  },
-  { value: "anual",  label: "Anual",   vsLabel: "vs ano passado"  },
+  { value: "hoje",   label: "Hoje",    vsLabel: "vs ontem",        vsHint: "que ontem"           },
+  { value: "7dias",  label: "7 dias",  vsLabel: "vs sem. passada", vsHint: "que a semana passada" },
+  { value: "30dias", label: "30 dias", vsLabel: "vs mês passado",  vsHint: "que o mês passado"   },
+  { value: "anual",  label: "Anual",   vsLabel: "vs ano passado",  vsHint: "que o ano passado"   },
 ];
 
 // Colunas de status do kanban de pedidos
@@ -77,6 +77,23 @@ export const STATUS_FILTERS = [
   { value: "todos",   label: "Todos"    },
   { value: "ativo",   label: "Ativos"   },
   { value: "inativo", label: "Inativos" },
+];
+
+// Unidades de medida de ingredientes
+export const UNIDADE_LABEL = {
+  KG:      "Quilos",
+  G:       "Gramas",
+  LITRO:   "Litros",
+  ML:      "Militros",
+  UNIDADE: "Unidades",
+};
+
+export const UNIDADE_OPTIONS = [
+  { value: "KG",      label: "kg — Quilograma" },
+  { value: "G",       label: "g — Grama"       },
+  { value: "LITRO",   label: "L — Litro"       },
+  { value: "ML",      label: "ml — Mililitro"  },
+  { value: "UNIDADE", label: "un — Unidade"    },
 ];
 
 // Categorias de produto

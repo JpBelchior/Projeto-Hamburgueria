@@ -65,7 +65,7 @@ export default function CampeaoCard({ categoria, produto, onVerProduto }) {
             <div className="h-px bg-gradient-to-r from-transparent via-slate-700/70 to-transparent my-2" />
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 ">
+            <div className="grid grid-cols-3 gap-3 mb-3 ">
               <div>
                 <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1">
                   Vendidos:

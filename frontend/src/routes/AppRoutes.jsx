@@ -7,13 +7,7 @@ import Funcionarios from "../pages/Funcionarios";
 import Dashboard from "../pages/Dashboard";
 import Pedidos from "../pages/Pedidos";
 import Produtos from "../pages/Produtos";
-
-const Ingredientes = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-white">Ingredientes</h1>
-    <p className="text-slate-400 mt-2">Controle de estoque</p>
-  </div>
-);
+import Ingredientes from "../pages/Ingredientes";
 
 const Combos = () => (
   <div>

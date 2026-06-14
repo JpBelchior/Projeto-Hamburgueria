@@ -3,10 +3,8 @@ import { Search, Trash2 } from "lucide-react";
 import { ingredienteService } from "../../services/ingrediente.service";
 import FormField from "../Ui/FormField";
 import Button from "../Ui/Button";
-import { CATEGORIA_OPTIONS } from "../../constants";
+import { CATEGORIA_OPTIONS, UNIDADE_LABEL } from "../../constants";
 import { INPUT_CLS as inputCls } from "../../utils/format";
-
-const UNIDADE_LABEL = { KG: "kg", G: "g", LITRO: "L", ML: "ml", UNIDADE: "un" };
 
 // ── Seletor de ingrediente ────────────────────────────────────────────────────
 

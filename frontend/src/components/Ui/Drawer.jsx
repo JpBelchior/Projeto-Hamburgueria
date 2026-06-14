@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { ACCENT } from "../../utils/format";
 
 /**
  * Drawer — componentes estruturais para painéis laterais deslizantes.
@@ -96,6 +97,54 @@ export function DrawerSection({ children }) {
     <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-3">
       {children}
     </p>
+  );
+}
+
+// ── Gradient Title ────────────────────────────────────────────────────────────
+
+/**
+ * DrawerGradientTitle — título com gradiente âmbar padrão para modos criar/editar.
+ */
+export function DrawerGradientTitle({ children }) {
+  return (
+    <h2
+      className="text-base font-bold bg-clip-text text-transparent"
+      style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+/**
+ * DrawerSkeleton — estado de carregamento padrão para drawers.
+ * Exibe avatar + linhas + duas seções de grid 2 colunas.
+ */
+export function DrawerSkeleton() {
+  return (
+    <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5 animate-pulse">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-full bg-slate-800 shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 bg-slate-800 rounded w-3/4" />
+          <div className="h-2 bg-slate-800 rounded w-1/2" />
+        </div>
+      </div>
+      <div className="h-px bg-slate-800" />
+      <div className="space-y-3">
+        <div className="h-2.5 bg-slate-800 rounded w-1/4" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-16 bg-slate-800 rounded-xl" />
+          <div className="h-16 bg-slate-800 rounded-xl" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-2.5 bg-slate-800 rounded w-1/3" />
+        {[1, 2, 3].map((i) => <div key={i} className="h-8 bg-slate-800 rounded" />)}
+      </div>
+    </div>
   );
 }
 

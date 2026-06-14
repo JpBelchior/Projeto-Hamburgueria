@@ -4,8 +4,8 @@ import { StatusPedido, CategoriaProduct } from "@prisma/client";
 import { CreatePedidoDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
 import { DateRange, Periodo, getRanges } from "../utils/dateRange";
 
-function calcVariacao(atual: number, anterior: number): number {
-  if (anterior === 0) return 0;
+function calcVariacao(atual: number, anterior: number): number | null {
+  if (anterior === 0) return null;
   return Math.round(((atual - anterior) / anterior) * 1000) / 10;
 }
 

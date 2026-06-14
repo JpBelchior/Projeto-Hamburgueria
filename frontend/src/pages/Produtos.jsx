@@ -49,7 +49,7 @@ export default function Produtos( ) {
           label:      "Margem média",
           value:      `${dados.margemMedia.valor.toFixed(1)}%`,
           deltaLabel: "lucro sobre custo",
-          hint:       "Média da margem de lucro de todos os produtos ativos. Fórmula: (preço de venda − custo) ÷ custo × 100",
+          hint:       "Média da margem de lucro de todos os produtos ativos. Fórmula: ((preço de venda − custo) ÷ custo × 100)/(Número de Produtos Ativos)",
         },
         {
           icon:       DollarSign,

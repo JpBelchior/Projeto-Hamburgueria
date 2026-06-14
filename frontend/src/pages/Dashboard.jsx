@@ -23,7 +23,17 @@ const Dashboard = () => {
     await refetch();
   }, [refetch]);
 
-  const deltaLabel = PERIODOS.find((p) => p.value === periodo)?.vsLabel ?? "";
+  const periodoAtual = PERIODOS.find((p) => p.value === periodo);
+  const deltaLabel   = periodoAtual?.vsLabel ?? "";
+  const vsHint       = periodoAtual?.vsHint  ?? "que o período anterior";
+
+  const deltaHint = (variacao, { invertido = false } = {}) => {
+    if (variacao === null)  return "Sem dados do período anterior para comparação";
+    if (variacao === 0)     return "Igual ao período anterior";
+    const abs = Math.abs(variacao).toFixed(1);
+    if (invertido) return variacao < 0 ? `${abs}% mais rápido ${vsHint}` : `${abs}% mais lento ${vsHint}`;
+    return variacao > 0 ? `${abs}% a mais ${vsHint}` : `${abs}% a menos ${vsHint}`;
+  };
 
   const kpis = dados
     ? [
@@ -33,6 +43,8 @@ const Dashboard = () => {
           value:      formatMoeda(dados.faturamento.valor),
           delta:      dados.faturamento.variacao,
           deltaLabel,
+          hint:       "Faturamento total dos pedidos no periodo selecionado",
+          deltaHint:  deltaHint(dados.faturamento.variacao),
         },
         {
           icon:       ClipboardList,
@@ -40,6 +52,8 @@ const Dashboard = () => {
           value:      String(dados.pedidos.valor),
           delta:      dados.pedidos.variacao,
           deltaLabel,
+          hint:       "Números de pedidos no periodo selecionado",
+          deltaHint:  deltaHint(dados.pedidos.variacao),
         },
         {
           icon:       TrendingUp,
@@ -47,7 +61,8 @@ const Dashboard = () => {
           value:      formatMoeda(dados.ticketMedio.valor),
           delta:      dados.ticketMedio.variacao,
           deltaLabel: `${deltaLabel} · faturamento ÷ pedidos`,
-          hint:       "Faturamento dividido pelo número de pedidos",
+          hint:       "Faturamento dividido pelo número de pedidos no periodo selecionado. ",
+          deltaHint:  deltaHint(dados.ticketMedio.variacao),
         },
         {
           icon:       Timer,
@@ -55,7 +70,8 @@ const Dashboard = () => {
           value:      dados.tempoPreparo.valor > 0 ? `${dados.tempoPreparo.valor} min` : "—",
           delta:      dados.tempoPreparo.variacao,
           deltaLabel: `${deltaLabel} · só pedidos c/ Principal`,
-          hint:       "Calculado apenas para pedidos que contêm um item Principal",
+          hint:       "Calcula a média do tempo de perparo, apenas para pedidos que contêm um item Principal,  no periodo selecionado.",
+          deltaHint:  deltaHint(dados.tempoPreparo.variacao, { invertido: true }),
           invertido:  true,
         },
       ]

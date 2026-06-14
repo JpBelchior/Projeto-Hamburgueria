@@ -36,16 +36,6 @@ export default function Filter({ search, tabs = [], dirty, onReset, action }) {
         />
       ))}
 
-      {dirty && onReset && (
-        <button
-          onClick={onReset}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white border border-slate-700/50 hover:border-slate-600 transition-all"
-        >
-          <X size={12} />
-          Limpar
-        </button>
-      )}
-
       <div className="flex-1" />
 
       {action && (

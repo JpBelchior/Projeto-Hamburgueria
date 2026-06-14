@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { ACCENT } from "../../utils/format";
 import TooltipPopover from "./TooltipPopover";
 import CardContainer from "./CardContainer";
@@ -16,12 +16,13 @@ import CardContainer from "./CardContainer";
  *   invertido   {bool?}       true quando queda é positiva (ex: tempo de preparo)
  *   size        {"default"|"compact"}  default = vertical (Dashboard); compact = horizontal (Pedidos/Produtos)
  */
-export default function KpiCard({ icon: Icon, label, value, delta, deltaLabel, hint, invertido, size = "default" }) {
-  const hasDelta   = delta !== null && delta !== undefined;
-  const positive   = invertido ? delta < 0 : delta > 0;
-  const deltaColor = positive ? "text-emerald-400" : "text-red-400";
-  const deltaBg    = positive ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20";
-  const DeltaIcon  = (invertido ? !positive : positive) ? ArrowUp : ArrowDown;
+export default function KpiCard({ icon: Icon, label, value, delta, deltaLabel, hint, deltaHint, invertido, size = "default" }) {
+  const hasDelta   = delta !== undefined;
+  const isNeutral  = delta === null || delta === 0;
+  const positive   = !isNeutral && (invertido ? delta < 0 : delta > 0);
+  const deltaColor = isNeutral ? "text-slate-400" : positive ? "text-emerald-400" : "text-red-400";
+  const deltaBg    = isNeutral ? "bg-slate-500/10 border-slate-500/20" : positive ? "bg-emerald-500/10 border-emerald-500/20" : "bg-red-500/10 border-red-500/20";
+  const DeltaIcon  = isNeutral ? Minus : (invertido ? !positive : positive) ? ArrowUp : ArrowDown;
 
   if (size === "compact") {
     return (
@@ -45,7 +46,7 @@ export default function KpiCard({ icon: Icon, label, value, delta, deltaLabel, h
               <p className="text-slate-500 text-[11px] truncate">{deltaLabel}</p>
               {hasDelta && (
                 <span className={`text-[10px] font-semibold shrink-0 ${deltaColor}`}>
-                  {delta >= 0 ? "+" : ""}{delta.toFixed(1)}%
+                  {isNeutral ? "—" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%`}
                 </span>
               )}
             </div>
@@ -66,10 +67,13 @@ export default function KpiCard({ icon: Icon, label, value, delta, deltaLabel, h
             <Icon size={16} style={{ color: ACCENT.text }} />
           </div>
           {hasDelta && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${deltaBg}`}>
+            <div
+              title={deltaHint}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${deltaBg} ${deltaHint ? "cursor-help" : ""}`}
+            >
               <DeltaIcon size={10} className={deltaColor} />
               <span className={`text-[10px] font-bold ${deltaColor}`}>
-                {Math.abs(delta).toFixed(1)}%
+                {isNeutral ? "—" : `${Math.abs(delta).toFixed(1)}%`}
               </span>
             </div>
           )}
