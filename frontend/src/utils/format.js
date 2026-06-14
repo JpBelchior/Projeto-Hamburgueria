@@ -6,6 +6,11 @@ export const ACCENT = {
   border: "rgba(245, 158, 11, 0.3)",
 };
 
+export const INPUT_CLS =
+  "w-full px-4 py-2.5 rounded-xl text-sm text-white bg-slate-800/50 border border-slate-700/50 " +
+  "placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/40 " +
+  "hover:border-slate-600/70 transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+
 export const fmtBRL = (valor) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 
@@ -43,6 +48,25 @@ export const CAT_COLOR = {
   SOBREMESA:      "#584a80",  
   COMBO:          "#147c56",  
 };
+
+// ── Produto — margem ────────────────────────────────────────────────────────
+
+export function calcLucro(produto) {
+  if (produto.precoProducao == null) return null;
+  return produto.precoVenda - produto.precoProducao;
+}
+
+// Markup sobre custo: (venda - custo) / custo × 100
+export function calcMargem(produto) {
+  if (produto.precoProducao == null || produto.precoProducao === 0) return null;
+  return Math.round(((produto.precoVenda - produto.precoProducao) / produto.precoProducao) * 100);
+}
+
+export function margemStyle(margem) {
+  return margem !== null && margem >= 50
+    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
+    : "bg-amber-500/15 text-amber-400 border-amber-500/25";
+}
 
 // ── Pedidos ─────────────────────────────────────────────────────────────────
 

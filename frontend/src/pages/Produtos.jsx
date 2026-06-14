@@ -2,7 +2,9 @@ import { useState } from "react";
 import { LayoutGrid, TrendingUp, DollarSign, Flame, PackagePlus } from "lucide-react";
 import HeaderBar from "../components/Ui/HeaderBar";
 import KpiCard from "../components/Ui/KpiCard";
-import CampeaoCard from "../components/Ui/CampeaoCard";
+import KpiSkeleton from "../components/Ui/KpiSkeleton";
+import EmptyState from "../components/Ui/EmptyState";
+import CampeaoCard from "../components/Produto/CampeaoCard";
 import ErrorAlert from "../components/Ui/ErrorAlert";
 import Filter from "../components/Ui/Filter";
 import ProdutoCard from "../components/Produto/ProdutoCard";
@@ -11,9 +13,8 @@ import { useProdutosMetricas } from "../hooks/useProdutosMetricas";
 import { useProdutosTopCategoria } from "../hooks/useProdutosTopCategoria";
 import { useProdutos } from "../hooks/useProdutos";
 import { fmtBRL, CAT_LABEL, CAT_COLOR } from "../utils/format";
-import { PERIODOS } from "../constants";
+import { PERIODOS, CATEGORIAS } from "../constants";
 
-const CATEGORIAS = ["PRINCIPAL", "ACOMPANHAMENTO", "BEBIDA", "SOBREMESA"];
 
 const CARDAPIO_TABS = [
   { value: "",               label: "Todos" },
@@ -23,21 +24,7 @@ const CARDAPIO_TABS = [
   { value: "SOBREMESA",      label: "Sobremesas" },
 ];
 
-const KpiSkeleton = () => (
-  <div className="bg-slate-900/60 border border-slate-700/50 rounded-2xl overflow-hidden animate-pulse">
-    <div className="h-0.5 bg-slate-800" />
-    <div className="px-5 py-4 flex items-center gap-4">
-      <div className="w-9 h-9 rounded-xl bg-slate-800 shrink-0" />
-      <div className="flex-1 space-y-2">
-        <div className="h-2.5 bg-slate-800 rounded w-1/2" />
-        <div className="h-5 bg-slate-800 rounded w-3/4" />
-        <div className="h-2 bg-slate-800 rounded w-1/3" />
-      </div>
-    </div>
-  </div>
-);
-
-export default function Produtos() {
+export default function Produtos( ) {
   const [periodo, setPeriodo] = useState("7dias");
   const [busca, setBusca] = useState("");
   const [categoriaSel, setCategoriaSel] = useState("");
@@ -62,6 +49,7 @@ export default function Produtos() {
           label:      "Margem média",
           value:      `${dados.margemMedia.valor.toFixed(1)}%`,
           deltaLabel: "lucro sobre custo",
+          hint:       "Média da margem de lucro de todos os produtos ativos. Fórmula: (preço de venda − custo) ÷ custo × 100",
         },
         {
           icon:       DollarSign,
@@ -93,6 +81,7 @@ export default function Produtos() {
         })).filter((g) => g.items.length > 0)
       : [{ cat: categoriaSel, items: produtosFiltrados }];
 
+
   return (
     <div className="flex flex-col gap-6">
       <HeaderBar
@@ -107,7 +96,7 @@ export default function Produtos() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
+          ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} variant="compact" />)
           : cards.map((c) => <KpiCard key={c.label} size="compact" {...c} />)
         }
       </div>
@@ -124,7 +113,7 @@ export default function Produtos() {
         {topCatErro && !topCatLoading && <ErrorAlert message={topCatErro} />}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {topCatLoading
-            ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
+            ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} variant="compact" />)
             : CATEGORIAS.map((cat) => (
                 <CampeaoCard
                   key={cat}
@@ -155,7 +144,7 @@ export default function Produtos() {
           <Filter
             search={{ value: busca, onChange: setBusca, placeholder: "Buscar produto..." }}
             tabs={[{ options: CARDAPIO_TABS, value: categoriaSel, onChange: setCategoriaSel }]}
-            action={{ label: "Novo Produto", icon: PackagePlus }}
+            action={{ label: "Novo Produto", icon: PackagePlus, onClick: () => setDrawerProdutoId("new") }}
           />
         </div>
 
@@ -163,33 +152,34 @@ export default function Produtos() {
 
         {prodLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => <KpiSkeleton key={i} />)}
+            {Array.from({ length: 8 }).map((_, i) => <KpiSkeleton key={i} variant="compact" />)}
           </div>
         ) : produtosFiltrados.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-2">
-            <p className="text-slate-500 text-sm">Nenhum produto encontrado</p>
-            {busca && (
-              <button
-                onClick={() => setBusca("")}
-                className="text-amber-400 text-xs hover:underline"
-              >
-                Limpar busca
-              </button>
-            )}
-          </div>
+          <EmptyState
+            message="Nenhum produto encontrado"
+            actionLabel={busca ? "Limpar busca" : undefined}
+            onAction={busca ? () => setBusca("") : undefined}
+          />
         ) : (
           <div className="flex flex-col gap-6">
-            {grupos.map(({ cat, items }) => (
+            {grupos.map(({ cat, items }) => {
+              const color    = CAT_COLOR[cat] ?? "#fbbf24";
+              const ativos   = items.filter((p) => p.ativo).length;
+              const inativos = items.length - ativos;
+              return (
               <div key={cat}>
                 {/* Separador de categoria */}
                 <div className="flex items-center gap-3 mb-3">
                     <span
-                      className="text-[10px] font-bold uppercase tracking-widest shrink-0 ml-5"
-                      style={{ color: CAT_COLOR[cat] ?? "#fbbf24" }}
+                      className="text-[10px] text-slate-400 font-bold uppercase tracking-widest shrink-0 ml-5"
+                      
                     >
-                      ● {CAT_LABEL[cat] ?? cat}
+                     <span style={{ color }}> ● </span>  {CAT_LABEL[cat] ?? cat}
                     </span>
-                    <span className="text-slate-600 text-[10px]">{items.length}</span>
+                    <span className="text-slate-600 text-[11px]">{ativos} ativos</span>
+                    {inativos > 0 && (
+                      <span className="text-slate-600 text-[11px]">· {inativos} inativos</span>
+                    )}
                     <div className="flex-1 h-px bg-slate-800" />
                   </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -198,17 +188,23 @@ export default function Produtos() {
                   ))}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>
 
-      {drawerProdutoId && (
+      {drawerProdutoId !== null && (
         <ProdutoDrawer
-          produtoId={drawerProdutoId}
+          produtoId={drawerProdutoId === "new" ? null : drawerProdutoId}
+          createMode={drawerProdutoId === "new"}
           periodo={periodo}
           periodoLabel={PERIODOS.find((p) => p.value === periodo)?.label ?? ""}
           onClose={() => setDrawerProdutoId(null)}
+          onProdutoCriado={(novo) => {
+            setProdutos((prev) => [...prev, novo]);
+            setDrawerProdutoId(null);
+          }}
           onProdutoAtualizado={(atualizado) =>
             setProdutos((prev) => prev.map((p) => (p.id === atualizado.id ? atualizado : p)))
           }

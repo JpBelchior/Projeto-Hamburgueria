@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { DollarSign, ClipboardList, TrendingUp, Timer, Zap } from "lucide-react";
 import ErrorAlert from "../components/Ui/ErrorAlert";
 import KpiCard from "../components/Ui/KpiCard";
+import KpiSkeleton from "../components/Ui/KpiSkeleton";
 import HeaderBar from "../components/Ui/HeaderBar";
 import FinanceiroCard from "../components/Dashboard/FinanceiroCard";
 import SalesChart from "../components/Dashboard/SalesChart";
@@ -10,22 +11,6 @@ import CategoriaMix from "../components/Dashboard/CategoriaMix";
 import { useDashboard } from "../hooks/useDashboard";
 import { formatMoeda } from "../utils/Date.utils";
 import { PERIODOS } from "../constants";
-
-// ── Skeletons de loading ──────────────────────────────────────────────────
-
-const KpiSkeleton = () => (
-  <div className="bg-slate-800/50 border border-slate-700/30 rounded-2xl p-5 flex flex-col gap-3 animate-pulse">
-    <div className="flex items-start justify-between">
-      <div className="w-10 h-10 rounded-xl bg-slate-700/60" />
-      <div className="w-14 h-5 rounded-full bg-slate-700/60" />
-    </div>
-    <div className="flex flex-col gap-1.5">
-      <div className="w-24 h-3 rounded bg-slate-700/60" />
-      <div className="w-32 h-7 rounded bg-slate-700/60" />
-    </div>
-    <div className="w-16 h-3 rounded bg-slate-700/60" />
-  </div>
-);
 
 // ── Página ─────────────────────────────────────────────────────────────────
 

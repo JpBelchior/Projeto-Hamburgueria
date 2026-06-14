@@ -3,18 +3,10 @@ import { Search, Trash2 } from "lucide-react";
 import { ingredienteService } from "../../services/ingrediente.service";
 import FormField from "../Ui/FormField";
 import Button from "../Ui/Button";
-
-const CATEGORIAS = [
-  { value: "PRINCIPAL",      label: "Principal" },
-  { value: "ACOMPANHAMENTO", label: "Acompanhamento" },
-  { value: "BEBIDA",         label: "Bebida" },
-  { value: "SOBREMESA",      label: "Sobremesa" },
-];
+import { CATEGORIA_OPTIONS } from "../../constants";
+import { INPUT_CLS as inputCls } from "../../utils/format";
 
 const UNIDADE_LABEL = { KG: "kg", G: "g", LITRO: "L", ML: "ml", UNIDADE: "un" };
-
-const inputCls =
-  "w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/40 transition-all";
 
 // ── Seletor de ingrediente ────────────────────────────────────────────────────
 
@@ -158,7 +150,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
 
       <FormField label="Categoria" required>
         <select className={inputCls} value={form.categoria} onChange={set("categoria")}>
-          {CATEGORIAS.map((c) => (
+          {CATEGORIA_OPTIONS.map((c) => (
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>

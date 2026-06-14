@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * TooltipPopover — popover de dica com botão "?"
@@ -29,11 +30,14 @@ export default function TooltipPopover({ text }) {
 
   useEffect(() => {
     if (!open) return;
-    const close = (e) => {
-      if (!btnRef.current?.contains(e.target)) setOpen(false);
+    const closeOnClick  = (e) => { if (!btnRef.current?.contains(e.target)) setOpen(false); };
+    const closeOnScroll = () => setOpen(false);
+    document.addEventListener("mousedown", closeOnClick);
+    document.addEventListener("scroll", closeOnScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", closeOnClick);
+      document.removeEventListener("scroll", closeOnScroll, true);
     };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
   return (
@@ -46,7 +50,7 @@ export default function TooltipPopover({ text }) {
         ?
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 9999 }}
           className="w-52 bg-slate-700 border border-slate-600/80 rounded-xl px-3 py-2.5 shadow-2xl"
@@ -57,7 +61,8 @@ export default function TooltipPopover({ text }) {
           <p className="text-xs text-slate-200 leading-relaxed normal-case tracking-normal font-normal">
             {text}
           </p>
-        </div>
+        </div>,
+        document.body
       )}
     </span>
   );

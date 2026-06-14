@@ -79,6 +79,16 @@ export const STATUS_FILTERS = [
   { value: "inativo", label: "Inativos" },
 ];
 
+// Categorias de produto
+export const CATEGORIAS = ["PRINCIPAL", "ACOMPANHAMENTO", "BEBIDA", "SOBREMESA"];
+
+export const CATEGORIA_OPTIONS = [
+  { value: "PRINCIPAL",      label: "Principal" },
+  { value: "ACOMPANHAMENTO", label: "Acompanhamento" },
+  { value: "BEBIDA",         label: "Bebida" },
+  { value: "SOBREMESA",      label: "Sobremesa" },
+];
+
 // Configuração visual do StatusBadge
 export const STATUS_CONFIG = {
   true:         { label: "Ativo",        style: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },

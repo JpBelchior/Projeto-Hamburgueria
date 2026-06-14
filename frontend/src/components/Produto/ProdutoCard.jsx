@@ -1,20 +1,12 @@
 import Avatar from "../Ui/Avatar";
-import { fmtBRL, CAT_LABEL, CAT_COLOR } from "../../utils/format";
+import { fmtBRL, CAT_LABEL, CAT_COLOR, calcMargem, margemStyle } from "../../utils/format";
 
 export default function ProdutoCard({ produto, onClick }) {
   const color = CAT_COLOR[produto.categoria] ?? "#fbbf24";
   const label = CAT_LABEL[produto.categoria] ?? produto.categoria;
   const inativo = produto.ativo === false;
 
-  const margem =
-    produto.precoProducao != null && produto.precoVenda > 0
-      ? Math.round(((produto.precoVenda - produto.precoProducao) / produto.precoVenda) * 100)
-      : null;
-
-  const margemStyle =
-    margem !== null && margem >= 50
-      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
-      : "bg-amber-500/15 text-amber-400 border-amber-500/25";
+  const margem = calcMargem(produto);
 
   return (
     <div
@@ -77,7 +69,7 @@ export default function ProdutoCard({ produto, onClick }) {
           </div>
           {margem !== null && (
             <span
-              className={`text-[11px] font-semibold px-2 py-1 rounded-lg border shrink-0 ${margemStyle}`}
+              className={`text-[11px] font-semibold px-2 py-1 rounded-lg border shrink-0 ${margemStyle(margem)}`}
             >
               {margem}% margem
             </span>

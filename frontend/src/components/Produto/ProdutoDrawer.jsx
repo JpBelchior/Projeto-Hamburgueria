@@ -4,8 +4,9 @@ import Drawer, { DrawerHeader, DrawerFooter, DrawerSection } from "../Ui/Drawer"
 import Avatar from "../Ui/Avatar";
 import Button from "../Ui/Button";
 import ConfirmDialog from "../Ui/ConfirmDialog";
-import { fmtBRL, CAT_LABEL, CAT_COLOR, ACCENT } from "../../utils/format";
+import { fmtBRL, CAT_LABEL, CAT_COLOR, ACCENT, calcLucro, calcMargem, margemStyle } from "../../utils/format";
 import { useProdutoDrawer } from "../../hooks/useProdutoDrawer";
+import { produtoService } from "../../services/produto.service";
 import ProdutoForm from "./ProdutoForm";
 
 const UNIDADE_LABEL = { KG: "kg", G: "g", LITRO: "L", ML: "ml", UNIDADE: "un" };
@@ -40,18 +41,12 @@ function LoadingSkeleton() {
 // ── Vista de detalhes ─────────────────────────────────────────────────────────
 
 function DetalheView({ produto, desempenho, periodoLabel }) {
-  const lucro  = produto.precoProducao != null ? produto.precoVenda - produto.precoProducao : null;
-  const margem = lucro != null && produto.precoVenda > 0
-    ? Math.round((lucro / produto.precoVenda) * 100) : null;
-
-  const margemStyle = margem !== null && margem >= 50
-    ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/25"
-    : "bg-amber-500/15 text-amber-400 border-amber-500/25";
+  const lucro  = calcLucro(produto);
+  const margem = calcMargem(produto);
 
   return (
     <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
 
-      {/* Avatar + info básica */}
       <div className="flex items-start gap-4">
         <Avatar name={produto.nome} src={produto.imagem ?? undefined} size="lg" />
         <div className="flex-1 min-w-0">
@@ -108,7 +103,7 @@ function DetalheView({ produto, desempenho, periodoLabel }) {
             <div className="flex items-center gap-2">
               <span className="text-emerald-400 text-sm font-semibold tabular-nums">+{fmtBRL(lucro)}</span>
               {margem !== null && (
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg border ${margemStyle}`}>
+                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg border ${margemStyle(margem)}`}>
                   {margem}% margem
                 </span>
               )}
@@ -171,36 +166,68 @@ function DetalheView({ produto, desempenho, periodoLabel }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export default function ProdutoDrawer({
-  produtoId, periodo, periodoLabel, onClose, onProdutoAtualizado, onProdutoDeletado,
+  produtoId,
+  createMode = false,
+  periodo,
+  periodoLabel,
+  onClose,
+  onProdutoCriado,
+  onProdutoAtualizado,
+  onProdutoDeletado,
 }) {
   const [editMode, setEditMode] = useState(false);
   const [confirma, setConfirma] = useState(false);
+  const [criando,  setCriando]  = useState(false);
+  const [erroCriar, setErroCriar] = useState(null);
 
   const { produto, desempenho, loading, erro, salvando, erroSalvar, handleToggleAtivo, handleSalvar, handleDelete } =
     useProdutoDrawer(produtoId, periodo, { onProdutoAtualizado, onProdutoDeletado });
 
+  const showForm = createMode || editMode;
+
   const color = produto ? (CAT_COLOR[produto.categoria] ?? "#fbbf24") : "#fbbf24";
   const label = produto ? (CAT_LABEL[produto.categoria] ?? produto.categoria) : "";
+
+  const gradientTitle = (text) => (
+    <h2
+      className="text-base font-bold bg-clip-text text-transparent"
+      style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
+    >
+      {text}
+    </h2>
+  );
+
+  const handleCriar = async (data) => {
+    setCriando(true);
+    setErroCriar(null);
+    try {
+      const novo = await produtoService.criar(data);
+      onProdutoCriado?.(novo);
+    } catch (e) {
+      setErroCriar(e?.response?.data?.message ?? e?.message ?? "Erro ao criar produto.");
+    } finally {
+      setCriando(false);
+    }
+  };
 
   const handleSalvarEFechar = async (data) => {
     try {
       await handleSalvar(data);
       setEditMode(false);
     } catch {
-      // erro já capturado no hook e exposto via erroSalvar
+      // erro exposto via erroSalvar
     }
   };
 
-  const headerTitle = editMode ? (
-    <h2
-      className="text-base font-bold bg-clip-text text-transparent"
-      style={{ backgroundImage: `linear-gradient(to right, ${ACCENT.from}, ${ACCENT.to})` }}
-    >
-      Editar Produto
-    </h2>
-  ) : (produto?.nome ?? "Carregando…");
+  // ── Header ────────────────────────────────────────────────────────────────
 
-  const headerBadge = !editMode && produto ? (
+  const headerTitle = createMode
+    ? gradientTitle("Novo Produto")
+    : editMode
+    ? gradientTitle("Editar Produto")
+    : (produto?.nome ?? "Carregando…");
+
+  const headerBadge = !showForm && produto ? (
     <span
       className="text-[9px] font-bold px-2 py-0.5 rounded-md shrink-0"
       style={{ color, background: `${color}20`, border: `1px solid ${color}30` }}
@@ -209,13 +236,15 @@ export default function ProdutoDrawer({
     </span>
   ) : null;
 
-  const headerActions = editMode ? (
-    <button
-      onClick={() => setEditMode(false)}
-      className="text-xs text-slate-500 hover:text-white px-2 transition-colors"
-    >
-      Ver detalhes
-    </button>
+  const headerActions = showForm ? (
+    !createMode ? (
+      <button
+        onClick={() => setEditMode(false)}
+        className="text-xs text-slate-500 hover:text-white px-2 transition-colors"
+      >
+        Ver detalhes
+      </button>
+    ) : null
   ) : produto ? (
     <button
       onClick={() => setEditMode(true)}
@@ -225,6 +254,8 @@ export default function ProdutoDrawer({
     </button>
   ) : null;
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <>
       <Drawer onClose={onClose}>
@@ -233,10 +264,21 @@ export default function ProdutoDrawer({
           badge={headerBadge}
           actions={headerActions}
           onClose={onClose}
-          accentColor={color}
+          accentColor={createMode ? ACCENT.from : color}
         />
 
-        {loading ? (
+        {/* Create mode — form direto sem fetch */}
+        {createMode ? (
+          <div className="flex-1 overflow-y-auto p-5">
+            {erroCriar && <p className="text-red-400 text-xs mb-3">{erroCriar}</p>}
+            <ProdutoForm
+              initialData={null}
+              onSubmit={handleCriar}
+              onCancel={onClose}
+              loading={criando}
+            />
+          </div>
+        ) : loading ? (
           <LoadingSkeleton />
         ) : erro ? (
           <div className="flex-1 flex items-center justify-center p-5">

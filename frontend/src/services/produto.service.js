@@ -21,6 +21,9 @@ export const produtoService = {
   getDesempenho: (id, periodo) =>
     api.get(`/produtos/${id}/desempenho?periodo=${periodo}`).then((r) => r.data),
 
+  criar: (data) =>
+    api.post("/produtos", data).then((r) => r.data),
+
   update: (id, data) =>
     api.put(`/produtos/${id}`, data).then((r) => r.data),
 

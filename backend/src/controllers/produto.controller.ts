@@ -49,6 +49,16 @@ export const getTopPorCategoria = async (req: Request, res: Response): Promise<v
   }
 };
 
+export const criarProduto = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const produto = await ProdutoService.criarProduto(req.body);
+    res.status(201).json(produto);
+  } catch (error) {
+    console.error("Erro ao criar produto:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
 export const atualizarProduto = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = Number(req.params.id);

@@ -110,7 +110,7 @@ export const getMetricas = async (periodo: Periodo) => {
   const margemMedia =
     produtosComMargem.length > 0
       ? produtosComMargem.reduce(
-          (sum, p) => sum + (p.precoVenda - p.precoProducao!) / p.precoProducao! * 100,
+          (sum, p) => (sum) + ((p.precoVenda - p.precoProducao!) / p.precoProducao! * 100),
           0,
         ) / produtosComMargem.length
       : 0;
@@ -182,6 +182,32 @@ export const getMetricas = async (periodo: Periodo) => {
     maisLucrativo: { nome: maisLucrativoRow?.nome ?? "—", lucro: Number(maisLucrativoRow?.lucro ?? 0) },
     campeaoVendas: { nome: campeaoAtual[0]?.nome ?? "—", qtd: qtdAtual, variacao },
   };
+};
+
+export const criarProduto = async (data: {
+  nome: string;
+  descricao?: string;
+  categoria: string;
+  precoVenda: number;
+  precoProducao?: number;
+  tempoPreparoEstimado?: number;
+  ingredientes?: { ingredienteId: number; quantidadeUsada: number }[];
+}) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const { ingredientes, ...campos } = data;
+  const novo = await prisma.produto.create({
+    data: {
+      ...campos as any,
+      restauranteId,
+      ativo:      true,
+      disponivel: true,
+      ...(ingredientes?.length && {
+        ingredientes: { create: ingredientes },
+      }),
+    },
+    select: { id: true },
+  });
+  return buscarProduto(novo.id);
 };
 
 export const atualizarProduto = async (

@@ -3,44 +3,12 @@ import { UserPlus, Users } from "lucide-react";
 import { useFuncionarios } from "../hooks/useFuncionario";
 import HeaderBar from "../components/Ui/HeaderBar";
 import Filter from "../components/Ui/Filter";
+import KpiSkeleton from "../components/Ui/KpiSkeleton";
+import EmptyState from "../components/Ui/EmptyState";
+import ErrorAlert from "../components/Ui/ErrorAlert";
 import FuncionarioCard from "../components/Funcionario/FuncionarioCard";
 import FuncionarioDrawer from "../components/Funcionario/FuncionarioDrawer";
 import { STATUS_FILTERS } from "../constants";
-
-const EmptyState = ({ search, onClear }) => (
-  <div className="col-span-2 flex flex-col items-center justify-center py-20 text-center">
-    <div className="w-14 h-14 rounded-2xl bg-slate-800/50 border border-slate-700/30 flex items-center justify-center mb-4">
-      <Users size={24} className="text-slate-600" />
-    </div>
-    <p className="text-slate-400 font-medium text-sm">
-      {search
-        ? `Nenhum funcionário encontrado para "${search}"`
-        : "Nenhum funcionário cadastrado ainda"}
-    </p>
-    {search && (
-      <button
-        onClick={onClear}
-        className="mt-3 text-xs text-amber-400 hover:text-amber-300 transition-colors"
-      >
-        Limpar busca
-      </button>
-    )}
-  </div>
-);
-
-const CardSkeleton = () => (
-  <div className="bg-slate-900/60 border border-slate-800/50 rounded-2xl overflow-hidden animate-pulse">
-    <div className="h-0.5 w-full bg-slate-800" />
-    <div className="p-5 flex items-center gap-4">
-      <div className="w-14 h-14 rounded-full bg-slate-800 shrink-0" />
-      <div className="flex-1 space-y-2">
-        <div className="h-3.5 bg-slate-800 rounded w-2/3" />
-        <div className="h-3 bg-slate-800 rounded w-1/3" />
-        <div className="h-5 bg-slate-800 rounded-full w-16 mt-2" />
-      </div>
-    </div>
-  </div>
-);
 
 // null = fechado, 'new' = criar, number = ver/editar
 const Funcionarios = () => {
@@ -78,14 +46,7 @@ const Funcionarios = () => {
         </div>
       )}
 
-      {error && (
-        <div className="mb-6 bg-red-500/10 border border-red-400/30 rounded-xl px-4 py-3">
-          <p className="text-red-300 text-sm flex items-center gap-2">
-            <span>⚠️</span>
-            {error}
-          </p>
-        </div>
-      )}
+      {error && <ErrorAlert message={error} className="mb-6" />}
 
       <div className="mb-6">
         <Filter
@@ -98,13 +59,19 @@ const Funcionarios = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         {isLoading ? (
           <>
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
+            <KpiSkeleton variant="card" />
+            <KpiSkeleton variant="card" />
+            <KpiSkeleton variant="card" />
+            <KpiSkeleton variant="card" />
           </>
         ) : funcionarios.length === 0 ? (
-          <EmptyState search={search} onClear={() => setSearch("")} />
+          <EmptyState
+            icon={Users}
+            message={search ? `Nenhum funcionário encontrado para "${search}"` : "Nenhum funcionário cadastrado ainda"}
+            actionLabel={search ? "Limpar busca" : undefined}
+            onAction={search ? () => setSearch("") : undefined}
+            className="col-span-2 py-20"
+          />
         ) : (
           funcionarios.map((funcionario) => (
             <FuncionarioCard
