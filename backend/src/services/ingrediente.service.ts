@@ -45,6 +45,19 @@ export const criarIngrediente = async (data: {
   imagem?:         string;
 }) => {
   const restauranteId = RequestContext.getRestauranteId()!;
+
+  const existentes = await prisma.ingrediente.findMany({
+    where:  { restauranteId },
+    select: { nome: true },
+  });
+
+  const nomeLower = data.nome?.trim().toLowerCase();
+  if (existentes.some(i => i.nome.trim().toLowerCase() === nomeLower)) {
+    const err = new Error("Esse ingrediente já está presente no estoque.") as any;
+    err.statusCode = 409;
+    throw err;
+  }
+
   return prisma.ingrediente.create({
     data:   { ...(data as any), restauranteId },
     select: ingredienteSelect,
@@ -65,6 +78,17 @@ export const atualizarIngrediente = async (
   const restauranteId = RequestContext.getRestauranteId()!;
   const existe = await prisma.ingrediente.findFirst({ where: { id, restauranteId } });
   if (!existe) return null;
+
+  if (data.nome && data.nome.trim().toLowerCase() !== existe.nome.trim().toLowerCase()) {
+    const existentes = await prisma.ingrediente.findMany({
+      where:  { restauranteId, NOT: { id } },
+      select: { nome: true },
+    });
+    if (existentes.some(i => i.nome.trim().toLowerCase() === data.nome!.trim().toLowerCase())) {
+      throw Object.assign(new Error("Esse ingrediente já está presente no estoque."), { statusCode: 409 });
+    }
+  }
+
   return prisma.ingrediente.update({
     where:  { id },
     data:   data as any,

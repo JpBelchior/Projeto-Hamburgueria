@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import * as IngredienteService from "../services/ingrediente.service";
+import { isPrismaUniqueViolation } from "../utils/prisma-error";
 
-export const listarIngredientes = async (req: Request, res: Response): Promise<void> => {
+export const listarIngredientes = async (_req: Request, res: Response): Promise<void> => {
   try {
     const dados = await IngredienteService.listarIngredientes();
     res.json(dados);
@@ -30,7 +31,11 @@ export const criarIngrediente = async (req: Request, res: Response): Promise<voi
   try {
     const ingrediente = await IngredienteService.criarIngrediente(req.body);
     res.status(201).json(ingrediente);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.statusCode === 409 || isPrismaUniqueViolation(error)) {
+      res.status(409).json({ message: error.statusCode === 409 ? error.message : "Esse ingrediente já está presente no estoque." });
+      return;
+    }
     console.error("Erro ao criar ingrediente:", error);
     res.status(500).json({ message: "Erro interno do servidor." });
   }
@@ -45,7 +50,11 @@ export const atualizarIngrediente = async (req: Request, res: Response): Promise
       return;
     }
     res.json(ingrediente);
-  } catch (error) {
+  } catch (error: any) {
+    if (error.statusCode === 409 || isPrismaUniqueViolation(error)) {
+      res.status(409).json({ message: error.statusCode === 409 ? error.message : "Esse ingrediente já está presente no estoque." });
+      return;
+    }
     console.error("Erro ao atualizar ingrediente:", error);
     res.status(500).json({ message: "Erro interno do servidor." });
   }
@@ -66,7 +75,7 @@ export const deletarIngrediente = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getMetricas = async (req: Request, res: Response): Promise<void> => {
+export const getMetricas = async (_req: Request, res: Response): Promise<void> => {
   try {
     const dados = await IngredienteService.getMetricas();
     res.json(dados);

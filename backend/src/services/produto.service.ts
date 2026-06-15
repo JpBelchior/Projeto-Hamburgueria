@@ -194,6 +194,13 @@ export const criarProduto = async (data: {
   ingredientes?: { ingredienteId: number; quantidadeUsada: number }[];
 }) => {
   const restauranteId = RequestContext.getRestauranteId()!;
+
+  const duplicado = await prisma.produto.findFirst({ where: { nome: data.nome, restauranteId } });
+  if (duplicado) {
+    const err = Object.assign(new Error("Já existe um produto com esse nome no cardápio."), { statusCode: 409 });
+    throw err;
+  }
+
   const { ingredientes, ...campos } = data;
   const novo = await prisma.produto.create({
     data: {
@@ -226,6 +233,14 @@ export const atualizarProduto = async (
   const restauranteId = RequestContext.getRestauranteId()!;
   const existe = await prisma.produto.findFirst({ where: { id, restauranteId } });
   if (!existe) return null;
+
+  if (data.nome && data.nome !== existe.nome) {
+    const duplicado = await prisma.produto.findFirst({ where: { nome: data.nome, restauranteId, NOT: { id } } });
+    if (duplicado) {
+      const err = Object.assign(new Error("Já existe um produto com esse nome no cardápio."), { statusCode: 409 });
+      throw err;
+    }
+  }
 
   const { ingredientes, ...campos } = data;
 

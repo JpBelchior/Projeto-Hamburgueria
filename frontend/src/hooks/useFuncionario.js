@@ -53,5 +53,6 @@ export const useFuncionarios = () => {
     setSearch,
     filterStatus,
     setFilterStatus,
+    refetch: fetchFuncionarios,
   };
 };

@@ -52,7 +52,7 @@ export default function IngredienteForm({ initialData, onSubmit, onCancel, loadi
           <input
             className={inputCls}
             type="number"
-            step="0.01"
+            step="1"
             min="0"
             value={form.quantidadeAtual}
             onChange={set("quantidadeAtual")}
@@ -64,7 +64,7 @@ export default function IngredienteForm({ initialData, onSubmit, onCancel, loadi
           <input
             className={inputCls}
             type="number"
-            step="0.01"
+            step="1"
             min="0"
             value={form.estoqueMinimo}
             onChange={set("estoqueMinimo")}

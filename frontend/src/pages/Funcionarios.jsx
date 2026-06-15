@@ -24,6 +24,7 @@ const Funcionarios = () => {
     setSearch,
     filterStatus,
     setFilterStatus,
+    refetch,
   } = useFuncionarios();
 
   return (
@@ -31,6 +32,8 @@ const Funcionarios = () => {
       <HeaderBar
         title="Funcionários"
         subtitle="Gerencie a equipe e os níveis de acesso"
+        onRefresh={refetch}
+        refreshing={isLoading}
       />
 
       {!isLoading && (

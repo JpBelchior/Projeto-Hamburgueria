@@ -159,7 +159,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
           <input
             className={inputCls}
             type="number"
-            step="0.01"
+            step="1"
             min="0"
             value={form.precoVenda}
             onChange={set("precoVenda")}
@@ -171,7 +171,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
           <input
             className={inputCls}
             type="number"
-            step="0.01"
+            step="1"
             min="0"
             value={form.precoProducao}
             onChange={set("precoProducao")}

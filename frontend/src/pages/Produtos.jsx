@@ -30,9 +30,12 @@ export default function Produtos( ) {
   const [categoriaSel, setCategoriaSel] = useState("");
   const [drawerProdutoId, setDrawerProdutoId] = useState(null);
 
-  const { dados, loading, erro }                   = useProdutosMetricas(periodo);
-  const { dados: topCat, loading: topCatLoading, erro: topCatErro } = useProdutosTopCategoria(periodo);
-  const { dados: produtos, setDados: setProdutos, loading: prodLoading, erro: prodErro } = useProdutos(true);
+  const { dados, loading, erro, refetch: refetchMetricas }                                              = useProdutosMetricas(periodo);
+  const { dados: topCat, loading: topCatLoading, erro: topCatErro, refetch: refetchTopCat }            = useProdutosTopCategoria(periodo);
+  const { dados: produtos, setDados: setProdutos, loading: prodLoading, erro: prodErro, refetch: refetchProdutos } = useProdutos(true);
+
+  const handleRefresh = () => { refetchMetricas(); refetchTopCat(); refetchProdutos(); };
+  const refreshing    = loading || topCatLoading || prodLoading;
 
   const deltaLabel = PERIODOS.find((p) => p.value === periodo)?.vsLabel ?? "";
 
@@ -90,6 +93,8 @@ export default function Produtos( ) {
         period={periodo}
         setPeriod={setPeriodo}
         periods={PERIODOS}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
       />
 
       {erro && !loading && <ErrorAlert message={erro} />}

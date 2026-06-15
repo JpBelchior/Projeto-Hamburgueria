@@ -22,8 +22,11 @@ const Ingredientes = () => {
   const [essencialSel, setEssencialSel] = useState("");
   const [drawerIngredienteId, setDrawerIngredienteId] = useState(null);
 
-  const { dados, loading, erro } = useIngredientesMetricas();
-  const { dados: ingredientes, setDados: setIngredientes, loading: ingLoading, erro: ingErro } = useIngredientes();
+  const { dados, loading, erro, refetch: refetchMetricas }                                                          = useIngredientesMetricas();
+  const { dados: ingredientes, setDados: setIngredientes, loading: ingLoading, erro: ingErro, refetch: refetchIngredientes } = useIngredientes();
+
+  const handleRefresh = () => { refetchMetricas(); refetchIngredientes(); };
+  const refreshing    = loading || ingLoading;
 
   const ingredientesFiltrados = ingredientes.filter((ing) =>
     (essencialSel === "" || String(ing.essencial) === essencialSel) &&
@@ -47,6 +50,8 @@ const Ingredientes = () => {
       <HeaderBar
         title="Ingredientes"
         subtitle="Gerencie o estoque de ingredientes e matérias-primas"
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
       />
 
       {erro && !loading && <ErrorAlert message={erro} />}
