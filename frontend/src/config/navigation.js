@@ -6,6 +6,7 @@ import {
   Layers,
   BarChart2,
   UtensilsCrossed,
+  Receipt,
 } from "lucide-react";
 
 export const GERENTE_NAV = [
@@ -21,8 +22,9 @@ export const GERENTE_NAV = [
     items: [
       { label: "Produtos", icon: UtensilsCrossed, path: "/Dashboard/produtos" },
       { label: "Ingredientes", icon: Package, path: "/Dashboard/ingredientes" },
-      { label: "Combos e Promoções", icon: Layers, path: "/Dashboard/combos" },
+      { label: "Combos & Promoções", icon: Layers, path: "/Dashboard/combos" },
       { label: "Funcionários", icon: Users, path: "/Dashboard/funcionarios" },
+      { label: "Compras & Pagamentos", icon: Receipt, path: "/Dashboard/compras-pagamentos" },
     ],
   },
   {

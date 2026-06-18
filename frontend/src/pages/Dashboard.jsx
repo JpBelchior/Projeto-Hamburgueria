@@ -1,18 +1,15 @@
 import { useState, useCallback } from "react";
-import { DollarSign, ClipboardList, TrendingUp, Timer, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import ErrorAlert from "../components/Ui/ErrorAlert";
-import KpiCard from "../components/Ui/KpiCard";
 import KpiSkeleton from "../components/Ui/KpiSkeleton";
 import HeaderBar from "../components/Ui/HeaderBar";
+import DashboardKpis from "../components/Dashboard/DashboardKpis";
 import FinanceiroCard from "../components/Dashboard/FinanceiroCard";
 import SalesChart from "../components/Dashboard/SalesChart";
 import TopItens from "../components/Dashboard/TopItens";
 import CategoriaMix from "../components/Dashboard/CategoriaMix";
 import { useDashboard } from "../hooks/useDashboard";
-import { formatMoeda } from "../utils/Date.utils";
 import { PERIODOS } from "../constants";
-
-// ── Página ─────────────────────────────────────────────────────────────────
 
 const Dashboard = () => {
   const [periodo, setPeriodo] = useState("30dias");
@@ -26,56 +23,6 @@ const Dashboard = () => {
   const periodoAtual = PERIODOS.find((p) => p.value === periodo);
   const deltaLabel   = periodoAtual?.vsLabel ?? "";
   const vsHint       = periodoAtual?.vsHint  ?? "que o período anterior";
-
-  const deltaHint = (variacao, { invertido = false } = {}) => {
-    if (variacao === null)  return "Sem dados do período anterior para comparação";
-    if (variacao === 0)     return "Igual ao período anterior";
-    const abs = Math.abs(variacao).toFixed(1);
-    if (invertido) return variacao < 0 ? `${abs}% mais rápido ${vsHint}` : `${abs}% mais lento ${vsHint}`;
-    return variacao > 0 ? `${abs}% a mais ${vsHint}` : `${abs}% a menos ${vsHint}`;
-  };
-
-  const kpis = dados
-    ? [
-        {
-          icon:       DollarSign,
-          label:      "Faturamento",
-          value:      formatMoeda(dados.faturamento.valor),
-          delta:      dados.faturamento.variacao,
-          deltaLabel,
-          hint:       "Faturamento total dos pedidos no periodo selecionado",
-          deltaHint:  deltaHint(dados.faturamento.variacao),
-        },
-        {
-          icon:       ClipboardList,
-          label:      "Pedidos",
-          value:      String(dados.pedidos.valor),
-          delta:      dados.pedidos.variacao,
-          deltaLabel,
-          hint:       "Números de pedidos no periodo selecionado",
-          deltaHint:  deltaHint(dados.pedidos.variacao),
-        },
-        {
-          icon:       TrendingUp,
-          label:      "Ticket Médio",
-          value:      formatMoeda(dados.ticketMedio.valor),
-          delta:      dados.ticketMedio.variacao,
-          deltaLabel: `${deltaLabel} · faturamento ÷ pedidos`,
-          hint:       "Faturamento dividido pelo número de pedidos no periodo selecionado. ",
-          deltaHint:  deltaHint(dados.ticketMedio.variacao),
-        },
-        {
-          icon:       Timer,
-          label:      "Tempo Médio de Preparo",
-          value:      dados.tempoPreparo.valor > 0 ? `${dados.tempoPreparo.valor} min` : "—",
-          delta:      dados.tempoPreparo.variacao,
-          deltaLabel: `${deltaLabel} · só pedidos c/ Principal`,
-          hint:       "Calcula a média do tempo de perparo, apenas para pedidos que contêm um item Principal,  no periodo selecionado.",
-          deltaHint:  deltaHint(dados.tempoPreparo.variacao, { invertido: true }),
-          invertido:  true,
-        },
-      ]
-    : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -103,12 +50,10 @@ const Dashboard = () => {
       {erro && !loading && <ErrorAlert message={erro} />}
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
-          : kpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)
-        }
-      </div>
+      {loading
+        ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)}</div>
+        : dados && <DashboardKpis dados={dados} deltaLabel={deltaLabel} vsHint={vsHint} />
+      }
 
       {/* Análise Financeira */}
       <FinanceiroCard />

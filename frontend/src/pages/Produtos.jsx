@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LayoutGrid, TrendingUp, DollarSign, Flame, PackagePlus } from "lucide-react";
+import { filterByName } from "../utils/search";
 import HeaderBar from "../components/Ui/HeaderBar";
 import KpiCard from "../components/Ui/KpiCard";
 import KpiSkeleton from "../components/Ui/KpiSkeleton";
@@ -70,11 +71,8 @@ export default function Produtos( ) {
       ]
     : [];
 
-  const produtosFiltrados = produtos.filter(
-    (p) =>
-      (categoriaSel === "" || p.categoria === categoriaSel) &&
-      (busca === "" || p.nome.toLowerCase().includes(busca.toLowerCase())),
-  );
+  const produtosFiltrados = filterByName(produtos, busca)
+    .filter((p) => categoriaSel === "" || p.categoria === categoriaSel);
 
   const grupos =
     categoriaSel === ""

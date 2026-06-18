@@ -11,9 +11,12 @@ import Button from "./Button";
  *   tabs     {{ options, value, onChange }[]}     — um ou mais TabSelectors
  *   dirty    {boolean}                            — exibe botão "Limpar"
  *   onReset  {function}                           — limpa todos os filtros
- *   action   {{ label, icon, onClick }}           — botão de ação (direita)
+ *   action   {{ label, icon, onClick }}           — botão de ação único (direita)
+ *   actions  {{ label, icon, onClick }[]}         — múltiplos botões de ação (direita)
  */
-export default function Filter({ search, tabs = [], dirty, onReset, action }) {
+export default function Filter({ search, tabs = [], dirty, onReset, action, actions }) {
+  const actionList = actions ?? (action ? [action] : []);
+
   return (
     <div className="flex flex-wrap items-center gap-2 bg-slate-900/60 border border-slate-700/50 rounded-2xl px-4 py-3">
 
@@ -38,14 +41,16 @@ export default function Filter({ search, tabs = [], dirty, onReset, action }) {
 
       <div className="flex-1" />
 
-      {action && (
+      {actionList.length > 0 && (
         <>
           {tabs.length > 0 && (
             <div className="w-px h-5 bg-slate-700/60" />
           )}
-          <Button icon={action.icon} size="sm" onClick={action.onClick}>
-            {action.label}
-          </Button>
+          {actionList.map((a, i) => (
+            <Button key={i} icon={a.icon} size="sm" onClick={a.onClick}>
+              {a.label}
+            </Button>
+          ))}
         </>
       )}
 

@@ -5,10 +5,13 @@ import PedidosFilters from "../components/Pedidos/PedidosFilters";
 import PedidosKanban from "../components/Pedidos/PedidosKanban";
 import PedidosDrawer from "../components/Pedidos/PedidosDrawer";
 import { usePedidos } from "../hooks/usePedidos";
+import { usePedidosMetricas } from "../hooks/usePedidosMetricas";
 import { PERIODOS } from "../constants";
 
 export default function Pedidos() {
   const { filtered, loading, error, filters, drawer, tick, refetch, actions } = usePedidos();
+  const { dados: metricas } = usePedidosMetricas(filters.periodo);
+  const vsHint = PERIODOS.find((p) => p.value === filters.periodo)?.vsHint ?? "que o período anterior";
 
   return (
     <div className="flex flex-col gap-5">
@@ -24,7 +27,7 @@ export default function Pedidos() {
 
       {error && !loading && <ErrorAlert message={error} />}
 
-      <PedidosStats pedidos={filtered} />
+      <PedidosStats pedidos={filtered} metricas={metricas} vsHint={vsHint} />
 
       <PedidosFilters
         filters={filters}

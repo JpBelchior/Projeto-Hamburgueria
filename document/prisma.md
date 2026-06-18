@@ -1,93 +1,97 @@
-# 🗄️ Prisma — Manual de Comandos Úteis
+# Prisma — Referência de Comandos
 
-Referência rápida para migrations e seeds no Prisma ORM.
+Referência rápida para migrations, seeds e geração do client no projeto.
 
 ---
 
-## 📋 Pré-requisitos
+## Pré-requisitos
 
-Certifique-se de que o arquivo `.env` contém a variável de conexão com o banco:
+O arquivo `.env` em `backend/` precisa da variável de conexão:
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+DATABASE_URL="mysql://user:password@localhost:3306/hamburgueria"
 ```
 
 ---
 
-## 🔄 Migrations
+## Estrutura do schema
 
-### Criar e aplicar uma migration (desenvolvimento)
-```bash
-npx prisma migrate dev --name nome_da_migration
+O projeto usa **multi-file schema** — todos os modelos ficam em arquivos separados dentro de `backend/prisma/schema/`:
+
 ```
-> Cria o arquivo SQL em `prisma/migrations/` e aplica no banco automaticamente.
-
----
-
-### Aplicar migrations pendentes (produção)
-```bash
-npx prisma migrate deploy
-```
-> Aplica todas as migrations ainda não executadas. Ideal para CI/CD.
-
----
-
-### Ver status das migrations
-```bash
-npx prisma migrate status
-```
-> Lista quais migrations foram aplicadas e quais estão pendentes.
-
----
-
-### Resetar o banco ⚠️
-```bash
-npx prisma migrate reset
-```
-> **Apaga todos os dados**, recria o banco do zero e reaaplica todas as migrations.
-> Também roda a seed automaticamente ao final.
-> **Use apenas em desenvolvimento!**
-
----
-
-### Gerar o Prisma Client
-```bash
-npx prisma generate
-```
-> Deve ser rodado sempre que houver mudanças no `schema.prisma`.
-
----
-
-## 🌱 Seed
-
-### Rodar a seed
-```bash
-npx prisma db seed
+prisma/schema/
+  base.prisma              ← generator + datasource
+  enums.prisma             ← Cargo, CategoriaProduct, StatusPedido, FormaPagamento, UnidadeMedida
+  user.prisma              ← User, UserRole
+  role.prisma              ← Role, RolePermission
+  permission.prisma        ← Permission
+  resource.prisma          ← Resource
+  restaurante.prisma       ← Restaurante
+  funcionario.prisma       ← Funcionario
+  produto.prisma           ← Produto, ProdutoIngrediente
+  ingrediente.prisma       ← Ingrediente
+  combo.prisma             ← Combo, ComboProduto
+  pedido.prisma            ← Pedido, PedidoItem
+  gasto_ingrediente.prisma ← GastoIngrediente, GastoIngredienteIngrediente
+  gasto_funcionario.prisma ← GastoFuncionario, GastoFuncionarioFuncionario
 ```
 
----
-
-### Configuração no `package.json`
-
-Declare o arquivo de seed no `package.json`:
+O `package.json` já aponta para a pasta:
 
 ```json
 "prisma": {
+  "schema": "prisma/schema",
   "seed": "ts-node prisma/seed.ts"
 }
 ```
 
-Alternativas para projetos com `tsx` ou `esm`:
-
-```json
-"prisma": {
-  "seed": "tsx prisma/seed.ts"
-}
-```
+Todos os comandos `npx prisma` abaixo funcionam sem `--schema` adicional graças a essa configuração.
 
 ---
 
-### Exemplo de `prisma/seed.ts`
+## Migrations
+
+### Criar e aplicar (desenvolvimento)
+```bash
+npx prisma migrate dev --name nome_da_migration
+```
+Cria o arquivo SQL em `prisma/migrations/` e aplica no banco. Roda a seed automaticamente se o banco for resetado.
+
+### Aplicar pendentes (produção)
+```bash
+npx prisma migrate deploy
+```
+Aplica todas as migrations ainda não executadas. Use em CI/CD.
+
+### Ver status
+```bash
+npx prisma migrate status
+```
+
+### Resetar o banco
+```bash
+npx prisma migrate reset
+```
+**Apaga todos os dados**, recria do zero e reaaplica todas as migrations + seed. Use apenas em desenvolvimento.
+
+---
+
+## Client
+
+```bash
+npx prisma generate
+```
+Deve ser rodado após qualquer alteração em qualquer arquivo `.prisma`.
+
+---
+
+## Seed
+
+```bash
+npx prisma db seed
+```
+
+Exemplo mínimo de `prisma/seed.ts`:
 
 ```ts
 import { PrismaClient } from '@prisma/client'
@@ -99,6 +103,8 @@ async function main() {
     data: {
       name: 'Admin',
       email: 'admin@email.com',
+      cpf: '000.000.000-00',
+      password: 'hash_aqui',
     },
   })
 }
@@ -110,21 +116,27 @@ main()
 
 ---
 
-## 🗂️ Fluxo de Desenvolvimento
+## Studio (inspeção visual)
+
+```bash
+npx prisma studio
+```
+
+---
+
+## Fluxo de desenvolvimento
 
 ```
-1. Editar schema.prisma
+1. Editar o arquivo .prisma correspondente
         ↓
-2. npx prisma migrate dev --name descricao
+2. npx prisma migrate dev --name descricao_da_mudanca
         ↓
 3. npx prisma generate
         ↓
 4. npx prisma db seed   (se necessário)
 ```
 
----
-
-## 🚀 Fluxo de Produção
+## Fluxo de produção
 
 ```
 1. npx prisma migrate deploy
@@ -134,7 +146,7 @@ main()
 
 ---
 
-## 📌 Referência Rápida
+## Referência rápida
 
 | Comando | Descrição |
 |---|---|
@@ -145,7 +157,3 @@ main()
 | `prisma generate` | Gera o Prisma Client |
 | `prisma db seed` | Executa a seed |
 | `prisma studio` | Abre interface visual do banco |
-
----
-
-> 📚 Documentação oficial: [https://www.prisma.io/docs](https://www.prisma.io/docs)

@@ -14,6 +14,7 @@ model Ingrediente {
   restauranteId   Int
   restaurante     Restaurante          @relation(fields: [restauranteId], references: [id])
   produtos        ProdutoIngrediente[]
+  gastos          GastoIngredienteIngrediente[]
 
   @@unique([nome, restauranteId])
   @@map("ingredientes")

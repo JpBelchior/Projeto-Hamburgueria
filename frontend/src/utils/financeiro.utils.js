@@ -1,3 +1,8 @@
+export const calcDelta = (atual, anterior) => {
+  if (!anterior || anterior === 0) return undefined;
+  return ((atual - anterior) / anterior) * 100;
+};
+
 /**
  * Transforma o bloco `financeiro` retornado pela API em valores
  * prontos para exibição no FinanceiroCard.

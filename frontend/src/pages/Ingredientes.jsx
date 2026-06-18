@@ -10,16 +10,16 @@ import IngredienteCard from "../components/Ingredientes/IngredienteCard";
 import IngredienteDrawer from "../components/Ingredientes/IngredienteDrawer";
 import { useIngredientesMetricas } from "../hooks/useIngredientesMetricas";
 import { useIngredientes } from "../hooks/useIngredientes";
+import { useFilterState } from "../hooks/useFilterState";
+import { filterByName } from "../utils/search";
 
 const ESSENCIAL_TABS = [
-  { value: "",     label: "Todos" },
-  { value: "true", label: "Essenciais" },
+  { value: "",      label: "Todos"          },
+  { value: "true",  label: "Essenciais"     },
   { value: "false", label: "Não Essenciais" },
 ];
 
 const Ingredientes = () => {
-  const [busca, setBusca] = useState("");
-  const [essencialSel, setEssencialSel] = useState("");
   const [drawerIngredienteId, setDrawerIngredienteId] = useState(null);
 
   const { dados, loading, erro, refetch: refetchMetricas }                                                          = useIngredientesMetricas();
@@ -28,21 +28,21 @@ const Ingredientes = () => {
   const handleRefresh = () => { refetchMetricas(); refetchIngredientes(); };
   const refreshing    = loading || ingLoading;
 
-  const ingredientesFiltrados = ingredientes.filter((ing) =>
-    (essencialSel === "" || String(ing.essencial) === essencialSel) &&
-    (busca === "" || ing.nome.toLowerCase().includes(busca.toLowerCase())),
-  );
+  const { filters, setFilter, dirty, reset: handleReset } = useFilterState({ busca: "", essencialSel: "" });
+  const { busca, essencialSel } = filters;
+  const setBusca       = setFilter("busca");
+  const setEssencialSel = setFilter("essencialSel");
+
+  const ingredientesFiltrados = filterByName(ingredientes, busca)
+    .filter((ing) => essencialSel === "" || String(ing.essencial) === essencialSel);
 
   const grupos =
     essencialSel !== ""
       ? [{ essencial: essencialSel === "true", items: ingredientesFiltrados }]
       : [
-          { essencial: true,  items: ingredientesFiltrados.filter((i) => i.essencial) },
+          { essencial: true,  items: ingredientesFiltrados.filter((i) => i.essencial)  },
           { essencial: false, items: ingredientesFiltrados.filter((i) => !i.essencial) },
         ].filter((g) => g.items.length > 0);
-
-  const dirty = busca !== "" || essencialSel !== "";
-  const handleReset = () => { setBusca(""); setEssencialSel(""); };
 
   return (
     <>
@@ -81,8 +81,9 @@ const Ingredientes = () => {
           <Filter
             search={{ value: busca, onChange: setBusca, placeholder: "Buscar ingrediente..." }}
             tabs={[{ options: ESSENCIAL_TABS, value: essencialSel, onChange: setEssencialSel }]}
+            dirty={dirty}
             onReset={handleReset}
-            action={{ label: "Criar Ingrediente", icon: PackagePlus, onClick: () => setDrawerIngredienteId("new") }}
+            action={{ label: "Novo Ingrediente", icon: PackagePlus, onClick: () => setDrawerIngredienteId("new") }}
           />
         </div>
 

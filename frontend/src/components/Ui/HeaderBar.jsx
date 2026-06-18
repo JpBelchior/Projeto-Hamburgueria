@@ -24,6 +24,7 @@ export default function HeaderBar({
   periods = [],
   onRefresh,
   refreshing,
+  rightSlot,
 }) {
   const now     = new Date();
   const dataStr = now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
@@ -66,12 +67,14 @@ export default function HeaderBar({
           </p>
         </div>
 
-        {(showPeriods || onRefresh) && (
+        {(rightSlot || showPeriods || onRefresh) && (
           <div className="flex items-center gap-2">
 
             {showPeriods && (
               <TabSelector options={periods} value={period} onChange={setPeriod} />
             )}
+
+            {rightSlot}
 
             {onRefresh && (
               <Button variant="ghost" size="sm" onClick={onRefresh} disabled={refreshing}>

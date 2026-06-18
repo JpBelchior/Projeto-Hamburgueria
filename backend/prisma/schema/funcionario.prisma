@@ -14,6 +14,7 @@ model Funcionario {
   restaurante  Restaurante @relation(fields: [restauranteId], references: [id])
   user         User        @relation(fields: [userId], references: [id])
   pedidos      Pedido[]
+  gastos       GastoFuncionarioFuncionario[]
 
   @@map("funcionarios")
 }

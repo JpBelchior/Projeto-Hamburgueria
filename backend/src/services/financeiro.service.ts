@@ -48,23 +48,22 @@ async function calcCustoIngredientes(
   return agg._sum.valor ?? 0;
 }
 
-async function calcCustoSalarios(
+async function calcCustoFuncionarios(
   restauranteId: number,
   tipo: TipoFinanceiro,
   mes: number,
   ano: number,
 ): Promise<number> {
-  if (tipo === "mensal") {
-    const gasto = await prisma.gastoMensal.findUnique({
-      where: { mes_ano_restauranteId: { mes, ano, restauranteId } },
-    });
-    return gasto?.totalSalarios ?? 0;
-  }
+  const where =
+    tipo === "mensal"
+      ? { restauranteId, mes, ano }
+      : { restauranteId, ano };
 
-  const gastos = await prisma.gastoMensal.findMany({
-    where: { restauranteId, ano },
+  const agg = await prisma.gastoFuncionario.aggregate({
+    where,
+    _sum: { valor: true },
   });
-  return gastos.reduce((acc, g) => acc + g.totalSalarios, 0);
+  return agg._sum.valor ?? 0;
 }
 
 export const getMetricasFinanceiro = async (
@@ -75,22 +74,20 @@ export const getMetricasFinanceiro = async (
   const restauranteId = RequestContext.getRestauranteId()!;
   const range = getRange(tipo, mes, ano);
 
-  const [receita, custoIngredientes, custoSalarios] = await Promise.all([
+  const [receita, custoIngredientes, custoFuncionarios] = await Promise.all([
     calcReceita(restauranteId, range),
     calcCustoIngredientes(restauranteId, tipo, mes, ano),
-    calcCustoSalarios(restauranteId, tipo, mes, ano),
+    calcCustoFuncionarios(restauranteId, tipo, mes, ano),
   ]);
 
-  const custoTotal = Math.round((custoIngredientes + custoSalarios) * 100) / 100;
+  const custoTotal = Math.round((custoIngredientes + custoFuncionarios) * 100) / 100;
   const margem     = Math.round((receita - custoTotal) * 100) / 100;
-
-  // Verifica se há dados de custo registrados para o período
-  const gastoCadastrado = custoIngredientes > 0 || custoSalarios > 0;
+  const gastoCadastrado = custoIngredientes > 0 || custoFuncionarios > 0;
 
   return {
-    receita:           Math.round(receita           * 100) / 100,
-    custoIngredientes: Math.round(custoIngredientes * 100) / 100,
-    custoSalarios:     Math.round(custoSalarios     * 100) / 100,
+    receita:            Math.round(receita            * 100) / 100,
+    custoIngredientes:  Math.round(custoIngredientes  * 100) / 100,
+    custoFuncionarios:  Math.round(custoFuncionarios  * 100) / 100,
     custoTotal,
     margem,
     gastoCadastrado,

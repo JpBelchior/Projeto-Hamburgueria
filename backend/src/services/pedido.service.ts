@@ -32,7 +32,14 @@ async function calcMetricas(restauranteId: number, range: DateRange) {
       ...where,
       tempoInicioPreparo: { not: null },
       tempoFimPreparo:    { not: null },
-      itens: { some: { produto: { categoria: CategoriaProduct.PRINCIPAL } } },
+      itens: {
+        some: {
+          OR: [
+            { produto: { categoria: CategoriaProduct.PRINCIPAL } },
+            { combo: { produtos: { some: { produto: { categoria: CategoriaProduct.PRINCIPAL } } } } },
+          ],
+        },
+      },
     },
     select: { tempoInicioPreparo: true, tempoFimPreparo: true },
   });
@@ -257,7 +264,7 @@ const pedidoInclude = {
           produtos: {
             select: {
               quantidade: true,
-              produto: { select: { nome: true } },
+              produto: { select: { nome: true, categoria: true } },
             },
           },
         },
@@ -420,15 +427,53 @@ export const getMetricas = async (periodo: Periodo) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const { atual, anterior } = getRanges(periodo);
 
-  const [m1, m2] = await Promise.all([
-    calcMetricas(restauranteId, atual),
-    calcMetricas(restauranteId, anterior),
+  type TopRow = { nome: string; qtd: bigint | number };
+
+  const [[m1, m2], maisVendidoRows] = await Promise.all([
+    Promise.all([
+      calcMetricas(restauranteId, atual),
+      calcMetricas(restauranteId, anterior),
+    ]),
+    prisma.$queryRaw<TopRow[]>`
+      SELECT nome, qtd FROM (
+        SELECT p.nome, SUM(pi.quantidade) AS qtd
+        FROM pedido_itens pi
+        JOIN produtos p   ON p.id   = pi.produtoId
+        JOIN pedidos  ped ON ped.id = pi.pedidoId
+        WHERE ped.restauranteId = ${restauranteId}
+          AND ped.status        = ${StatusPedido.FINALIZADO}
+          AND ped.createdAt    >= ${atual.inicio}
+          AND ped.createdAt     < ${atual.fim}
+          AND pi.produtoId IS NOT NULL
+        GROUP BY p.id, p.nome
+
+        UNION ALL
+
+        SELECT c.nome, SUM(pi.quantidade) AS qtd
+        FROM pedido_itens pi
+        JOIN combos  c   ON c.id   = pi.comboId
+        JOIN pedidos ped ON ped.id = pi.pedidoId
+        WHERE ped.restauranteId = ${restauranteId}
+          AND ped.status        = ${StatusPedido.FINALIZADO}
+          AND ped.createdAt    >= ${atual.inicio}
+          AND ped.createdAt     < ${atual.fim}
+          AND pi.comboId IS NOT NULL
+        GROUP BY c.id, c.nome
+      ) combined
+      ORDER BY qtd DESC
+      LIMIT 1
+    `,
   ]);
+
+  const maisVendido = maisVendidoRows[0]
+    ? { nome: maisVendidoRows[0].nome, qtd: Number(maisVendidoRows[0].qtd) }
+    : null;
 
   return {
     faturamento:  { valor: m1.faturamento,                          variacao: calcVariacao(m1.faturamento,  m2.faturamento)  },
     pedidos:      { valor: m1.pedidos,                              variacao: calcVariacao(m1.pedidos,      m2.pedidos)      },
     ticketMedio:  { valor: Math.round(m1.ticketMedio  * 100) / 100, variacao: calcVariacao(m1.ticketMedio,  m2.ticketMedio)  },
-    tempoPreparo: { valor: Math.round(m1.tempoPreparo * 10)  / 10,  variacao: calcVariacao(m1.tempoPreparo, m2.tempoPreparo) },
+    tempoPreparo: { variacao: calcVariacao(m1.tempoPreparo, m2.tempoPreparo) },
+    maisVendido,
   };
 };

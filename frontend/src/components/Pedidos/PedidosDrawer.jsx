@@ -154,17 +154,22 @@ function DetalheView({ pedido }) {
           {(pedido.itens ?? []).map((item, idx) => {
             const nome = item.produto?.nome ?? item.combo?.nome ?? `Item ${idx + 1}`;
             return (
-              <div key={item.id ?? idx} className="flex items-center justify-between gap-3 py-1.5 border-b border-slate-800/60 last:border-0">
-                <div className="flex-1 min-w-0">
-                  <span className="text-white text-xs">{item.quantidade}× {nome}</span>
-                  <ComboProdutosLista produtos={item.combo?.produtos} />
-                  {item.observacao && (
-                    <p className="text-slate-500 text-[10px] truncate">{item.observacao}</p>
-                  )}
+              <div key={item.id ?? idx} className="flex flex-col gap-1.5 py-2 border-b border-slate-800/60 last:border-0">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-white text-xs">{item.quantidade}× {nome}</span>
+                    <ComboProdutosLista produtos={item.combo?.produtos} />
+                  </div>
+                  <span className="text-slate-300 text-xs tabular-nums shrink-0">
+                    {fmtBRL(item.quantidade * item.precoUnitario)}
+                  </span>
                 </div>
-                <span className="text-slate-300 text-xs tabular-nums shrink-0">
-                  {fmtBRL(item.quantidade * item.precoUnitario)}
-                </span>
+                {item.observacao && (
+                  <div className=" px-3 mt-4">
+                    <p className="text-white py-1">Observação:</p>
+                    <p className=" px-2 ml-1 text-slate-300 py-1.5 border-2 border-amber-500/20 rounded-lg text-xs leading-relaxed">{item.observacao}</p>
+                  </div>
+                )}
               </div>
             );
           })}

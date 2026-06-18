@@ -2,18 +2,13 @@
 
 ## Como visualizar
 
-### Opção 1 — mermaid.live (mais fácil, sem instalar nada)
+### Opção 1 — mermaid.live (sem instalar nada)
 1. Acesse **https://mermaid.live**
 2. Apague o conteúdo do painel esquerdo
-3. Cole o código Mermaid abaixo (só o bloco de código, sem os três backticks)
+3. Cole o bloco Mermaid abaixo (sem os três backticks)
 4. O diagrama aparece ao vivo no painel direito
-5. Botão **Download SVG** ou **PNG** para salvar
 
-### Opção 2 — draw.io com arquivo importado
-1. Acesse **https://mermaid.live**, cole o código e clique em **Export → PNG/SVG**
-2. No draw.io: **File → Import → From This Device** e selecione o SVG exportado
-
-### Opção 3 — VS Code
+### Opção 2 — VS Code
 Instale a extensão **Markdown Preview Mermaid Support** (`bierner.markdown-mermaid`) e pressione `Ctrl+Shift+V` neste arquivo.
 
 ---
@@ -23,21 +18,25 @@ erDiagram
 
   %% ── AUTENTICAÇÃO ────────────────────────────────────────────
   User {
-    Int     id          PK
-    String  name
-    String  cpf         UK
-    String  email       UK
-    String  telefone
-    String  password
-    Boolean active
-    String  refreshToken
+    Int      id           PK
+    String   name
+    String   cpf          UK
+    String   email        UK
+    String   telefone     "optional"
+    String   password
+    Boolean  active
+    String   refreshToken "optional"
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   Role {
-    Int     id          PK
-    String  name        UK
-    String  description
-    Boolean active
+    Int      id          PK
+    String   name        UK
+    String   description "optional"
+    Boolean  active
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   Resource {
@@ -46,9 +45,12 @@ erDiagram
   }
 
   Permission {
-    Int    id         PK
-    String action
-    Int    resourceId FK
+    Int      id          PK
+    String   action
+    String   description "optional"
+    Int      resourceId  FK
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   UserRole {
@@ -67,13 +69,15 @@ erDiagram
 
   %% ── RESTAURANTE / TENANT ─────────────────────────────────────
   Restaurante {
-    Int     id       PK
-    String  nome
-    String  cnpj     UK
-    String  email    UK
-    String  telefone
-    String  endereco
-    Boolean active
+    Int      id        PK
+    String   nome
+    String   cnpj      UK
+    String   email     UK
+    String   telefone  "optional"
+    String   endereco  "optional"
+    Boolean  active
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   Funcionario {
@@ -84,47 +88,55 @@ erDiagram
     Float    salario
     DateTime dataAdmissao
     Boolean  active
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   %% ── CARDÁPIO ─────────────────────────────────────────────────
   Produto {
-    Int     id                   PK
-    Int     restauranteId        FK
-    String  nome
-    String  descricao
-    String  categoria
-    Float   precoVenda
-    Float   precoProducao
-    Float   desconto
-    Int     tempoPreparoEstimado
-    Boolean ativo
-    Boolean disponivel
-    String  imagem
+    Int      id                   PK
+    Int      restauranteId        FK
+    String   nome
+    String   descricao            "optional"
+    String   categoria
+    Float    precoVenda
+    Float    precoProducao        "optional"
+    Float    desconto
+    Int      tempoPreparoEstimado "optional"
+    Boolean  ativo
+    Boolean  disponivel
+    String   imagem               "optional"
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   Ingrediente {
-    Int     id            PK
-    Int     restauranteId FK
-    String  nome
-    Float   quantidadeAtual
-    String  unidade
-    Boolean essencial
-    Float   estoqueMinimo
-    String  imagem
+    Int      id              PK
+    Int      restauranteId   FK
+    String   nome
+    Float    quantidadeAtual
+    String   unidade
+    Boolean  essencial
+    Float    estoqueMinimo   "optional"
+    String   imagem          "optional"
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   ProdutoIngrediente {
-    Int   produtoId     FK
-    Int   ingredienteId FK
+    Int   produtoId       FK
+    Int   ingredienteId   FK
     Float quantidadeUsada
   }
 
   Combo {
-    Int     id            PK
-    Int     restauranteId FK
-    String  nome
-    Float   preco
-    Boolean ativo
+    Int      id            PK
+    Int      restauranteId FK
+    String   nome
+    Float    preco
+    Boolean  ativo
+    DateTime createdAt
+    DateTime updatedAt
   }
 
   ComboProduto {
@@ -139,75 +151,97 @@ erDiagram
     Int      restauranteId      FK
     Int      funcionarioId      FK
     String   numeroPedido
-    String   nomeCliente
+    String   nomeCliente        "optional"
     String   status
-    String   formaPagamento
+    String   formaPagamento     "optional"
     Float    valorTotal
-    DateTime tempoInicioPreparo
-    DateTime tempoFimPreparo
+    DateTime tempoInicioPreparo "optional"
+    DateTime tempoFimPreparo    "optional"
     DateTime createdAt
+    DateTime updatedAt
   }
 
   PedidoItem {
     Int    id            PK
     Int    pedidoId      FK
-    Int    produtoId     FK
-    Int    comboId       FK
+    Int    produtoId     FK "optional"
+    Int    comboId       FK "optional"
     Int    quantidade
     Float  precoUnitario
-    String observacao
+    String observacao    "optional"
   }
 
   %% ── FINANCEIRO ───────────────────────────────────────────────
   GastoIngrediente {
     Int      id            PK
     Int      restauranteId FK
+    String   nome
     Float    valor
-    String   descricao
+    String   descricao     "optional"
     Int      mes
     Int      ano
     DateTime createdAt
+    DateTime updatedAt
   }
 
-  GastoMensal {
+  GastoIngredienteIngrediente {
+    Int gastoIngredienteId FK
+    Int ingredienteId      FK
+  }
+
+  GastoFuncionario {
     Int      id            PK
     Int      restauranteId FK
+    String   nome
+    Float    valor
+    String   descricao     "optional"
     Int      mes
-    Float    totalSalarios
     Int      ano
     DateTime createdAt
+    DateTime updatedAt
+  }
+
+  GastoFuncionarioFuncionario {
+    Int gastoFuncionarioId FK
+    Int funcionarioId      FK
   }
 
   %% ── RELAÇÕES ─────────────────────────────────────────────────
 
   %% Auth
-  User         ||--o{ UserRole        : "tem roles"
-  Role         ||--o{ UserRole        : "atribuída a"
-  Role         ||--o{ RolePermission  : "tem permissões"
-  Permission   ||--o{ RolePermission  : "atribuída a"
-  Resource     ||--o{ Permission      : "define"
+  User         ||--o{ UserRole                    : "tem roles"
+  Role         ||--o{ UserRole                    : "atribuída a"
+  Role         ||--o{ RolePermission              : "tem permissões"
+  Permission   ||--o{ RolePermission              : "atribuída a"
+  Resource     ||--o{ Permission                  : "define"
 
   %% Restaurante (tenant raiz)
-  Restaurante  ||--o{ Funcionario      : "emprega"
-  Restaurante  ||--o{ Produto          : "oferece"
-  Restaurante  ||--o{ Ingrediente      : "estoca"
-  Restaurante  ||--o{ Combo            : "tem"
-  Restaurante  ||--o{ Pedido           : "recebe"
-  Restaurante  ||--o{ GastoIngrediente : "registra"
-  Restaurante  ||--o{ GastoMensal      : "consolida"
+  Restaurante  ||--o{ Funcionario                 : "emprega"
+  Restaurante  ||--o{ Produto                     : "oferece"
+  Restaurante  ||--o{ Ingrediente                 : "estoca"
+  Restaurante  ||--o{ Combo                       : "tem"
+  Restaurante  ||--o{ Pedido                      : "recebe"
+  Restaurante  ||--o{ GastoIngrediente            : "registra"
+  Restaurante  ||--o{ GastoFuncionario            : "registra"
 
   %% Funcionário
-  User         ||--|| Funcionario      : "é"
-  Funcionario  ||--o{ Pedido           : "atende"
+  User         ||--|| Funcionario                 : "é"
+  Funcionario  ||--o{ Pedido                      : "atende"
+  Funcionario  ||--o{ GastoFuncionarioFuncionario : "tem pagamentos"
 
   %% Cardápio
-  Produto      ||--o{ ProdutoIngrediente : "usa"
-  Ingrediente  ||--o{ ProdutoIngrediente : "compõe"
-  Combo        ||--o{ ComboProduto       : "contém"
-  Produto      ||--o{ ComboProduto       : "integra"
+  Produto      ||--o{ ProdutoIngrediente          : "usa"
+  Ingrediente  ||--o{ ProdutoIngrediente          : "compõe"
+  Combo        ||--o{ ComboProduto                : "contém"
+  Produto      ||--o{ ComboProduto                : "integra"
+  Ingrediente  ||--o{ GastoIngredienteIngrediente : "em compras"
 
   %% Pedidos
-  Pedido       ||--o{ PedidoItem : "contém"
-  Produto      ||--o{ PedidoItem : "vendido em"
-  Combo        ||--o{ PedidoItem : "vendido em"
+  Pedido       ||--o{ PedidoItem                  : "contém"
+  Produto      ||--o{ PedidoItem                  : "vendido em"
+  Combo        ||--o{ PedidoItem                  : "vendido em"
+
+  %% Financeiro
+  GastoIngrediente ||--o{ GastoIngredienteIngrediente : "registra"
+  GastoFuncionario ||--o{ GastoFuncionarioFuncionario : "registra"
 ```

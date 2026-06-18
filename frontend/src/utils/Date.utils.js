@@ -51,3 +51,6 @@ export const formatTelefone = (value) => {
   }
   return digits.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").replace(/-$/, "");
 };
+
+export const mesAnoAnterior = (mes, ano) =>
+  mes === 1 ? { mes: 12, ano: ano - 1 } : { mes: mes - 1, ano };

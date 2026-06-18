@@ -252,3 +252,84 @@ Login
 5. Usar `hasPermission("recurso:acao")` no frontend para esconder elementos
 
 Nenhuma alteração de middleware ou store é necessária.
+
+
+---
+
+## Módulo Compras & Pagamentos
+
+### Services — chamadas à API
+
+A lógica real fica em `gasto.service.js`, que expõe uma factory:
+
+```javascript
+// gasto.service.js
+const createGastoService = (endpoint) => ({
+  getAll: (mes, ano) => api.get(`${endpoint}?mes=${mes}&ano=${ano}`),
+  create: (payload)  => api.post(endpoint, payload),
+  update: (id, payload) => api.put(`${endpoint}/${id}`, payload),
+  remove: (id)       => api.delete(`${endpoint}/${id}`),
+});
+
+export const gastoIngredienteService = createGastoService("/gasto-ingredientes");
+export const gastoFuncionarioService  = createGastoService("/gasto-funcionarios");
+```
+
+`gasto_ingrediente.service.js` e `gasto_funcionario.service.js` são re-exports finos que apontam para os objetos acima.
+
+### Hooks — estado + CRUD reativo
+
+**`useGasto(service, mes, ano, onAlterado)`** — hook base compartilhado; expõe:
+
+| Campo / Função | Descrição |
+|---|---|
+| `gastos` | lista do mês selecionado |
+| `total` | soma dos valores |
+| `loading` | fetch em andamento |
+| `saving` | create/update/delete em andamento |
+| `editandoId` / `setEditandoId` | controle de qual card está em modo edição |
+| `add(nome, valor, descricao, idsPayload)` | cria e refetch |
+| `edit(id, nome, valor, descricao, idsPayload)` | atualiza e refetch |
+| `remove(id)` | deleta e refetch |
+| `refresh()` | refetch manual |
+
+**`useGastoIngrediente(mes, ano, onAlterado)`** — wrapper que injeta `{ ingredienteIds }` no `idsPayload`:
+- `add(nome, valor, descricao, ingredienteIds)`
+- `edit(id, nome, valor, descricao, ingredienteIds)`
+
+**`useGastoFuncionario(mes, ano, onAlterado)`** — wrapper idêntico com `{ funcionarioIds }`:
+- `add(nome, valor, descricao, funcionarioIds)`
+- `edit(id, nome, valor, descricao, funcionarioIds)`
+
+### Componentes
+
+**`GastoCard({ gasto, tipo })`** — card visual de um lançamento.
+- `tipo`: `"ingrediente"` | `"funcionario"` — determina badge, cor e legenda do contador.
+- Header: badge de tipo + nome + mês/ano.
+- Body: `gasto.descricao` (opcional, truncado em 2 linhas).
+- Footer: contagem de ingredientes ou funcionários vinculados + valor formatado em BRL.
+
+### Páginas
+
+**`ComprasPagamentos`** — página principal do módulo.
+
+Instancia **4 hooks** para KPIs com comparativo:
+```javascript
+const ing      = useGastoIngrediente(mes,      ano,      undefined);
+const ingPrev  = useGastoIngrediente(prev.mes, prev.ano, undefined);
+const func     = useGastoFuncionario(mes,      ano,      undefined);
+const funcPrev = useGastoFuncionario(prev.mes, prev.ano, undefined);
+```
+
+Filtros via `useFilterState({ busca, filtro })` — `filtro` é uma das abas `todos | ingrediente | funcionario`.
+
+Busca aplicada via `filterByName` (utilitário em `search.js`).
+
+Renderiza: `MonthYearSelector` no header, 2 `KpiCard` com delta vs mês anterior, `Filter` com busca + abas + botões de ação, grupos de `GastoCard` por tipo.
+
+**`FinanceiroCard`** — widget do Dashboard.
+
+Consome `useFinanceiro(tipo, mes, ano)` — retorna `{ dados, loading, erro }` onde `dados` inclui:
+`custoIngredientes`, `custoFuncionarios`, `custoTotal`, `receita`, `margem`, `gastoCadastrado`.
+
+Exibe: seletor Mensal/Anual + `MonthYearSelector`, MetricBox de custo total e margem bruta, barra de composição do custo (ingredientes vs funcionários), linha de receita do período.

@@ -56,6 +56,13 @@ export const FORMAS_PAGAMENTO = [
   { value: "CARTAO_DEBITO",  label: "Cartão Débito"  },
 ];
 
+// Anos disponíveis nos seletores (ano atual e 4 anteriores)
+export const ANOS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+
+// Classe padrão dos selects de mês/ano no header
+export const SELECT_CLASS =
+  "bg-slate-800/70 border border-slate-700/50 text-slate-300 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500/50";
+
 // Meses do ano
 export const MESES = [
   { value: 1,  label: "Janeiro"   },

@@ -1,14 +1,47 @@
-import { DollarSign, ClipboardList, TrendingUp } from "lucide-react";
+import { Timer, ClipboardList, TrendingUp } from "lucide-react";
 import { fmtBRL, STATUS_COLOR, STATUS_LABEL } from "../../utils/format";
 import CardContainer from "../Ui/CardContainer";
 import KpiCard from "../Ui/KpiCard";
 import { STATUS_COLS } from "../../constants";
 
-export default function PedidosStats({ pedidos }) {
+function mkHint(variacao, vsHint, { invertido = false } = {}) {
+  if (variacao == null) return "Sem dados do período anterior para comparação";
+  if (variacao === 0)   return "Igual ao período anterior";
+  const abs = Math.abs(variacao).toFixed(1);
+  if (invertido) return variacao < 0 ? `${abs}% mais rápido ${vsHint}` : `${abs}% mais lento ${vsHint}`;
+  return variacao > 0 ? `${abs}% a mais ${vsHint}` : `${abs}% a menos ${vsHint}`;
+}
+
+export default function PedidosStats({ pedidos, metricas, vsHint = "que o período anterior" }) {
   const ativos      = pedidos.filter((p) => p.status !== "CANCELADO");
   const faturamento = ativos.reduce((s, p) => s + p.valorTotal, 0);
   const ticketMedio = ativos.length > 0 ? faturamento / ativos.length : 0;
   const total       = pedidos.length;
+
+  const comTempo = pedidos.filter(
+    (p) =>
+      p.status === "FINALIZADO" &&
+      p.tempoInicioPreparo &&
+      p.tempoFimPreparo &&
+      p.itens?.some(
+        (item) =>
+          item.produto?.categoria === "PRINCIPAL" ||
+          item.combo?.produtos?.some((cp) => cp.produto?.categoria === "PRINCIPAL"),
+      ),
+  );
+  const tempoPreparo =
+    comTempo.length === 0
+      ? 0
+      : Math.round(
+          (comTempo.reduce(
+            (acc, p) =>
+              acc +
+              (new Date(p.tempoFimPreparo).getTime() - new Date(p.tempoInicioPreparo).getTime()) / 60_000,
+            0,
+          ) /
+            comTempo.length) *
+            10,
+        ) / 10;
 
   const contagem = STATUS_COLS.reduce((acc, s) => {
     acc[s] = pedidos.filter((p) => p.status === s).length;
@@ -17,9 +50,32 @@ export default function PedidosStats({ pedidos }) {
 
   return (
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-      <KpiCard size="compact" icon={ClipboardList} label="Pedidos no período" value={String(total)}     deltaLabel={`${ativos.length} ativos`} />
-      <KpiCard size="compact" icon={DollarSign}    label="Faturamento"        value={fmtBRL(faturamento)} deltaLabel="exclui cancelados" />
-      <KpiCard size="compact" icon={TrendingUp}    label="Ticket Médio"       value={fmtBRL(ticketMedio)} deltaLabel="por pedido" />
+      <KpiCard
+        icon={ClipboardList}
+        label="Pedidos no período"
+        value={String(total)}
+        deltaLabel={`${ativos.length} ativos`}
+        delta={metricas?.pedidos?.variacao}
+        deltaHint={metricas ? mkHint(metricas.pedidos.variacao, vsHint) : undefined}
+      />
+      <KpiCard
+        icon={TrendingUp}
+        label="Ticket Médio"
+        value={fmtBRL(ticketMedio)}
+        deltaLabel="por pedido"
+        delta={metricas?.ticketMedio?.variacao}
+        deltaHint={metricas ? mkHint(metricas.ticketMedio.variacao, vsHint) : undefined}
+      />
+      <KpiCard
+        icon={Timer}
+        label="Tempo Médio de Preparo"
+        value={tempoPreparo > 0 ? `${tempoPreparo} min` : "—"}
+        deltaLabel={comTempo.length > 0 ? `${comTempo.length} pedidos c/ Principal` : "sem dados"}
+        hint="Média do tempo entre o pedido entrar em preparo e ser finalizado, contando apenas pedidos com ao menos um item da categoria Principal."
+        delta={metricas?.tempoPreparo?.variacao}
+        deltaHint={metricas ? mkHint(metricas.tempoPreparo?.variacao, vsHint, { invertido: true }) : undefined}
+        invertido
+      />
 
       {/* Mix por status */}
       <CardContainer className="hover:border-slate-600 transition-all relative">

@@ -7,6 +7,7 @@ import pedidoRoutes from "./pedido/pedido.routes";
 import produtoRoutes from "./produto/produto.routes";
 import comboRoutes   from "./combo/combo.routes";
 import gastoIngredienteRoutes from "./gasto_ingrediente/gasto_ingrediente.routes";
+import gastoFuncionarioRoutes from "./gasto_funcionario/gasto_funcionario.routes";
 import financeiroRoutes from "./financeiro/financeiro.routes";
 import ingredienteRoutes from "./ingrediente/ingrediente.routes";
 
@@ -20,6 +21,7 @@ protectedRoutes.use("/funcionarios",       funcionarioRoutes);
 protectedRoutes.use("/produtos",           produtoRoutes);
 protectedRoutes.use("/combos",             comboRoutes);
 protectedRoutes.use("/pedidos",            pedidoRoutes);
-protectedRoutes.use("/gasto-ingredientes", gastoIngredienteRoutes);
+protectedRoutes.use("/gasto-ingredientes",  gastoIngredienteRoutes);
+protectedRoutes.use("/gasto-funcionarios",  gastoFuncionarioRoutes);
 protectedRoutes.use("/financeiro",         financeiroRoutes);
 protectedRoutes.use("/ingredientes",       ingredienteRoutes);

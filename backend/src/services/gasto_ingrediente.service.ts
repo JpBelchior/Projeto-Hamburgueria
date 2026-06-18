@@ -1,71 +1,171 @@
 import { RequestContext } from "../utils/request-context";
 import prisma from "../config/prisma";
 
+const includeIngredientes = {
+  ingredientes: {
+    include: {
+      ingrediente: { select: { id: true, nome: true, unidade: true } },
+    },
+  },
+};
+
+export const findAll = async () => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const gastos = await prisma.gastoIngrediente.findMany({
+    where: { restauranteId },
+    orderBy: { createdAt: "desc" },
+    include: includeIngredientes,
+  });
+  const total = gastos.reduce((acc, g) => acc + g.valor, 0);
+  return { gastos, total };
+};
+
 export const findByMesAno = async (mes: number, ano: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const gastos = await prisma.gastoIngrediente.findMany({
     where: { restauranteId, mes, ano },
     orderBy: { createdAt: "desc" },
+    include: includeIngredientes,
   });
   const total = gastos.reduce((acc, g) => acc + g.valor, 0);
   return { gastos, total };
 };
 
 export const create = async (data: {
+  nome: string;
   valor: number;
   descricao?: string;
   mes: number;
   ano: number;
+  ingredientes?: { id: number; quantidade: number }[];
 }) => {
   const restauranteId = RequestContext.getRestauranteId()!;
+  const { ingredientes, ...rest } = data;
 
-  const gasto = await prisma.gastoIngrediente.create({
-    data: { ...data, restauranteId },
-  });
-
-  // Cria snapshot de salários se ainda não existe GastoMensal para este mês/ano
-  const existe = await prisma.gastoMensal.findUnique({
-    where: { mes_ano_restauranteId: { mes: data.mes, ano: data.ano, restauranteId } },
-  });
-
-  if (!existe) {
-    const agg = await prisma.funcionario.aggregate({
-      where: { restauranteId, active: true },
-      _sum: { salario: true },
-    });
-    await prisma.gastoMensal.create({
+  return prisma.$transaction(async (tx) => {
+    const gasto = await tx.gastoIngrediente.create({
       data: {
-        mes: data.mes,
-        ano: data.ano,
-        totalSalarios: agg._sum.salario ?? 0,
+        ...rest,
         restauranteId,
+        ingredientes: ingredientes?.length
+          ? {
+              create: ingredientes.map(({ id, quantidade }) => ({
+                ingredienteId: id,
+                quantidade,
+              })),
+            }
+          : undefined,
       },
+      include: includeIngredientes,
     });
-  }
 
-  return gasto;
+    if (ingredientes?.length) {
+      await Promise.all(
+        ingredientes.map(({ id, quantidade }) =>
+          tx.ingrediente.update({
+            where: { id },
+            data: { quantidadeAtual: { increment: quantidade } },
+          })
+        )
+      );
+    }
+
+    return gasto;
+  });
 };
 
 export const update = async (
   id: number,
-  data: { valor?: number; descricao?: string }
+  data: {
+    nome?: string;
+    valor?: number;
+    descricao?: string;
+    ingredientes?: { id: number; quantidade: number }[];
+  }
 ) => {
   const restauranteId = RequestContext.getRestauranteId()!;
-  const gasto = await prisma.gastoIngrediente.findFirst({
-    where: { id, restauranteId },
-  });
-  if (!gasto) return null;
+  const { ingredientes, ...rest } = data;
 
-  return prisma.gastoIngrediente.update({ where: { id }, data });
+  return prisma.$transaction(async (tx) => {
+    const gasto = await tx.gastoIngrediente.findFirst({
+      where: { id, restauranteId },
+    });
+    if (!gasto) return null;
+
+    if (ingredientes !== undefined) {
+      const antigas = await tx.gastoIngredienteIngrediente.findMany({
+        where: { gastoIngredienteId: id },
+      });
+
+      if (antigas.length) {
+        await Promise.all(
+          antigas.map((a) =>
+            tx.ingrediente.update({
+              where: { id: a.ingredienteId },
+              data: { quantidadeAtual: { decrement: a.quantidade } },
+            })
+          )
+        );
+      }
+
+      await tx.gastoIngredienteIngrediente.deleteMany({
+        where: { gastoIngredienteId: id },
+      });
+
+      if (ingredientes.length) {
+        await tx.gastoIngredienteIngrediente.createMany({
+          data: ingredientes.map(({ id: ingId, quantidade }) => ({
+            gastoIngredienteId: id,
+            ingredienteId: ingId,
+            quantidade,
+          })),
+        });
+
+        await Promise.all(
+          ingredientes.map(({ id: ingId, quantidade }) =>
+            tx.ingrediente.update({
+              where: { id: ingId },
+              data: { quantidadeAtual: { increment: quantidade } },
+            })
+          )
+        );
+      }
+    }
+
+    return tx.gastoIngrediente.update({
+      where: { id },
+      data: rest,
+      include: includeIngredientes,
+    });
+  });
 };
 
-export const remove = async (id: number) => {
+export const remove = async (id: number, reverterEstoque = false) => {
   const restauranteId = RequestContext.getRestauranteId()!;
-  const gasto = await prisma.gastoIngrediente.findFirst({
-    where: { id, restauranteId },
-  });
-  if (!gasto) return null;
 
-  await prisma.gastoIngrediente.delete({ where: { id } });
-  return { deleted: true };
+  return prisma.$transaction(async (tx) => {
+    const gasto = await tx.gastoIngrediente.findFirst({
+      where: { id, restauranteId },
+    });
+    if (!gasto) return null;
+
+    if (reverterEstoque) {
+      const juncoes = await tx.gastoIngredienteIngrediente.findMany({
+        where: { gastoIngredienteId: id },
+      });
+      if (juncoes.length) {
+        await Promise.all(
+          juncoes.map((j) =>
+            tx.ingrediente.update({
+              where: { id: j.ingredienteId },
+              data: { quantidadeAtual: { decrement: j.quantidade } },
+            })
+          )
+        );
+      }
+    }
+
+    await tx.gastoIngrediente.delete({ where: { id } });
+    return { deleted: true };
+  });
 };
