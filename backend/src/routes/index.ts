@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRoutes from "./autentficacao/auth.routes";
 import funcionarioRoutes from "./funcionario/funcionario.routes";
 import restauranteRoutes from "./restaurante/restaurante.routes";
+import restauranteProtectedRoutes from "./restaurante/restaurante.protected.routes";
 import rolesRoutes from "./roles/roles.routes";
 import pedidoRoutes from "./pedido/pedido.routes";
 import produtoRoutes from "./produto/produto.routes";
@@ -17,6 +18,7 @@ publicRoutes.use("/roles", rolesRoutes);
 publicRoutes.use("/restaurantes", restauranteRoutes);
 
 export const protectedRoutes = Router();
+protectedRoutes.use("/restaurantes",       restauranteProtectedRoutes);
 protectedRoutes.use("/funcionarios",       funcionarioRoutes);
 protectedRoutes.use("/produtos",           produtoRoutes);
 protectedRoutes.use("/combos",             comboRoutes);

@@ -3,6 +3,7 @@ import * as FuncionarioController from "../../controllers/funcionario.controller
 
 const router = Router();
 
+router.get("/metricas", FuncionarioController.getMetricas);
 router.get("/", FuncionarioController.getAll);
 router.get("/:id", FuncionarioController.getById);
 router.post("/", FuncionarioController.create);

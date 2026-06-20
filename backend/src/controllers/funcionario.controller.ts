@@ -2,6 +2,16 @@ import { Request, Response } from "express";
 import * as FuncionarioService from "../services/funcionario.service";
 import { InsufficientRankError } from "../services/funcionario.service";
 
+export const getMetricas = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const dados = await FuncionarioService.getMetricas();
+    res.json(dados);
+  } catch (error) {
+    console.error("Erro ao buscar métricas de funcionários:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
 export const getAll = async (_req: Request, res: Response): Promise<void> => {
   try {
     const funcionarios = await FuncionarioService.findAll();
@@ -114,9 +124,13 @@ export const hardDelete = async (req: Request, res: Response): Promise<void> => 
     }
 
     res.json({ message: "Funcionário excluído permanentemente." });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof InsufficientRankError) {
       res.status(403).json({ message: error.message });
+      return;
+    }
+    if (error.message?.includes("responsável do restaurante")) {
+      res.status(409).json({ message: error.message });
       return;
     }
     console.error("Erro ao excluir funcionário:", error);

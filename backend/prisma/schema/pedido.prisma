@@ -4,6 +4,7 @@ model Pedido {
   id                 Int             @id @default(autoincrement())
   numeroPedido       String
   nomeCliente        String?
+  mesa               Int?
   status             StatusPedido    @default(ABERTO)
   formaPagamento     FormaPagamento?
   valorTotal         Float           @default(0)

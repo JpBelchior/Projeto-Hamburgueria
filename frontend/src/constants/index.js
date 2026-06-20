@@ -18,6 +18,12 @@ export const CARGO_LABEL = {
   CAIXA: "Caixa",
 };
 
+export const CARGO_COLOR = {
+  ATENDENTE:  "#38bdf8",  // sky   — STATUS_COLOR.ABERTO
+  COZINHEIRO: "#fbbf24",  // amber — ACCENT / CAT_COLOR.PRINCIPAL
+  CAIXA:      "#34d399",  // green — STATUS_COLOR.FINALIZADO
+};
+
 export const CARGO_OPTIONS = [
   { value: "ATENDENTE", label: "Atendente" },
   { value: "COZINHEIRO", label: "Cozinheiro" },

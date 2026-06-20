@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { onboarding } from "../services/restaurante.service";
+import { onboarding, getMe as getMeService, update as updateService } from "../services/restaurante.service";
 
 export const cadastrarRestaurante = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -23,6 +23,30 @@ export const cadastrarRestaurante = async (req: Request, res: Response): Promise
       return;
     }
     console.error("Erro no onboarding:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+export const getMe = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const restaurante = await getMeService();
+    if (!restaurante) {
+      res.status(404).json({ message: "Restaurante não encontrado." });
+      return;
+    }
+    res.json(restaurante);
+  } catch (error) {
+    console.error("Erro ao buscar restaurante:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+export const updateMe = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const restaurante = await updateService(req.body);
+    res.json(restaurante);
+  } catch (error) {
+    console.error("Erro ao atualizar restaurante:", error);
     res.status(500).json({ message: "Erro interno do servidor." });
   }
 };

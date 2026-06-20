@@ -137,6 +137,7 @@ function DetalheView({ pedido }) {
       {/* Cliente + Pagamento */}
       <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-4 flex flex-col gap-2">
         <DrawerRow label="Cliente"     value={pedido.nomeCliente || "Não informado"} />
+        {pedido.mesa != null && <DrawerRow label="Mesa" value={`Mesa ${pedido.mesa}`} />}
         <DrawerRow label="Pagamento"   value={pedido.formaPagamento ? (PAGAMENTO_LABEL[pedido.formaPagamento] ?? pedido.formaPagamento) : "Não informado"} />
         <DrawerRow label="Responsável" value={nomeFunc} highlight />
       </div>
@@ -276,15 +277,25 @@ function FormView({ drawer, actions }) {
   return (
     <>
       <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-        {/* Cliente */}
-        <FormField label="Cliente">
-          <input
-            type="text" value={form.nomeCliente}
-            onChange={(e) => setField("nomeCliente", e.target.value)}
-            placeholder="Nome do cliente (opcional)"
-            className={inputCls}
-          />
-        </FormField>
+        {/* Cliente + Mesa */}
+        <div className="flex gap-3">
+          <FormField label="Cliente" className="flex-1">
+            <input
+              type="text" value={form.nomeCliente}
+              onChange={(e) => setField("nomeCliente", e.target.value)}
+              placeholder="Nome do cliente (opcional)"
+              className={inputCls}
+            />
+          </FormField>
+          <FormField label="Mesa" className="w-24">
+            <input
+              type="number" value={form.mesa} min="1"
+              onChange={(e) => setField("mesa", e.target.value)}
+              placeholder="Nº"
+              className={inputCls}
+            />
+          </FormField>
+        </div>
 
         {/* Pagamento */}
         <FormField label="Forma de Pagamento">

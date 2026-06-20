@@ -337,6 +337,7 @@ export const criarPedido = async (dto: CreatePedidoDTO) => {
       restauranteId,
       funcionarioId:  func.id,
       nomeCliente:    dto.nomeCliente,
+      mesa:           dto.mesa,
       formaPagamento: dto.formaPagamento,
       valorTotal,
       itens: {
@@ -367,6 +368,7 @@ export const editarPedido = async (id: number, dto: UpdatePedidoDTO) => {
     where: { id },
     data: {
       nomeCliente:    dto.nomeCliente,
+      mesa:           dto.mesa,
       formaPagamento: dto.formaPagamento,
       ...(valorTotal !== undefined && { valorTotal }),
       ...(dto.itens && {

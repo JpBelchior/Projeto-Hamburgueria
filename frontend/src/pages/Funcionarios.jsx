@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { UserPlus, Users } from "lucide-react";
 import { useFuncionarios } from "../hooks/useFuncionario";
+import { useFuncionariosMetricas } from "../hooks/useFuncionariosMetricas";
 import HeaderBar from "../components/Ui/HeaderBar";
 import Filter from "../components/Ui/Filter";
 import KpiSkeleton from "../components/Ui/KpiSkeleton";
 import EmptyState from "../components/Ui/EmptyState";
 import ErrorAlert from "../components/Ui/ErrorAlert";
+import FuncionariosKpis from "../components/Funcionario/FuncionariosKpis";
 import FuncionarioCard from "../components/Funcionario/FuncionarioCard";
 import FuncionarioDrawer from "../components/Funcionario/FuncionarioDrawer";
 import { STATUS_FILTERS } from "../constants";
@@ -17,7 +19,6 @@ const Funcionarios = () => {
   const {
     funcionarios,
     setFuncionarios,
-    stats = { total: 0, ativos: 0, inativos: 0 },
     isLoading,
     error,
     search,
@@ -27,31 +28,30 @@ const Funcionarios = () => {
     refetch,
   } = useFuncionarios();
 
+  const { dados: metricas, loading: metricasLoading, refetch: refetchMetricas } = useFuncionariosMetricas();
+
+  const handleRefresh = () => { refetch(); refetchMetricas(); };
+
   return (
-    <div>
+    <div className="flex flex-col gap-5">
       <HeaderBar
         title="Funcionários"
         subtitle="Gerencie a equipe e os níveis de acesso"
-        onRefresh={refetch}
-        refreshing={isLoading}
+        onRefresh={handleRefresh}
+        refreshing={isLoading || metricasLoading}
       />
 
-      {!isLoading && (
-        <div className="flex items-center gap-1.5 mb-6 text-sm">
-          <span className="text-white font-semibold">{stats.total}</span>
-          <span className="text-slate-500">
-            {stats.total === 1 ? "funcionário" : "funcionários"}
-          </span>
-          <span className="text-slate-700 mx-1">·</span>
-          <span className="text-emerald-400 font-medium">{stats.ativos} ativos</span>
-          <span className="text-slate-700 mx-1">·</span>
-          <span className="text-slate-500 font-medium">{stats.inativos} inativos</span>
+      {metricasLoading ? (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} variant="compact" />)}
         </div>
+      ) : (
+        metricas && <FuncionariosKpis metricas={metricas} />
       )}
 
-      {error && <ErrorAlert message={error} className="mb-6" />}
+      {error && <ErrorAlert message={error} />}
 
-      <div className="mb-6">
+      <div>
         <Filter
           search={{ value: search, onChange: setSearch, placeholder: "Buscar funcionário pelo nome..." }}
           tabs={[{ options: STATUS_FILTERS, value: filterStatus, onChange: setFilterStatus }]}

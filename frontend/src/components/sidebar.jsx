@@ -51,7 +51,7 @@ const Sidebar = () => {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-5 px-2">
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-5 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {GERENTE_NAV.map(({ section, items }) => (
           <div key={section}>
             {!collapsed && (

@@ -7,6 +7,7 @@ import {
   BarChart2,
   UtensilsCrossed,
   Receipt,
+  Settings,
 } from "lucide-react";
 
 export const GERENTE_NAV = [
@@ -31,6 +32,12 @@ export const GERENTE_NAV = [
     section: "ESTATÍSTICAS",
     items: [
       { label: "Métricas", icon: BarChart2, path: "/Dashboard/metricas" },
+    ],
+  },
+  {
+    section: "SISTEMA",
+    items: [
+      { label: "Configurações", icon: Settings, path: "/Dashboard/configuracoes" },
     ],
   },
 ];

@@ -2,7 +2,8 @@ import { Cargo } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.utils";
 import { toTokenPayload } from "../dto/auth.dto";
-import { OnboardingDTO } from "../dto/restaurante.dto";
+import { OnboardingDTO, UpdateRestauranteDTO } from "../dto/restaurante.dto";
+import { RequestContext } from "../utils/request-context";
 import prisma from "../config/prisma";
 
 export const onboarding = async (data: OnboardingDTO) => {
@@ -66,4 +67,26 @@ export const onboarding = async (data: OnboardingDTO) => {
     expiresIn: 30 * 60,
     user: { ...payload, permissions: [] },
   };
+};
+
+export const getMe = async () => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  return prisma.restaurante.findUnique({
+    where: { id: restauranteId },
+    select: { id: true, nome: true, cnpj: true, email: true, telefone: true, endereco: true, logo: true },
+  });
+};
+
+export const update = async (data: UpdateRestauranteDTO) => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  return prisma.restaurante.update({
+    where: { id: restauranteId },
+    data: {
+      ...(data.nome !== undefined && { nome: data.nome }),
+      ...(data.telefone !== undefined && { telefone: data.telefone }),
+      ...(data.endereco !== undefined && { endereco: data.endereco }),
+      ...(data.logo !== undefined && { logo: data.logo }),
+    },
+    select: { id: true, nome: true, cnpj: true, email: true, telefone: true, endereco: true, logo: true },
+  });
 };

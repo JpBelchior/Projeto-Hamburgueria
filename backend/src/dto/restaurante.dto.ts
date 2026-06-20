@@ -14,3 +14,10 @@ export interface OnboardingDTO {
     telefone?: string;
   };
 }
+
+export interface UpdateRestauranteDTO {
+  nome?: string;
+  telefone?: string;
+  endereco?: string;
+  logo?: string;
+}

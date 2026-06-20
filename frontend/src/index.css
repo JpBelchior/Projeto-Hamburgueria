@@ -35,3 +35,12 @@ code {
   padding: 1.5rem;
   border: 1px solid #e5e7eb;
 }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}

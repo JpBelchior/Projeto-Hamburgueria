@@ -4,7 +4,7 @@ import { funcionarioService } from "../services/funcionario.service";
 export function usePedidoForm(drawer, actions) {
   const isEditar = drawer.modo === "editar";
 
-  const [form,         setForm]         = useState({ nomeCliente: "", formaPagamento: "", funcionarioId: "", itens: [] });
+  const [form,         setForm]         = useState({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: "", itens: [] });
   const [funcionarios, setFuncionarios] = useState([]);
   const [saving,       setSaving]       = useState(false);
   const [erro,         setErro]         = useState(null);
@@ -21,6 +21,7 @@ export function usePedidoForm(drawer, actions) {
       const p = drawer.dados;
       setForm({
         nomeCliente:    p.nomeCliente ?? "",
+        mesa:           p.mesa != null ? String(p.mesa) : "",
         formaPagamento: p.formaPagamento ?? "",
         funcionarioId:  p.funcionarioId ? String(p.funcionarioId) : "",
         itens: (p.itens ?? []).map((i) => ({
@@ -31,7 +32,7 @@ export function usePedidoForm(drawer, actions) {
         })),
       });
     } else {
-      setForm({ nomeCliente: "", formaPagamento: "", funcionarioId: "", itens: [] });
+      setForm({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: "", itens: [] });
     }
     setErro(null);
   }, [drawer.aberto, drawer.dados]);
@@ -75,6 +76,7 @@ export function usePedidoForm(drawer, actions) {
     try {
       const dto = {
         nomeCliente:    form.nomeCliente    || undefined,
+        mesa:           form.mesa           ? Number(form.mesa) : undefined,
         formaPagamento: form.formaPagamento || undefined,
         funcionarioId:  form.funcionarioId  ? Number(form.funcionarioId) : undefined,
         itens: form.itens.map((i) => ({

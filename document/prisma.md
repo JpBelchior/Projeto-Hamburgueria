@@ -157,3 +157,94 @@ npx prisma studio
 | `prisma generate` | Gera o Prisma Client |
 | `prisma db seed` | Executa a seed |
 | `prisma studio` | Abre interface visual do banco |
+
+
+
+
+
+
+Criar a página /Dashboard/combos (atualmente placeholder) seguindo o mesmo padrão da página de Produtos. O backend tem apenas GET (listar/buscar), então precisamos completar o CRUD. A lógica de negócio central é o desconto (calculado a partir dos preços de venda dos produtos) e a distinção entre Combo (múltiplos produtos) e Promoção (1 produto com quantidade > 1, ex: "Compre 3 pague 2").
+
+Lógica de negócio
+// preço que seria cobrado sem o combo
+precoNormal = sum(item.produto.precoVenda * item.quantidade)
+
+// % de desconto que o combo oferece
+desconto = round((1 - combo.preco / precoNormal) * 100)
+
+// economia em R$
+economia = precoNormal - combo.preco
+
+// É promoção quando tem exatamente 1 produto com qtd > 1
+isPromocao = combo.produtos.length === 1 && combo.produtos[0].quantidade > 1
+
+// Label da promoção: "Compre 3 pague 2"
+qtdPaga = round(combo.preco / item.produto.precoVenda)
+label   = `Compre ${qtd} pague ${qtdPaga}`
+Essas funções ficam em frontend/src/utils/combo.utils.js (novo arquivo).
+
+Backend (3 arquivos)
+1. backend/src/services/combo.service.ts
+Adicionar precoVenda no comboSelect (dentro de produto: { select: { ..., precoVenda: true } }) — necessário para o frontend calcular descontos
+Adicionar funções: criarCombo(data), atualizarCombo(id, data), deletarCombo(id), toggleAtivo(id)
+criarCombo e atualizarCombo recebem { nome, preco, produtos: [{ produtoId, quantidade }] } e usam createMany/deleteMany para gerenciar a relação ComboProduto
+2. backend/src/controllers/combo.controller.ts
+Adicionar: criarCombo, atualizarCombo, deletarCombo, toggleAtivo (padrão igual ao funcionário/produto)
+
+3. backend/src/routes/combo/combo.routes.ts
+Adicionar:
+
+POST   /           → criarCombo
+PUT    /:id        → atualizarCombo
+DELETE /:id        → deletarCombo
+PATCH  /:id/toggle → toggleAtivo
+Mudar listarCombos para aceitar query param incluirInativos=true.
+
+Frontend (6 arquivos novos + 2 atualizados)
+4. frontend/src/utils/combo.utils.js (novo)
+Funções puras: calcPrecoNormal, calcDesconto, calcEconomia, isPromocao, getPromoLabel
+
+5. frontend/src/services/combo.service.js (atualizar)
+Adicionar: criar, update, toggleAtivo, deletar, param incluirInativos no getAll
+
+6. frontend/src/hooks/useCombos.js (novo)
+Padrão idêntico ao useProdutos.js — retorna { dados, setDados, loading, erro, refetch }
+
+7. frontend/src/components/Combo/ComboCard.jsx (novo)
+Reutiliza ItemCard. Exibe:
+
+Badge tipo: Promoção (roxo) ou Combo (âmbar)
+Preço do combo + preço normal riscado
+Badge de desconto % off em verde
+Label "Compre X pague Y" quando promoção
+8. frontend/src/components/Combo/ComboForm.jsx (novo)
+Campos: nome, preço do combo, ProdutoSelector (padrão do IngredienteSelector em ProdutoForm.jsx) Preview em tempo real: preço normal, desconto %, economia
+
+9. frontend/src/components/Combo/ComboDrawer.jsx (novo)
+Padrão idêntico ao ProdutoDrawer:
+
+DetalheView: produtos com qtd, preço normal vs combo, desconto, label promoção
+Edit/Create mode → ComboForm
+Footer: deletar + ativar/desativar
+10. frontend/src/pages/Combos.jsx (substituir placeholder em AppRoutes.jsx)
+Estrutura igual a Produtos.jsx:
+
+HeaderBar "Combos & Promoções"
+4 KPIs (calculados localmente da lista já carregada — sem endpoint extra)
+Filter (busca + tabs: Todos / Combos / Promoções)
+Grid de ComboCards
+ComboDrawer (estado drawerComboId)
+KPI Cards (componente KpiCard existente em frontend/src/components/Ui/KpiCard.jsx)
+#	Label	Ícone	Valor	Detalhe
+1	Total de combos	LayoutGrid	N total	"X ativos · Y inativos"
+2	Desconto médio	Percent	XX%	"média entre combos ativos"
+3	Maior desconto	TrendingDown	Nome do combo	"+XX% off · R$ X,XX de economia"
+4	Promoções ativas	Tag	N promoções	"X combos · Y promoções"
+Todos os valores são derivados da lista já carregada usando as funções de combo.utils.js.
+
+Verificação
+POST /api/combos cria combo → resposta inclui produtos[].produto.precoVenda
+Card exibe desconto calculado corretamente para combo simples
+Promoção "compre 3 pague 2": 1 produto, qtd=3, preco=2×precoVenda → badge roxo + label correto
+Drawer: criar, editar, desativar, deletar funcionando e refletindo na lista
+KPIs atualizam ao criar/editar/deletar (derivados do mesmo array 

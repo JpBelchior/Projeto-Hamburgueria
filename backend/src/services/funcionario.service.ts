@@ -193,6 +193,51 @@ export const toggleActive = async (funcionarioId: number) => {
   return findById(funcionarioId);
 };
 
+export const getMetricas = async () => {
+  const restauranteId = RequestContext.getRestauranteId()!;
+  const now = new Date();
+  const mes = now.getMonth() + 1;
+  const ano = now.getFullYear();
+
+  const baseWhere = {
+    restauranteId,
+    user: { roles: { none: { role: { name: "ADMIN_RESTAURANTE" } } } },
+  };
+
+  const [funcionarios, gastoFuncMes, gastoIngMes] = await Promise.all([
+    prisma.funcionario.findMany({
+      where: baseWhere,
+      select: { cargo: true, salario: true, active: true },
+    }),
+    prisma.gastoFuncionario.aggregate({ where: { restauranteId, mes, ano }, _sum: { valor: true } }),
+    prisma.gastoIngrediente.aggregate({ where: { restauranteId, mes, ano }, _sum: { valor: true } }),
+  ]);
+
+  const total       = funcionarios.length;
+  const ativos      = funcionarios.filter((f) => f.active);
+  const ativosCount = ativos.length;
+  const salarioTotal = ativos.reduce((acc, f) => acc + f.salario, 0);
+  const salarioMedio = ativosCount > 0 ? salarioTotal / ativosCount : 0;
+
+  const CARGOS = ["ATENDENTE", "COZINHEIRO", "CAIXA"] as const;
+  const porCargo = Object.fromEntries(
+    CARGOS.map((cargo) => {
+      const fs = ativos.filter((f) => f.cargo === cargo);
+      return [
+        cargo,
+        {
+          count:        fs.length,
+          salarioMedio: fs.length > 0 ? fs.reduce((s, f) => s + f.salario, 0) / fs.length : 0,
+        },
+      ];
+    }),
+  );
+
+  const gastoMensal = (gastoFuncMes._sum.valor ?? 0) + (gastoIngMes._sum.valor ?? 0);
+
+  return { total, ativos: ativosCount, inativos: total - ativosCount, salarioTotal, salarioMedio, porCargo, gastoMensal };
+};
+
 export const hardDelete = async (funcionarioId: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const funcionario = await prisma.funcionario.findFirst({
@@ -204,7 +249,24 @@ export const hardDelete = async (funcionarioId: number) => {
 
   await assertOutranks(funcionario.userId);
 
+  const adminFuncionario = await prisma.funcionario.findFirst({
+    where: {
+      restauranteId,
+      user: { roles: { some: { role: { name: "ADMIN_RESTAURANTE" } } } },
+    },
+    select: { id: true },
+  });
+
+  if (!adminFuncionario) {
+    throw new Error("Não foi possível encontrar o responsável do restaurante para reassociar os pedidos.");
+  }
+
   await prisma.$transaction([
+    prisma.pedido.updateMany({
+      where: { funcionarioId, restauranteId },
+      data: { funcionarioId: adminFuncionario.id },
+    }),
+    prisma.gastoFuncionarioFuncionario.deleteMany({ where: { funcionarioId } }),
     prisma.funcionario.delete({ where: { id: funcionarioId } }),
     prisma.user.delete({ where: { id: funcionario.userId } }),
   ]);

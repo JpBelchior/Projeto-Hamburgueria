@@ -215,7 +215,7 @@ export default function GastoForm({ initialData, tipo, onSubmit, onCancel, loadi
         <input
           className={inputCls}
           type="number"
-          step="0.01"
+          step="1"
           min="0"
           value={form.valor}
           onChange={set("valor")}

@@ -9,6 +9,7 @@ import Pedidos from "../pages/Pedidos";
 import Produtos from "../pages/Produtos";
 import Ingredientes from "../pages/Ingredientes";
 import ComprasPagamentos from "../pages/ComprasPagamentos";
+import Configuracoes from "../pages/Configuracoes";
 
 const Combos = () => (
   <div>
@@ -57,6 +58,7 @@ const AppRoutes = () => {
         <Route path="funcionarios" element={<Funcionarios />} />
         <Route path="compras-pagamentos" element={<ComprasPagamentos />} />
         <Route path="metricas" element={<Metricas />} />
+        <Route path="configuracoes" element={<Configuracoes />} />
       </Route>
 
       {/* Dashboard do ATENDENTE */}

@@ -30,6 +30,11 @@ export const funcionarioService = {
     const response = await api.delete(`/funcionarios/${id}`);
     return response.data;
   },
+
+  getMetricas: async () => {
+    const response = await api.get("/funcionarios/metricas");
+    return response.data;
+  },
 };
 
 export const roleService = {
