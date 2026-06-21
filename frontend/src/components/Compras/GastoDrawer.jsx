@@ -3,41 +3,50 @@ import { Pencil, Trash2 } from "lucide-react";
 import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerRow, DrawerGradientTitle } from "../Ui/Drawer";
 import Button from "../Ui/Button";
 import GastoForm from "./GastoForm";
-import { gastoIngredienteService, gastoFuncionarioService } from "../../services/gasto.service";
+import { gastoService } from "../../services/gasto.service";
 import { ACCENT, fmtBRL } from "../../utils/format";
 import { MESES, UNIDADE_LABEL } from "../../constants";
 
-// ── Vista de detalhes ─────────────────────────────────────────────────────────
+// ── Configuração por tipo ─────────────────────────────────────────────────────
 
 const CFG = {
-  ingrediente: {
-    badgeLabel:  "Ingredientes",
-    badgeCls:    "bg-amber-500/10 border border-amber-500/30 text-amber-400",
+  INGREDIENTE: {
+    badgeLabel:   "Compra de Ingredientes",
+    badgeCls:     "bg-amber-500/10 border border-amber-500/30 text-amber-400",
     sectionLabel: "Ingredientes vinculados",
-    nomeItem:    (r) => r.ingrediente?.nome ?? "—",
-    subItem:     (r) => r.quantidade != null
+    getItens:     (g) => g.ingrediente?.ingredientes ?? [],
+    nomeItem:     (r) => r.ingrediente?.nome ?? "—",
+    subItem:      (r) => r.quantidade != null
       ? `${r.quantidade} ${UNIDADE_LABEL[r.ingrediente?.unidade] ?? r.ingrediente?.unidade ?? ""}`
       : null,
   },
-  funcionario: {
-    badgeLabel:  "Funcionários",
-    badgeCls:    "bg-slate-700/40 border border-slate-600/40 text-slate-400",
+  FUNCIONARIO: {
+    badgeLabel:   "Pagamento de Funcionários",
+    badgeCls:     "bg-violet-500/10 border border-violet-500/30 text-violet-400",
     sectionLabel: "Funcionários vinculados",
-    nomeItem:    (r) => r.funcionario?.user?.name ?? "—",
-    subItem:     () => null,
+    getItens:     (g) => g.funcionario?.funcionarios ?? [],
+    nomeItem:     (r) => r.funcionario?.user?.name ?? "—",
+    subItem:      () => null,
+  },
+  GENERICO: {
+    badgeLabel:   "Outro Gasto",
+    badgeCls:     "bg-sky-500/10 border border-sky-500/30 text-sky-400",
+    sectionLabel: null,
+    getItens:     () => [],
+    nomeItem:     () => "—",
+    subItem:      () => null,
   },
 };
 
-function DetalheView({ gasto, tipo }) {
-  const cfg      = CFG[tipo];
+// ── Vista de detalhes ─────────────────────────────────────────────────────────
+
+function DetalheView({ gasto }) {
+  const cfg      = CFG[gasto.tipo] ?? CFG.GENERICO;
   const mesLabel = MESES.find((m) => m.value === gasto.mes)?.label ?? "";
-  const itens    = tipo === "ingrediente"
-    ? (gasto.ingredientes ?? [])
-    : (gasto.funcionarios ?? []);
+  const itens    = cfg.getItens(gasto);
 
   return (
     <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-
       <div className="flex items-center gap-2">
         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${cfg.badgeCls}`}>
           {cfg.badgeLabel}
@@ -49,15 +58,13 @@ function DetalheView({ gasto, tipo }) {
       <div>
         <DrawerSection>Dados do Lançamento</DrawerSection>
         <div className="flex flex-col gap-3">
-          <DrawerRow label="Valor" value={fmtBRL(gasto.valor)} highlight />
+          <DrawerRow label="Valor"   value={fmtBRL(gasto.valor)} highlight />
           <DrawerRow label="Período" value={`${mesLabel} / ${gasto.ano}`} />
-          {gasto.descricao && (
-            <DrawerRow label="Descrição" value={gasto.descricao} />
-          )}
+          {gasto.descricao && <DrawerRow label="Descrição" value={gasto.descricao} />}
         </div>
       </div>
 
-      {itens.length > 0 && (
+      {itens.length > 0 && cfg.sectionLabel && (
         <>
           <div className="h-px bg-slate-800" />
           <div>
@@ -88,10 +95,11 @@ function DetalheView({ gasto, tipo }) {
   );
 }
 
-// ── Modal de exclusão customizado ─────────────────────────────────────────────
+// ── Modal de exclusão ─────────────────────────────────────────────────────────
 
-function DeleteModal({ gasto, tipo, onConfirm, onClose }) {
-  const temIngredientes = tipo === "ingrediente" && (gasto?.ingredientes?.length ?? 0) > 0;
+function DeleteModal({ gasto, onConfirm, onClose }) {
+  const temIngredientes = gasto?.tipo === "INGREDIENTE" &&
+    (gasto?.ingrediente?.ingredientes?.length ?? 0) > 0;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -137,7 +145,7 @@ function DeleteModal({ gasto, tipo, onConfirm, onClose }) {
 
 export default function GastoDrawer({
   gasto,
-  tipo,
+  tipoInicial,
   mes,
   ano,
   createMode = false,
@@ -146,18 +154,16 @@ export default function GastoDrawer({
   onAtualizado,
   onDeletado,
 }) {
-  const [editMode,      setEditMode]      = useState(false);
+  const [editMode,       setEditMode]       = useState(false);
   const [confirmaDelete, setConfirmaDelete] = useState(false);
-  const [salvando,      setSalvando]      = useState(false);
-  const [erroSalvar,    setErroSalvar]    = useState(null);
-
-  const service = tipo === "ingrediente" ? gastoIngredienteService : gastoFuncionarioService;
+  const [salvando,       setSalvando]       = useState(false);
+  const [erroSalvar,     setErroSalvar]     = useState(null);
 
   const handleCriar = async (data) => {
     setSalvando(true);
     setErroSalvar(null);
     try {
-      await service.create({ ...data, mes, ano });
+      await gastoService.create({ ...data, mes, ano });
       onCriado?.();
     } catch (e) {
       setErroSalvar(e?.response?.data?.message ?? e?.message ?? "Erro ao criar lançamento.");
@@ -170,7 +176,7 @@ export default function GastoDrawer({
     setSalvando(true);
     setErroSalvar(null);
     try {
-      await service.update(gasto.id, data);
+      await gastoService.update(gasto.id, data);
       setEditMode(false);
       onAtualizado?.();
     } catch (e) {
@@ -182,19 +188,16 @@ export default function GastoDrawer({
 
   const handleDelete = async (reverterEstoque) => {
     setConfirmaDelete(false);
-    await service.remove(gasto.id, reverterEstoque);
+    await gastoService.remove(gasto.id, reverterEstoque);
     onDeletado?.();
   };
 
-  const showForm  = createMode || editMode;
-  const tipoLabel = tipo === "ingrediente" ? "Gasto" : "Pagamento";
-
-  // ── Header ────────────────────────────────────────────────────────────────
+  const showForm = createMode || editMode;
 
   const headerTitle = createMode
-    ? <DrawerGradientTitle>Novo {tipoLabel}</DrawerGradientTitle>
+    ? <DrawerGradientTitle>Novo Gasto</DrawerGradientTitle>
     : editMode
-    ? <DrawerGradientTitle>Editar {tipoLabel}</DrawerGradientTitle>
+    ? <DrawerGradientTitle>Editar Gasto</DrawerGradientTitle>
     : (gasto?.nome ?? "Carregando…");
 
   const headerActions = showForm ? (
@@ -215,8 +218,6 @@ export default function GastoDrawer({
     </button>
   ) : null;
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
     <>
       <Drawer onClose={onClose}>
@@ -232,7 +233,7 @@ export default function GastoDrawer({
             {erroSalvar && <p className="text-red-400 text-xs mb-3">{erroSalvar}</p>}
             <GastoForm
               initialData={createMode ? null : gasto}
-              tipo={tipo}
+              tipoInicial={tipoInicial}
               onSubmit={createMode ? handleCriar : handleSalvar}
               onCancel={createMode ? onClose : () => { setEditMode(false); setErroSalvar(null); }}
               loading={salvando}
@@ -240,7 +241,7 @@ export default function GastoDrawer({
           </div>
         ) : gasto ? (
           <>
-            <DetalheView gasto={gasto} tipo={tipo} />
+            <DetalheView gasto={gasto} />
             <DrawerFooter>
               <button
                 onClick={() => setConfirmaDelete(true)}
@@ -257,7 +258,6 @@ export default function GastoDrawer({
       {confirmaDelete && (
         <DeleteModal
           gasto={gasto}
-          tipo={tipo}
           onConfirm={handleDelete}
           onClose={() => setConfirmaDelete(false)}
         />

@@ -41,9 +41,9 @@ async function calcCustoIngredientes(
       ? { restauranteId, mes, ano }
       : { restauranteId, ano };
 
-  const agg = await prisma.gastoIngrediente.aggregate({
-    where,
-    _sum: { valor: true },
+  const agg = await prisma.gasto.aggregate({
+    where: { ...where, tipo: "INGREDIENTE" },
+    _sum:  { valor: true },
   });
   return agg._sum.valor ?? 0;
 }
@@ -59,9 +59,9 @@ async function calcCustoFuncionarios(
       ? { restauranteId, mes, ano }
       : { restauranteId, ano };
 
-  const agg = await prisma.gastoFuncionario.aggregate({
-    where,
-    _sum: { valor: true },
+  const agg = await prisma.gasto.aggregate({
+    where: { ...where, tipo: "FUNCIONARIO" },
+    _sum:  { valor: true },
   });
   return agg._sum.valor ?? 0;
 }

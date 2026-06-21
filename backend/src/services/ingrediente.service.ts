@@ -118,15 +118,15 @@ export const getMetricas = async () => {
 
     prisma.ingrediente.count({ where: { restauranteId, essencial: true } }),
 
-    prisma.gastoIngrediente.aggregate({
-      where: { restauranteId, mes, ano },
-      _sum:  { valor: true },
+    prisma.gasto.aggregate({
+      where:  { restauranteId, mes, ano, tipo: "INGREDIENTE" },
+      _sum:   { valor: true },
       _count: { _all: true },
     }),
 
-    prisma.gastoIngrediente.aggregate({
-      where: { restauranteId, ano },
-      _sum:  { valor: true },
+    prisma.gasto.aggregate({
+      where:  { restauranteId, ano, tipo: "INGREDIENTE" },
+      _sum:   { valor: true },
       _count: { _all: true },
     }),
 

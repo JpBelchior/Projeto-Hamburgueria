@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { ShoppingCart, Users, Plus } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
+import { ShoppingCart, Users, DollarSign, TrendingDown, Plus } from "lucide-react";
 import HeaderBar from "../components/Ui/HeaderBar";
 import KpiCard from "../components/Ui/KpiCard";
 import KpiSkeleton from "../components/Ui/KpiSkeleton";
@@ -8,8 +8,7 @@ import EmptyState from "../components/Ui/EmptyState";
 import MonthYearSelector from "../components/Ui/MonthYearSelector";
 import GastoCard from "../components/Compras/GastoCard";
 import GastoDrawer from "../components/Compras/GastoDrawer";
-import { useGastoIngrediente } from "../hooks/useGastoIngrediente";
-import { useGastoFuncionario } from "../hooks/useGastoFuncionario";
+import { useGastos } from "../hooks/useGastos";
 import { useFilterState } from "../hooks/useFilterState";
 import { fmtBRL } from "../utils/format";
 import { mesAnoAnterior } from "../utils/Date.utils";
@@ -18,9 +17,16 @@ import { filterByName } from "../utils/search";
 import { MESES, ANOS } from "../constants";
 
 const FILTROS = [
-  { value: "todos",        label: "Todos"        },
-  { value: "ingrediente",  label: "Ingredientes" },
-  { value: "funcionario",  label: "Funcionários" },
+  { value: "todos",       label: "Todos"         },
+  { value: "INGREDIENTE", label: "Ingredientes"  },
+  { value: "FUNCIONARIO", label: "Funcionários"  },
+  { value: "GENERICO",    label: "Outros Gastos" },
+];
+
+const GRUPOS_CFG = [
+  { tipo: "INGREDIENTE", label: "Compras de Ingredientes",    cor: "#f59e0b" },
+  { tipo: "FUNCIONARIO", label: "Pagamentos de Funcionários", cor: "#8b5cf6" },
+  { tipo: "GENERICO",    label: "Outros Gastos",              cor: "#38bdf8" },
 ];
 
 const ComprasPagamentos = () => {
@@ -33,64 +39,66 @@ const ComprasPagamentos = () => {
   const setBusca  = setFilter("busca");
   const setFiltro = setFilter("filtro");
 
-  const prev = mesAnoAnterior(mes, ano);
+  const prev        = mesAnoAnterior(mes, ano);
   const mesPrevLabel = MESES.find((m) => m.value === prev.mes)?.label ?? "";
-  const deltaHint    = `vs ${mesPrevLabel}/${prev.ano}`;
+  const deltaHint   = `vs ${mesPrevLabel}/${prev.ano}`;
 
-  // KPI hooks — filtrados pelo mês/ano selecionado
-  const ing      = useGastoIngrediente(mes,      ano,      undefined);
-  const ingPrev  = useGastoIngrediente(prev.mes, prev.ano, undefined);
-  const func     = useGastoFuncionario(mes,      ano,      undefined);
-  const funcPrev = useGastoFuncionario(prev.mes, prev.ano, undefined);
+  // Hook de KPI — filtrado pelo mês/ano
+  const kpi     = useGastos(useMemo(() => ({ mes, ano }),      [mes, ano]));
+  const kpiPrev = useGastos(useMemo(() => ({ mes: prev.mes, ano: prev.ano }), [prev.mes, prev.ano]));
 
-  // Lista hooks — todos os gastos sem filtro de data
-  const listIng  = useGastoIngrediente(undefined, undefined, undefined);
-  const listFunc = useGastoFuncionario(undefined, undefined, undefined);
+  // Hook de lista — sem filtro de data
+  const lista   = useGastos(useMemo(() => ({}), []));
 
   const handleRefresh = useCallback(() => {
-    ing.refresh();
-    ingPrev.refresh();
-    func.refresh();
-    funcPrev.refresh();
-    listIng.refresh();
-    listFunc.refresh();
-  }, [ing.refresh, ingPrev.refresh, func.refresh, funcPrev.refresh, listIng.refresh, listFunc.refresh]);
+    kpi.refresh();
+    kpiPrev.refresh();
+    lista.refresh();
+  }, [kpi.refresh, kpiPrev.refresh, lista.refresh]);
 
-  const handleCriado = useCallback(() => {
-    ing.refresh();
-    func.refresh();
-    listIng.refresh();
-    listFunc.refresh();
-  }, [ing.refresh, func.refresh, listIng.refresh, listFunc.refresh]);
+  const handleAlterado = useCallback(() => {
+    kpi.refresh();
+    lista.refresh();
+  }, [kpi.refresh, lista.refresh]);
 
   const handleDeletado = useCallback(() => {
     setDrawerGasto(null);
-    handleCriado();
-  }, [handleCriado]);
+    handleAlterado();
+  }, [handleAlterado]);
 
-  const gastosIngFiltrados = filterByName(listIng.gastos, busca);
-  const gastosFunFiltrados = filterByName(listFunc.gastos, busca);
+  // Filtro de busca + tipo na lista
+  const gastosFiltrados = useMemo(() => {
+    const porNome = filterByName(lista.gastos, busca);
+    return filtro === "todos" ? porNome : porNome.filter((g) => g.tipo === filtro);
+  }, [lista.gastos, busca, filtro]);
 
-  const GRUPOS = [
-    { tipo: "ingrediente", label: "Compras de Ingredientes",    cor: "#f59e0b", items: gastosIngFiltrados },
-    { tipo: "funcionario", label: "Pagamentos de Funcionários", cor: "#121155", items: gastosFunFiltrados },
-  ];
+  const gruposFiltrados = useMemo(() => {
+    const tiposAtivos = filtro === "todos"
+      ? GRUPOS_CFG.map((g) => g.tipo)
+      : [filtro];
+    return GRUPOS_CFG
+      .filter((g) => tiposAtivos.includes(g.tipo))
+      .map((g) => ({ ...g, items: gastosFiltrados.filter((x) => x.tipo === g.tipo) }))
+      .filter((g) => g.items.length > 0);
+  }, [gastosFiltrados, filtro]);
 
-  const gruposFiltrados = filtro === "todos"
-    ? GRUPOS
-    : GRUPOS.filter((g) => g.tipo === filtro);
+  const totalFiltrados = gastosFiltrados.length;
+  const kpiLoading     = kpi.loading || kpiPrev.loading;
 
-  const totalFiltrados = gruposFiltrados.reduce((acc, g) => acc + g.items.length, 0);
-
-  const listaLoading = listIng.loading || listFunc.loading;
+  const contagens = useMemo(() => ({
+    ingrediente: kpi.gastos.filter((g) => g.tipo === "INGREDIENTE").length,
+    funcionario: kpi.gastos.filter((g) => g.tipo === "FUNCIONARIO").length,
+    generico:    kpi.gastos.filter((g) => g.tipo === "GENERICO").length,
+    total:       kpi.gastos.length,
+  }), [kpi.gastos]);
 
   return (
     <div className="flex flex-col gap-5">
       <HeaderBar
         title="Compras & Pagamentos"
-        subtitle="Registre compras de ingredientes e pagamentos da equipe"
+        subtitle="Registre compras de ingredientes, pagamentos da equipe e outros gastos"
         onRefresh={handleRefresh}
-        refreshing={listaLoading}
+        refreshing={lista.loading}
         rightSlot={
           <MonthYearSelector
             mes={mes} ano={ano}
@@ -99,34 +107,49 @@ const ComprasPagamentos = () => {
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {ing.loading || ingPrev.loading ? (
-          <KpiSkeleton />
+      {/* KPI Cards — 4 cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {kpiLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <KpiSkeleton key={i} />)
         ) : (
-          <KpiCard
-            icon={ShoppingCart}
-            label="Gastos com ingredientes"
-            value={fmtBRL(ing.total)}
-            delta={ingPrev.total === 0 ? null : calcDelta(ing.total, ingPrev.total)}
-            deltaLabel={`${ing.gastos.length} compra${ing.gastos.length !== 1 ? "s" : ""} no mês`}
-            deltaHint={ingPrev.total === 0 ? "Sem dados do mês anterior para comparação" : deltaHint}
-            invertido
-          />
-        )}
-
-        {func.loading || funcPrev.loading ? (
-          <KpiSkeleton />
-        ) : (
-          <KpiCard
-            icon={Users}
-            label="Gastos com funcionários"
-            value={fmtBRL(func.total)}
-            delta={funcPrev.total === 0 ? null : calcDelta(func.total, funcPrev.total)}
-            deltaLabel={`${func.gastos.length} pagamento${func.gastos.length !== 1 ? "s" : ""} no mês`}
-            deltaHint={funcPrev.total === 0 ? "Sem dados do mês anterior para comparação" : deltaHint}
-            invertido
-          />
+          <>
+            <KpiCard
+              icon={ShoppingCart}
+              label="Gastos com ingredientes"
+              value={fmtBRL(kpi.totais.ingrediente)}
+              deltaLabel={`${contagens.ingrediente} compra${contagens.ingrediente !== 1 ? "s" : ""} no mês`}
+              delta={kpiPrev.totais.ingrediente === 0 ? null : calcDelta(kpi.totais.ingrediente, kpiPrev.totais.ingrediente)}
+              deltaHint={kpiPrev.totais.ingrediente === 0 ? "Sem dados do mês anterior" : deltaHint}
+              invertido
+            />
+            <KpiCard
+              icon={Users}
+              label="Gastos com funcionários"
+              value={fmtBRL(kpi.totais.funcionario)}
+              deltaLabel={`${contagens.funcionario} pagamento${contagens.funcionario !== 1 ? "s" : ""} no mês`}
+              delta={kpiPrev.totais.funcionario === 0 ? null : calcDelta(kpi.totais.funcionario, kpiPrev.totais.funcionario)}
+              deltaHint={kpiPrev.totais.funcionario === 0 ? "Sem dados do mês anterior" : deltaHint}
+              invertido
+            />
+            <KpiCard
+              icon={DollarSign}
+              label="Outros gastos"
+              value={fmtBRL(kpi.totais.generico)}
+              deltaLabel={`${contagens.generico} lançamento${contagens.generico !== 1 ? "s" : ""} no mês`}
+              delta={kpiPrev.totais.generico === 0 ? null : calcDelta(kpi.totais.generico, kpiPrev.totais.generico)}
+              deltaHint={kpiPrev.totais.generico === 0 ? "Sem dados do mês anterior" : deltaHint}
+              invertido
+            />
+            <KpiCard
+              icon={TrendingDown}
+              label="Total do mês"
+              value={fmtBRL(kpi.totais.total)}
+              deltaLabel={`${contagens.total} lançamento${contagens.total !== 1 ? "s" : ""} no mês`}
+              delta={kpiPrev.totais.total === 0 ? null : calcDelta(kpi.totais.total, kpiPrev.totais.total)}
+              deltaHint={kpiPrev.totais.total === 0 ? "Sem dados do mês anterior" : deltaHint}
+              invertido
+            />
+          </>
         )}
       </div>
 
@@ -136,7 +159,7 @@ const ComprasPagamentos = () => {
           <h2 className="text-white text-[11px] uppercase tracking-widest font-semibold shrink-0 ml-5">
             Nossos Gastos
           </h2>
-          {!listaLoading && (
+          {!lista.loading && (
             <span className="text-slate-500 text-[10px] shrink-0">
               · {totalFiltrados} registro{totalFiltrados !== 1 ? "s" : ""}
             </span>
@@ -151,17 +174,14 @@ const ComprasPagamentos = () => {
             dirty={dirty}
             onReset={handleReset}
             actions={[
-              { label: "Novo Gasto",     icon: Plus, onClick: () => setDrawerGasto({ tipo: "ingrediente", gasto: null }) },
-              { label: "Novo Pagamento", icon: Plus, onClick: () => setDrawerGasto({ tipo: "funcionario", gasto: null }) },
+              { label: "Novo Gasto", icon: Plus, onClick: () => setDrawerGasto({ tipoInicial: "INGREDIENTE", gasto: null }) },
             ]}
           />
         </div>
 
-        {listaLoading ? (
+        {lista.loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <KpiSkeleton key={i} />
-            ))}
+            {Array.from({ length: 3 }).map((_, i) => <KpiSkeleton key={i} />)}
           </div>
         ) : totalFiltrados === 0 ? (
           <EmptyState
@@ -171,32 +191,29 @@ const ComprasPagamentos = () => {
           />
         ) : (
           <div className="flex flex-col gap-6">
-            {gruposFiltrados.map(({ tipo, label, cor, items }) =>
-              items.length === 0 ? null : (
-                <div key={tipo}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest shrink-0 ml-5">
-                      <span style={{ color: cor }}> ● </span>
-                      {label}
-                    </span>
-                    <span className="text-slate-600 text-[11px]">
-                      {items.length} registro{items.length !== 1 ? "s" : ""}
-                    </span>
-                    <div className="flex-1 h-px bg-slate-800" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {items.map((g) => (
-                      <GastoCard
-                        key={g.id}
-                        gasto={g}
-                        tipo={tipo}
-                        onClick={() => setDrawerGasto({ tipo, gasto: g })}
-                      />
-                    ))}
-                  </div>
+            {gruposFiltrados.map(({ tipo, label, cor, items }) => (
+              <div key={tipo}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest shrink-0 ml-5">
+                    <span style={{ color: cor }}> ● </span>
+                    {label}
+                  </span>
+                  <span className="text-slate-600 text-[11px]">
+                    {items.length} registro{items.length !== 1 ? "s" : ""}
+                  </span>
+                  <div className="flex-1 h-px bg-slate-800" />
                 </div>
-              )
-            )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {items.map((g) => (
+                    <GastoCard
+                      key={g.id}
+                      gasto={g}
+                      onClick={() => setDrawerGasto({ tipoInicial: g.tipo, gasto: g })}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -204,13 +221,13 @@ const ComprasPagamentos = () => {
       {drawerGasto && (
         <GastoDrawer
           gasto={drawerGasto.gasto}
-          tipo={drawerGasto.tipo}
+          tipoInicial={drawerGasto.tipoInicial}
           mes={mes}
           ano={ano}
           createMode={drawerGasto.gasto === null}
           onClose={() => setDrawerGasto(null)}
-          onCriado={() => { handleCriado(); setDrawerGasto(null); }}
-          onAtualizado={handleCriado}
+          onCriado={() => { handleAlterado(); setDrawerGasto(null); }}
+          onAtualizado={handleAlterado}
           onDeletado={handleDeletado}
         />
       )}

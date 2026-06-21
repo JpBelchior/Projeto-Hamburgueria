@@ -1,0 +1,75 @@
+// GASTO — entidade pai (herança TPT)
+// tipo = INGREDIENTE → existe linha em GastoIngrediente
+// tipo = FUNCIONARIO → existe linha em GastoFuncionario
+// tipo = GENERICO    → sem tabela filho (somente campos base)
+
+enum TipoGasto {
+  INGREDIENTE
+  FUNCIONARIO
+  GENERICO
+}
+
+model Gasto {
+  id            Int        @id @default(autoincrement())
+  tipo          TipoGasto
+  nome          String
+  valor         Float
+  descricao     String?
+  mes           Int
+  ano           Int
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  restauranteId Int
+  restaurante   Restaurante       @relation(fields: [restauranteId], references: [id])
+
+  ingrediente   GastoIngrediente?
+  funcionario   GastoFuncionario?
+
+  @@map("gastos")
+}
+
+// ── Filho: ingrediente ────────────────────────────────────────────────────────
+
+model GastoIngrediente {
+  gastoId      Int   @id
+  gasto        Gasto @relation(fields: [gastoId], references: [id], onDelete: Cascade)
+
+  ingredientes GastoIngredienteIngrediente[]
+
+  @@map("gasto_ingredientes")
+}
+
+model GastoIngredienteIngrediente {
+  gastoIngredienteId Int
+  ingredienteId      Int
+  quantidade         Float @default(0)
+
+  gastoIngrediente   GastoIngrediente @relation(fields: [gastoIngredienteId], references: [gastoId], onDelete: Cascade)
+  ingrediente        Ingrediente      @relation(fields: [ingredienteId], references: [id])
+
+  @@id([gastoIngredienteId, ingredienteId])
+  @@map("gasto_ingrediente_ingredientes")
+}
+
+// ── Filho: funcionario ────────────────────────────────────────────────────────
+
+model GastoFuncionario {
+  gastoId      Int   @id
+  gasto        Gasto @relation(fields: [gastoId], references: [id], onDelete: Cascade)
+
+  funcionarios GastoFuncionarioFuncionario[]
+
+  @@map("gasto_funcionarios")
+}
+
+model GastoFuncionarioFuncionario {
+  gastoFuncionarioId Int
+  funcionarioId      Int
+
+  gastoFuncionario   GastoFuncionario @relation(fields: [gastoFuncionarioId], references: [gastoId], onDelete: Cascade)
+  funcionario        Funcionario      @relation(fields: [funcionarioId], references: [id])
+
+  @@id([gastoFuncionarioId, funcionarioId])
+  @@map("gasto_funcionario_funcionarios")
+}

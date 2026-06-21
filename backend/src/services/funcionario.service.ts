@@ -204,13 +204,12 @@ export const getMetricas = async () => {
     user: { roles: { none: { role: { name: "ADMIN_RESTAURANTE" } } } },
   };
 
-  const [funcionarios, gastoFuncMes, gastoIngMes] = await Promise.all([
+  const [funcionarios, gastosMes] = await Promise.all([
     prisma.funcionario.findMany({
       where: baseWhere,
       select: { cargo: true, salario: true, active: true },
     }),
-    prisma.gastoFuncionario.aggregate({ where: { restauranteId, mes, ano }, _sum: { valor: true } }),
-    prisma.gastoIngrediente.aggregate({ where: { restauranteId, mes, ano }, _sum: { valor: true } }),
+    prisma.gasto.aggregate({ where: { restauranteId, mes, ano }, _sum: { valor: true } }),
   ]);
 
   const total       = funcionarios.length;
@@ -233,7 +232,7 @@ export const getMetricas = async () => {
     }),
   );
 
-  const gastoMensal = (gastoFuncMes._sum.valor ?? 0) + (gastoIngMes._sum.valor ?? 0);
+  const gastoMensal = gastosMes._sum.valor ?? 0;
 
   return { total, ativos: ativosCount, inativos: total - ativosCount, salarioTotal, salarioMedio, porCargo, gastoMensal };
 };

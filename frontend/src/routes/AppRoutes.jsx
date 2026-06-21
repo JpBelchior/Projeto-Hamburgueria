@@ -10,13 +10,7 @@ import Produtos from "../pages/Produtos";
 import Ingredientes from "../pages/Ingredientes";
 import ComprasPagamentos from "../pages/ComprasPagamentos";
 import Configuracoes from "../pages/Configuracoes";
-
-const Combos = () => (
-  <div>
-    <h1 className="text-2xl font-bold text-white">Combos</h1>
-    <p className="text-slate-400 mt-2">Gestão de combos</p>
-  </div>
-);
+import Combos from "../pages/Combos";
 
 const Metricas = () => (
   <div>
