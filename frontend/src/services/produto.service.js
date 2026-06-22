@@ -32,4 +32,7 @@ export const produtoService = {
 
   deletar: (id) =>
     api.delete(`/produtos/${id}`).then((r) => r.data),
+
+  remove: (id) =>
+    api.delete(`/produtos/${id}`).then((r) => r.data),
 };

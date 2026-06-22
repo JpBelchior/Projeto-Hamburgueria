@@ -1,3 +1,4 @@
+import { Clock } from "lucide-react";
 import ItemCard from "../Ui/ItemCard";
 import { fmtBRL, CAT_LABEL, CAT_COLOR, calcMargem, margemStyle } from "../../utils/format";
 
@@ -16,6 +17,18 @@ export default function ProdutoCard({ produto, onClick }) {
         {label}
       </span>
     </div>
+  );
+
+  const nomeComTempo = (
+    <span className="flex items-center gap-1.5 min-w-0">
+      <span className="truncate">{produto.nome}</span>
+      {produto.tempoPreparoEstimado && (
+        <span className="flex mt-1 items-center gap-0.5 text-slate-500 text-[10px] font-normal shrink-0">
+          <Clock size={9} />
+          {produto.tempoPreparoEstimado} min
+        </span>
+      )}
+    </span>
   );
 
   const footer = (
@@ -44,7 +57,7 @@ export default function ProdutoCard({ produto, onClick }) {
       inactive={inativo}
       avatar={{ name: produto.nome, src: produto.imagem ?? undefined }}
       badge={badge}
-      name={produto.nome}
+      name={nomeComTempo}
       footer={footer}
     >
       {produto.descricao && (

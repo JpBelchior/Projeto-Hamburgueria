@@ -1,0 +1,38 @@
+// PROMOCAO
+
+model Promocao {
+  id           Int               @id @default(autoincrement())
+  nome         String
+  ativo        Boolean           @default(true)
+  descricao    String?           @db.Text
+  desconto     Float?
+  tempoPreparo Int?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  restauranteId Int
+  restaurante   Restaurante      @relation(fields: [restauranteId], references: [id])
+  combos        PromocaoCombo[]
+  produtos      PromocaoProduto[]
+  pedidoItens   PedidoItem[]
+
+  @@map("promocoes")
+}
+
+model PromocaoCombo {
+  promocaoId Int
+  comboId    Int
+  promocao   Promocao @relation(fields: [promocaoId], references: [id], onDelete: Cascade)
+  combo      Combo    @relation(fields: [comboId],    references: [id])
+  @@id([promocaoId, comboId])
+  @@map("promocao_combos")
+}
+
+model PromocaoProduto {
+  promocaoId Int
+  produtoId  Int
+  promocao   Promocao @relation(fields: [promocaoId], references: [id], onDelete: Cascade)
+  produto    Produto  @relation(fields: [produtoId],  references: [id])
+  @@id([promocaoId, produtoId])
+  @@map("promocao_produtos")
+}

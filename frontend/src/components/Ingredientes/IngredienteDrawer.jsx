@@ -1,14 +1,12 @@
-import { useState } from "react";
-import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
-import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerSkeleton, DrawerGradientTitle } from "../Ui/Drawer";
+import { AlertTriangle } from "lucide-react";
+import { DrawerSection } from "../Ui/Drawer";
 import Avatar from "../Ui/Avatar";
-import Button from "../Ui/Button";
-import ConfirmDialog from "../Ui/ConfirmDialog";
-import IngredienteForm from "./IngredienteForm";
-import { useIngredienteDrawer } from "../../hooks/useIngredienteDrawer";
-import { ingredienteService } from "../../services/ingrediente.service";
 import { ACCENT } from "../../utils/format";
 import { UNIDADE_LABEL } from "../../constants";
+import { useIngredienteDrawer } from "../../hooks/useIngredienteDrawer";
+import { ingredienteService } from "../../services/ingrediente.service";
+import EntityDrawerShell from "../Ui/EntityDrawerShell";
+import IngredienteForm from "./IngredienteForm";
 
 // ── Vista de detalhes ─────────────────────────────────────────────────────────
 
@@ -62,7 +60,7 @@ function DetalheView({ ingrediente }) {
       {/* Produtos que usam este ingrediente */}
       {produtos?.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-3 ">
+          <div className="flex items-center justify-between mb-3">
             <DrawerSection>Usado em</DrawerSection>
             <span className="text-slate-400 text-[10px] -mt-3">
               {produtos.length} produto{produtos.length !== 1 ? "s" : ""}
@@ -94,47 +92,14 @@ export default function IngredienteDrawer({
   onIngredienteAtualizado,
   onIngredienteDeletado,
 }) {
-  const [editMode,  setEditMode]  = useState(false);
-  const [confirma,  setConfirma]  = useState(false);
-  const [criando,   setCriando]   = useState(false);
-  const [erroCriar, setErroCriar] = useState(null);
-
   const { ingrediente, loading, erro, salvando, erroSalvar, handleSalvar, handleDelete } =
     useIngredienteDrawer(ingredienteId, { onIngredienteAtualizado, onIngredienteDeletado });
 
-  const showForm = createMode || editMode;
+  const accentColor = createMode
+    ? ACCENT.from
+    : ingrediente?.essencial ? "#f59e0b" : undefined;
 
-  const handleCriar = async (data) => {
-    setCriando(true);
-    setErroCriar(null);
-    try {
-      const novo = await ingredienteService.criar(data);
-      onIngredienteCriado?.(novo);
-    } catch (e) {
-      setErroCriar(e?.response?.data?.message ?? e?.message ?? "Erro ao criar ingrediente.");
-    } finally {
-      setCriando(false);
-    }
-  };
-
-  const handleSalvarEFechar = async (data) => {
-    try {
-      await handleSalvar(data);
-      setEditMode(false);
-    } catch {
-      // erro exposto via erroSalvar
-    }
-  };
-
-  // ── Header ────────────────────────────────────────────────────────────────
-
-  const headerTitle = createMode
-    ? <DrawerGradientTitle>Novo Ingrediente</DrawerGradientTitle>
-    : editMode
-    ? <DrawerGradientTitle>Editar Ingrediente</DrawerGradientTitle>
-    : (ingrediente?.nome ?? "Carregando…");
-
-  const headerBadge = !showForm && ingrediente ? (
+  const headerBadge = ingrediente ? (
     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
       ingrediente.essencial
         ? "bg-amber-500/10 border border-amber-500/30 text-amber-400"
@@ -144,89 +109,24 @@ export default function IngredienteDrawer({
     </span>
   ) : null;
 
-  const headerActions = showForm ? (
-    !createMode ? (
-      <button
-        onClick={() => setEditMode(false)}
-        className="text-xs text-slate-500 hover:text-white px-2 transition-colors"
-      >
-        Ver detalhes
-      </button>
-    ) : null
-  ) : ingrediente ? (
-    <button
-      onClick={() => setEditMode(true)}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-amber-400 border border-slate-700/50 hover:border-amber-500/30 transition-all"
-    >
-      <Pencil size={12} /> Editar
-    </button>
-  ) : null;
-
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
-    <>
-      <Drawer onClose={onClose}>
-        <DrawerHeader
-          title={headerTitle}
-          badge={headerBadge}
-          actions={headerActions}
-          onClose={onClose}
-          accentColor={createMode ? ACCENT.from : ingrediente?.essencial ? "#f59e0b" : undefined}
-        />
-
-        {createMode ? (
-          <div className="flex-1 overflow-y-auto p-5">
-            {erroCriar && <p className="text-red-400 text-xs mb-3">{erroCriar}</p>}
-            <IngredienteForm
-              initialData={null}
-              onSubmit={handleCriar}
-              onCancel={onClose}
-              loading={criando}
-            />
-          </div>
-        ) : loading ? (
-          <DrawerSkeleton />
-        ) : erro ? (
-          <div className="flex-1 flex items-center justify-center p-5">
-            <p className="text-red-400 text-sm text-center">{erro}</p>
-          </div>
-        ) : ingrediente ? (
-          editMode ? (
-            <div className="flex-1 overflow-y-auto p-5">
-              <IngredienteForm
-                initialData={ingrediente}
-                onSubmit={handleSalvarEFechar}
-                onCancel={() => setEditMode(false)}
-                loading={salvando}
-                erro={erroSalvar}
-              />
-            </div>
-          ) : (
-            <>
-              <DetalheView ingrediente={ingrediente} />
-              <DrawerFooter>
-                <button
-                  onClick={() => setConfirma(true)}
-                  title="Excluir ingrediente"
-                  className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </DrawerFooter>
-            </>
-          )
-        ) : null}
-      </Drawer>
-
-      <ConfirmDialog
-        isOpen={confirma}
-        onClose={() => setConfirma(false)}
-        onConfirm={handleDelete}
-        title="Excluir ingrediente"
-        message={`Tem certeza que deseja excluir "${ingrediente?.nome}"? O ingrediente será removido de todos os produtos onde é utilizado.`}
-        confirmLabel="Sim, excluir"
-      />
-    </>
+    <EntityDrawerShell
+      item={ingrediente}
+      loading={loading} erro={erro}
+      salvando={salvando} erroSalvar={erroSalvar}
+      handleSalvar={handleSalvar} handleDelete={handleDelete}
+      createMode={createMode} onClose={onClose}
+      accentColor={accentColor}
+      createTitle="Novo Ingrediente"
+      editTitle="Editar Ingrediente"
+      headerBadge={headerBadge}
+      Form={IngredienteForm}
+      onCriar={(data) => ingredienteService.criar(data)}
+      onCriado={onIngredienteCriado}
+      confirmTitle="Excluir ingrediente"
+      confirmMessage={`Tem certeza que deseja excluir "${ingrediente?.nome}"? O ingrediente será removido de todos os produtos onde é utilizado.`}
+    >
+      <DetalheView ingrediente={ingrediente} />
+    </EntityDrawerShell>
   );
 }

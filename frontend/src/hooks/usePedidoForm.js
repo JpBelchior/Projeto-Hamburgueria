@@ -43,6 +43,38 @@ export function usePedidoForm(drawer, actions) {
   const removeItem  = (idx) => setForm((p) => ({ ...p, itens: p.itens.filter((_, i) => i !== idx) }));
 
   const addItem = (item, tipo) => {
+    if (tipo === "promocao") {
+      const precoTotal = item.precoTotal ?? 0;
+      const precoReal  = item.precoReal  ?? precoTotal;
+      const fator      = precoTotal > 0 ? precoReal / precoTotal : 1;
+
+      const novosItens = [
+        ...(item.combos ?? []).map((pc) => ({
+          comboId:       pc.combo.id,
+          promocaoId:    item.id,
+          comboProdutos: pc.combo.produtos ?? [],
+          nome:          pc.combo.nome,
+          tipo:          "combo",
+          quantidade:    1,
+          precoUnitario: pc.combo.preco * fator,
+          observacao:    "",
+        })),
+        ...(item.produtos ?? []).map((pp) => ({
+          produtoId:     pp.produto.id,
+          promocaoId:    item.id,
+          categoria:     pp.produto.categoria,
+          nome:          pp.produto.nome,
+          tipo:          "produto",
+          quantidade:    1,
+          precoUnitario: pp.produto.precoVenda * fator,
+          observacao:    "",
+        })),
+      ];
+
+      setForm((p) => ({ ...p, itens: [...p.itens, ...novosItens] }));
+      return;
+    }
+
     const preco = tipo === "produto"
       ? item.precoVenda * (1 - (item.desconto ?? 0) / 100)
       : item.preco;
@@ -82,6 +114,7 @@ export function usePedidoForm(drawer, actions) {
         itens: form.itens.map((i) => ({
           produtoId:     i.produtoId     || undefined,
           comboId:       i.comboId       || undefined,
+          promocaoId:    i.promocaoId    || undefined,
           quantidade:    i.quantidade,
           precoUnitario: i.precoUnitario,
           observacao:    i.observacao    || undefined,

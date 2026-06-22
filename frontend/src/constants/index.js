@@ -125,8 +125,6 @@ export const STATUS_CONFIG = {
   false:        { label: "Inativo",      style: "bg-slate-500/15 text-slate-400 border-slate-500/25" },
   ativo:        { label: "Ativo",        style: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
   inativo:      { label: "Inativo",      style: "bg-slate-500/15 text-slate-400 border-slate-500/25" },
-  disponivel:   { label: "Disponível",   style: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
-  indisponivel: { label: "Indisponível", style: "bg-red-500/15 text-red-400 border-red-500/25" },
   ABERTO:       { label: "Aberto",       style: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
   EM_PREPARO:   { label: "Em preparo",   style: "bg-amber-500/15 text-amber-400 border-amber-500/25" },
   FINALIZADO:   { label: "Finalizado",   style: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },

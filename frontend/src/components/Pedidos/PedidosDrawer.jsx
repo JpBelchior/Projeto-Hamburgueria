@@ -195,21 +195,29 @@ function ItemSelector({ onSelect }) {
 
   const handleSelect = (item) => { onSelect(item, aba); clearSearch(); };
 
+  const TABS = [
+    { key: "produto",  label: "Produto",  cor: null },
+    { key: "combo",    label: "Combo",    cor: "#a78bfa" },
+    { key: "promocao", label: "Promoção", cor: CAT_COLOR.PROMOCAO },
+  ];
+
+  const placeholderMap = { produto: "produto", combo: "combo", promocao: "promoção" };
+
   return (
     <div className="relative">
-      {/* Abas produto / combo */}
+      {/* Abas produto / combo / promoção */}
       <div className="flex gap-1 mb-2">
-        {["produto", "combo"].map((tab) => (
+        {TABS.map((tab) => (
           <button
-            key={tab}
-            onClick={() => handleAba(tab)}
+            key={tab.key}
+            onClick={() => handleAba(tab.key)}
             className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition-all ${
-              aba === tab
+              aba === tab.key
                 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                 : "text-slate-500 hover:text-slate-300 border border-transparent"
             }`}
           >
-            {tab === "produto" ? "Produto" : "Combo"}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -223,7 +231,7 @@ function ItemSelector({ onSelect }) {
           onChange={(e) => { setBusca(e.target.value); setAberto(true); }}
           onFocus={() => setAberto(true)}
           onBlur={() => setTimeout(() => setAberto(false), 150)}
-          placeholder={`Buscar ${aba === "produto" ? "produto" : "combo"} pelo nome…`}
+          placeholder={`Buscar ${placeholderMap[aba]} pelo nome…`}
           className="w-full pl-8 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/40 transition-all"
         />
       </div>
@@ -232,10 +240,20 @@ function ItemSelector({ onSelect }) {
       {aberto && filtrados.length > 0 && (
         <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden max-h-52 overflow-y-auto">
           {filtrados.map((item) => {
-            const preco = aba === "produto"
-              ? item.precoVenda * (1 - (item.desconto ?? 0) / 100)
-              : item.preco;
-            const cor = aba === "produto" ? (CAT_COLOR[item.categoria] ?? "#94a3b8") : "#a78bfa";
+            let preco, cor, label;
+            if (aba === "produto") {
+              preco = item.precoVenda * (1 - (item.desconto ?? 0) / 100);
+              cor   = CAT_COLOR[item.categoria] ?? "#94a3b8";
+              label = CAT_LABEL[item.categoria] ?? item.categoria;
+            } else if (aba === "combo") {
+              preco = item.preco;
+              cor   = "#a78bfa";
+              label = "Combo";
+            } else {
+              preco = item.precoReal ?? item.precoTotal;
+              cor   = CAT_COLOR.PROMOCAO;
+              label = "Promoção";
+            }
             return (
               <button
                 key={item.id}
@@ -247,7 +265,7 @@ function ItemSelector({ onSelect }) {
                     className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
                     style={{ color: cor, background: `${cor}20` }}
                   >
-                    {aba === "produto" ? (CAT_LABEL[item.categoria] ?? item.categoria) : "Combo"}
+                    {label}
                   </span>
                   <span className="text-white text-xs truncate">{item.nome}</span>
                 </div>
@@ -262,7 +280,7 @@ function ItemSelector({ onSelect }) {
 
       {aberto && busca.trim() && filtrados.length === 0 && (
         <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-slate-500">
-          Nenhum {aba === "produto" ? "produto" : "combo"} encontrado
+          Nenhum {placeholderMap[aba]} encontrado
         </div>
       )}
     </div>
@@ -329,6 +347,7 @@ function FormView({ drawer, actions }) {
               {form.itens.map((item, idx) => {
                 const isCombo = item.tipo === "combo";
                 const cor = isCombo ? "#a78bfa" : (CAT_COLOR[item.categoria] ?? "#94a3b8");
+                const promoColor = CAT_COLOR.PROMOCAO;
                 return (
                   <div key={idx} className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
                     {/* Nome + categoria + remover */}
@@ -339,6 +358,14 @@ function FormView({ drawer, actions }) {
                       >
                         {isCombo ? "Combo" : (CAT_LABEL[item.categoria] ?? "—")}
                       </span>
+                      {item.promocaoId && (
+                        <span
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                          style={{ color: promoColor, background: `${promoColor}18`, border: `1px solid ${promoColor}30` }}
+                        >
+                          Promo
+                        </span>
+                      )}
                       <span className="text-white text-xs flex-1 truncate">{item.nome}</span>
                       <button onClick={() => removeItem(idx)} className="text-slate-600 hover:text-red-400 transition-colors shrink-0">
                         <Trash2 size={13} />

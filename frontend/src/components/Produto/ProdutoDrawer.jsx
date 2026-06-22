@@ -1,15 +1,14 @@
-import { useState } from "react";
-import { Clock, TrendingUp, Pencil, Trash2, Power } from "lucide-react";
-import Drawer, { DrawerHeader, DrawerFooter, DrawerSection, DrawerSkeleton, DrawerGradientTitle } from "../Ui/Drawer";
+import { Power } from "lucide-react";
+import { Clock, TrendingUp } from "lucide-react";
+import { DrawerSection } from "../Ui/Drawer";
 import Avatar from "../Ui/Avatar";
 import Button from "../Ui/Button";
-import ConfirmDialog from "../Ui/ConfirmDialog";
 import { fmtBRL, CAT_LABEL, CAT_COLOR, ACCENT, calcLucro, calcMargem, margemStyle } from "../../utils/format";
 import { UNIDADE_LABEL } from "../../constants";
 import { useProdutoDrawer } from "../../hooks/useProdutoDrawer";
 import { produtoService } from "../../services/produto.service";
+import EntityDrawerShell from "../Ui/EntityDrawerShell";
 import ProdutoForm from "./ProdutoForm";
-
 
 // ── Vista de detalhes ─────────────────────────────────────────────────────────
 
@@ -148,148 +147,44 @@ export default function ProdutoDrawer({
   onProdutoAtualizado,
   onProdutoDeletado,
 }) {
-  const [editMode, setEditMode] = useState(false);
-  const [confirma, setConfirma] = useState(false);
-  const [criando,  setCriando]  = useState(false);
-  const [erroCriar, setErroCriar] = useState(null);
-
   const { produto, desempenho, loading, erro, salvando, erroSalvar, handleToggleAtivo, handleSalvar, handleDelete } =
     useProdutoDrawer(produtoId, periodo, { onProdutoAtualizado, onProdutoDeletado });
 
-  const showForm = createMode || editMode;
-
-  const color = produto ? (CAT_COLOR[produto.categoria] ?? "#fbbf24") : "#fbbf24";
-  const label = produto ? (CAT_LABEL[produto.categoria] ?? produto.categoria) : "";
-
-  const handleCriar = async (data) => {
-    setCriando(true);
-    setErroCriar(null);
-    try {
-      const novo = await produtoService.criar(data);
-      onProdutoCriado?.(novo);
-    } catch (e) {
-      setErroCriar(e?.response?.data?.message ?? e?.message ?? "Erro ao criar produto.");
-    } finally {
-      setCriando(false);
-    }
-  };
-
-  const handleSalvarEFechar = async (data) => {
-    try {
-      await handleSalvar(data);
-      setEditMode(false);
-    } catch {
-      // erro exposto via erroSalvar
-    }
-  };
-
-  // ── Header ────────────────────────────────────────────────────────────────
-
-  const headerTitle = createMode
-    ? <DrawerGradientTitle>Novo Produto</DrawerGradientTitle>
-    : editMode
-    ? <DrawerGradientTitle>Editar Produto</DrawerGradientTitle>
-    : (produto?.nome ?? "Carregando…");
-
-  const headerBadge = !showForm && produto ? (
-    <span
-      className="text-[9px] font-bold px-2 py-0.5 rounded-md shrink-0"
-      style={{ color, background: `${color}20`, border: `1px solid ${color}30` }}
-    >
-      {label}
-    </span>
-  ) : null;
-
-  const headerActions = showForm ? (
-    !createMode ? (
-      <button
-        onClick={() => setEditMode(false)}
-        className="text-xs text-slate-500 hover:text-white px-2 transition-colors"
-      >
-        Ver detalhes
-      </button>
-    ) : null
-  ) : produto ? (
-    <button
-      onClick={() => setEditMode(true)}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-amber-400 border border-slate-700/50 hover:border-amber-500/30 transition-all"
-    >
-      <Pencil size={12} /> Editar
-    </button>
-  ) : null;
-
-  // ── Render ────────────────────────────────────────────────────────────────
+  const color  = produto ? (CAT_COLOR[produto.categoria] ?? "#fbbf24") : "#fbbf24";
+  const label  = produto ? (CAT_LABEL[produto.categoria] ?? produto.categoria) : "";
 
   return (
-    <>
-      <Drawer onClose={onClose}>
-        <DrawerHeader
-          title={headerTitle}
-          badge={headerBadge}
-          actions={headerActions}
-          onClose={onClose}
-          accentColor={createMode ? ACCENT.from : color}
-        />
-
-        {/* Create mode — form direto sem fetch */}
-        {createMode ? (
-          <div className="flex-1 overflow-y-auto p-5">
-            {erroCriar && <p className="text-red-400 text-xs mb-3">{erroCriar}</p>}
-            <ProdutoForm
-              initialData={null}
-              onSubmit={handleCriar}
-              onCancel={onClose}
-              loading={criando}
-            />
-          </div>
-        ) : loading ? (
-          <DrawerSkeleton />
-        ) : erro ? (
-          <div className="flex-1 flex items-center justify-center p-5">
-            <p className="text-red-400 text-sm text-center">{erro}</p>
-          </div>
-        ) : produto ? (
-          editMode ? (
-            <div className="flex-1 overflow-y-auto p-5">
-              <ProdutoForm
-                initialData={produto}
-                onSubmit={handleSalvarEFechar}
-                onCancel={() => setEditMode(false)}
-                loading={salvando}
-                erro={erroSalvar}
-              />
-            </div>
-          ) : (
-            <>
-              <DetalheView produto={produto} desempenho={desempenho} periodoLabel={periodoLabel} />
-
-              <DrawerFooter>
-                <button
-                  onClick={() => setConfirma(true)}
-                  title="Excluir produto"
-                  className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
-                >
-                  <Trash2 size={15} />
-                </button>
-                <div className="flex gap-2 flex-1 justify-end">
-                  <Button variant="ghost" size="sm" icon={Power} onClick={handleToggleAtivo}>
-                    {produto.ativo ? "Desativar" : "Ativar"}
-                  </Button>
-                </div>
-              </DrawerFooter>
-            </>
-          )
-        ) : null}
-      </Drawer>
-
-      <ConfirmDialog
-        isOpen={confirma}
-        onClose={() => setConfirma(false)}
-        onConfirm={handleDelete}
-        title="Excluir produto"
-        message={`Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido do cardápio. Pedidos passados que o incluem não serão afetados.`}
-        confirmLabel="Sim, excluir"
-      />
-    </>
+    <EntityDrawerShell
+      item={produto}
+      loading={loading} erro={erro}
+      salvando={salvando} erroSalvar={erroSalvar}
+      handleSalvar={handleSalvar} handleDelete={handleDelete}
+      createMode={createMode} onClose={onClose}
+      accentColor={createMode ? ACCENT.from : color}
+      createTitle="Novo Produto"
+      editTitle="Editar Produto"
+      headerBadge={
+        <span
+          className="text-[9px] font-bold px-2 py-0.5 rounded-md shrink-0"
+          style={{ color, background: `${color}20`, border: `1px solid ${color}30` }}
+        >
+          {label}
+        </span>
+      }
+      Form={ProdutoForm}
+      onCriar={(data) => produtoService.criar(data)}
+      onCriado={onProdutoCriado}
+      confirmTitle="Excluir produto"
+      confirmMessage={`Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido do cardápio. Pedidos passados que o incluem não serão afetados.`}
+      footerActions={
+        produto && (
+          <Button variant="ghost" size="sm" icon={Power} onClick={handleToggleAtivo}>
+            {produto.ativo ? "Desativar" : "Ativar"}
+          </Button>
+        )
+      }
+    >
+      <DetalheView produto={produto} desempenho={desempenho} periodoLabel={periodoLabel} />
+    </EntityDrawerShell>
   );
 }

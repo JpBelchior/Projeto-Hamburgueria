@@ -10,7 +10,6 @@ model Produto {
   desconto             Float                @default(0)
   tempoPreparoEstimado Int?
   ativo                Boolean              @default(true)
-  disponivel           Boolean              @default(true)
   imagem               String?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
@@ -20,6 +19,7 @@ model Produto {
   ingredientes         ProdutoIngrediente[]
   combos               ComboProduto[]
   pedidoItens          PedidoItem[]
+  promocoes            PromocaoProduto[]
 
   @@map("produtos")
 }

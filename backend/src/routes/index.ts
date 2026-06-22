@@ -6,7 +6,8 @@ import restauranteProtectedRoutes from "./restaurante/restaurante.protected.rout
 import rolesRoutes from "./roles/roles.routes";
 import pedidoRoutes from "./pedido/pedido.routes";
 import produtoRoutes from "./produto/produto.routes";
-import comboRoutes   from "./combo/combo.routes";
+import comboRoutes     from "./combo/combo.routes";
+import promocaoRoutes  from "./promocao/promocao.routes";
 import gastoRoutes from "./gasto/gasto.routes";
 import financeiroRoutes from "./financeiro/financeiro.routes";
 import ingredienteRoutes from "./ingrediente/ingrediente.routes";
@@ -21,6 +22,7 @@ protectedRoutes.use("/restaurantes",       restauranteProtectedRoutes);
 protectedRoutes.use("/funcionarios",       funcionarioRoutes);
 protectedRoutes.use("/produtos",           produtoRoutes);
 protectedRoutes.use("/combos",             comboRoutes);
+protectedRoutes.use("/promocoes",          promocaoRoutes);
 protectedRoutes.use("/pedidos",            pedidoRoutes);
 protectedRoutes.use("/gastos",             gastoRoutes);
 protectedRoutes.use("/financeiro",         financeiroRoutes);

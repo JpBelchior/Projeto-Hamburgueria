@@ -344,6 +344,7 @@ export const criarPedido = async (dto: CreatePedidoDTO) => {
         create: dto.itens.map((item) => ({
           produtoId:     item.produtoId,
           comboId:       item.comboId,
+          promocaoId:    item.promocaoId,
           quantidade:    item.quantidade,
           precoUnitario: item.precoUnitario,
           observacao:    item.observacao,

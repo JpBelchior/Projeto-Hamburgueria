@@ -13,7 +13,6 @@ const produtoSelect = {
   desconto:             true,
   tempoPreparoEstimado: true,
   ativo:                true,
-  disponivel:           true,
   imagem:               true,
 };
 
@@ -23,7 +22,7 @@ export const listarProdutos = async (busca?: string, categoria?: string, incluir
   return prisma.produto.findMany({
     where: {
       restauranteId,
-      ...(!incluirInativos && { ativo: true, disponivel: true }),
+      ...(!incluirInativos && { ativo: true }),
       ...(categoria && { categoria: categoria as any }),
       ...(busca && { nome: { contains: busca } }),
     },
@@ -206,8 +205,7 @@ export const criarProduto = async (data: {
     data: {
       ...campos as any,
       restauranteId,
-      ativo:      true,
-      disponivel: true,
+      ativo: true,
       ...(ingredientes?.length && {
         ingredientes: { create: ingredientes },
       }),
@@ -226,7 +224,6 @@ export const atualizarProduto = async (
     precoVenda?: number;
     precoProducao?: number | null;
     tempoPreparoEstimado?: number | null;
-    disponivel?: boolean;
     ingredientes?: { ingredienteId: number; quantidadeUsada: number }[];
   }
 ) => {

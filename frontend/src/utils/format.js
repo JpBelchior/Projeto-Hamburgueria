@@ -39,15 +39,35 @@ export const CAT_LABEL = {
   BEBIDA:         "Bebida",
   SOBREMESA:      "Sobremesa",
   COMBO:          "Combo",
+  PROMOCAO:       "Promoção",
 };
 
 export const CAT_COLOR = {
-  PRINCIPAL:      "#fbbf24",  
-  ACOMPANHAMENTO: "#dca075", 
-  BEBIDA:         "#41a2cb",  
-  SOBREMESA:      "#584a80",  
-  COMBO:          "#147c56",  
+  PRINCIPAL:      "#fbbf24",
+  ACOMPANHAMENTO: "#dca075",
+  BEBIDA:         "#41a2cb",
+  SOBREMESA:      "#584a80",
+  COMBO:          "#34d399",
+  PROMOCAO:       "#e879f9",
 };
+
+// ── Combo — desconto e margem ────────────────────────────────────────────────
+
+export function calcComboSomaPrecosVenda(combo) {
+  return (combo.produtos ?? []).reduce((s, cp) => s + cp.quantidade * cp.produto.precoVenda, 0);
+}
+
+export function calcComboDesconto(combo) {
+  const soma = calcComboSomaPrecosVenda(combo);
+  if (soma === 0 || combo.preco >= soma) return null;
+  return ((soma - combo.preco) / soma) * 100;
+}
+
+export function calcComboMargem(combo) {
+  const custo = (combo.produtos ?? []).reduce((s, cp) => s + cp.quantidade * (cp.produto.precoProducao ?? 0), 0);
+  if (custo === 0) return null;
+  return ((combo.preco - custo) / custo) * 100;
+}
 
 // ── Produto — margem ────────────────────────────────────────────────────────
 

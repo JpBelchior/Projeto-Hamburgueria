@@ -3,15 +3,18 @@
 model Combo {
   id          Int            @id @default(autoincrement())
   nome        String
+  descricao   String?        @db.Text
   preco       Float
-  ativo       Boolean        @default(true)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  ativo        Boolean        @default(true)
+  tempoPreparo Int?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   restauranteId Int
   restaurante   Restaurante    @relation(fields: [restauranteId], references: [id])
   produtos      ComboProduto[]
   pedidoItens   PedidoItem[]
+  promocoes     PromocaoCombo[]
 
   @@unique([nome, restauranteId])
   @@map("combos")

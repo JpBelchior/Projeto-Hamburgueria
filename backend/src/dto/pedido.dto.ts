@@ -3,6 +3,7 @@ import { FormaPagamento, StatusPedido } from "@prisma/client";
 export interface PedidoItemDTO {
   produtoId?:    number;
   comboId?:      number;
+  promocaoId?:   number;
   quantidade:    number;
   precoUnitario: number;
   observacao?:   string;

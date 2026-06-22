@@ -23,20 +23,22 @@ model Pedido {
   @@map("pedidos")
 }
 
-// PEDIDO ITEM — produto ou combo
+// PEDIDO ITEM — produto, combo ou promoção
 
 model PedidoItem {
   id            Int     @id @default(autoincrement())
   pedidoId      Int
   produtoId     Int?
   comboId       Int?
+  promocaoId    Int?
   quantidade    Int
   precoUnitario Float
   observacao    String?
 
-  pedido        Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
-  produto       Produto? @relation(fields: [produtoId], references: [id])
-  combo         Combo?   @relation(fields: [comboId], references: [id])
+  pedido        Pedido   @relation(fields: [pedidoId],   references: [id], onDelete: Cascade)
+  produto       Produto? @relation(fields: [produtoId],  references: [id])
+  combo         Combo?   @relation(fields: [comboId],    references: [id])
+  promocao      Promocao? @relation(fields: [promocaoId], references: [id])
 
   @@map("pedido_itens")
 }

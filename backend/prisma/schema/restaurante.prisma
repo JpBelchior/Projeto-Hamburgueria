@@ -17,7 +17,8 @@ model Restaurante {
   produtos           Produto[]
   ingredientes       Ingrediente[]
   combos             Combo[]
-  gastos              Gasto[]
+  gastos             Gasto[]
+  promocoes          Promocao[]
 
   @@map("restaurantes")
 }
