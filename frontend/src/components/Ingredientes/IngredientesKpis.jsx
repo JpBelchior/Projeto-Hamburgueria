@@ -2,6 +2,7 @@ import { Package, DollarSign, AlertTriangle } from "lucide-react";
 import { fmtBRL, ACCENT } from "../../utils/format";
 import KpiCard from "../Ui/KpiCard";
 import CardContainer from "../Ui/CardContainer";
+import MixBar from "../Ui/MixBar";
 
 const MIX = [
   { key: "essencial",    label: "Essencial",    cor: "#fbbf24" },
@@ -65,35 +66,10 @@ export default function IngredientesKpis({ metricas }) {
         deltaLabel={abaixoDoMinimo === 0 ? "estoque OK" : "requer atenção"}
       />
 
-      {/* 4 — Mix essencial */}
-      <CardContainer className="hover:border-slate-600 transition-all">
-        <div className="px-5 py-4">
-          <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-3">
-            Mix Essencial
-          </p>
-
-          <div className="flex h-2 rounded-full overflow-hidden mb-3 gap-0.5">
-            {MIX.map(({ key, cor }) =>
-              mixContagem[key] > 0 ? (
-                <div
-                  key={key}
-                  className="rounded-full transition-all duration-500"
-                  style={{ flex: mixContagem[key], background: cor }}
-                />
-              ) : null
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {MIX.map(({ key, label, cor }) => (
-              <span key={key} className="flex items-center gap-1 text-[10px] text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: cor }} />
-                {label} {mixContagem[key]}
-              </span>
-            ))}
-          </div>
-        </div>
-      </CardContainer>
+      <MixBar
+        title="Mix Essencial"
+        items={MIX.map(({ key, label, cor }) => ({ key, label, color: cor, value: mixContagem[key] }))}
+      />
 
     </div>
   );

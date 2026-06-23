@@ -1,4 +1,5 @@
-import { Power } from "lucide-react";
+import { useState } from "react";
+import { Power, ChevronDown } from "lucide-react";
 import { Clock, TrendingDown } from "lucide-react";
 import { DrawerSection } from "../Ui/Drawer";
 import Button from "../Ui/Button";
@@ -11,10 +12,11 @@ import PromocaoForm from "./PromocaoForm";
 // ── Vista de detalhes ─────────────────────────────────────────────────────────
 
 function DetalheView({ promocao, desempenho, periodoLabel }) {
+  const [expandido, setExpandido] = useState(null);
   const color = CAT_COLOR.PROMOCAO;
 
-  const totalCombos   = (promocao.combos   ?? []).reduce((s, pc) => s + pc.combo.preco,        0);
-  const totalProdutos = (promocao.produtos  ?? []).reduce((s, pp) => s + pp.produto.precoVenda, 0);
+  const totalCombos   = (promocao.combos   ?? []).reduce((s, pc) => s + pc.combo.preco        * (pc.quantidade ?? 1), 0);
+  const totalProdutos = (promocao.produtos  ?? []).reduce((s, pp) => s + pp.produto.precoVenda * (pp.quantidade ?? 1), 0);
 
   return (
     <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
@@ -91,19 +93,58 @@ function DetalheView({ promocao, desempenho, periodoLabel }) {
           </div>
 
           <div className="flex flex-col">
-            {promocao.combos?.map((pc, idx) => (
-              <div key={`c-${idx}`} className="flex items-center justify-between py-2.5 border-b border-slate-800/60 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: `${CAT_COLOR.COMBO}18`, color: CAT_COLOR.COMBO, border: `1px solid ${CAT_COLOR.COMBO}30` }}>Combo</span>
-                  <span className="text-white text-xs">{pc.combo.nome}</span>
+            {promocao.combos?.map((pc, idx) => {
+              const aberto = expandido === pc.combo.id;
+              const temProdutos = (pc.combo.produtos?.length ?? 0) > 0;
+              return (
+                <div key={`c-${pc.combo.id}`} className="border-b border-slate-800/60 last:border-0">
+                  <button
+                    type="button"
+                    onClick={() => temProdutos && setExpandido(aberto ? null : pc.combo.id)}
+                    className={`flex items-center justify-between py-2.5 w-full text-left -mx-1 px-1 rounded-lg transition-colors group ${temProdutos ? "hover:bg-slate-800/40 cursor-pointer" : "cursor-default"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums" style={{ background: `${CAT_COLOR.PROMOCAO}18`, color: CAT_COLOR.PROMOCAO, border: `1px solid ${CAT_COLOR.PROMOCAO}30` }}>
+                        ×{pc.quantidade ?? 1}
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: `${CAT_COLOR.COMBO}18`, color: CAT_COLOR.COMBO, border: `1px solid ${CAT_COLOR.COMBO}30` }}>Combo</span>
+                      <span className="text-white text-xs">{pc.combo.nome}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-slate-500 text-xs tabular-nums">{fmtBRL(pc.combo.preco * (pc.quantidade ?? 1))}</span>
+                      {temProdutos && (
+                        <ChevronDown size={13} className={`text-slate-500 transition-transform duration-200 ${aberto ? "rotate-180" : ""}`} />
+                      )}
+                    </div>
+                  </button>
+
+                  {aberto && (
+                    <div className="mb-2 ml-2 pl-3 border-l-2 border-slate-700/60 flex flex-col gap-1">
+                      {pc.combo.produtos.map((cp, i) => (
+                        <div key={i} className="flex items-center justify-between py-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold px-1 py-0.5 rounded tabular-nums" style={{ background: `${CAT_COLOR.COMBO}18`, color: CAT_COLOR.COMBO, border: `1px solid ${CAT_COLOR.COMBO}30` }}>
+                              ×{cp.quantidade}
+                            </span>
+                            <span className="text-slate-300 text-xs">{cp.produto.nome}</span>
+                          </div>
+                          <span className="text-slate-600 text-xs tabular-nums">{fmtBRL(cp.produto.precoVenda)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="text-slate-500 text-xs tabular-nums">{fmtBRL(pc.combo.preco)}</span>
-              </div>
-            ))}
+              );
+            })}
             {promocao.produtos?.map((pp, idx) => (
               <div key={`p-${idx}`} className="flex items-center justify-between py-2.5 border-b border-slate-800/60 last:border-0">
-                <span className="text-white text-xs">{pp.produto.nome}</span>
-                <span className="text-slate-500 text-xs tabular-nums">{fmtBRL(pp.produto.precoVenda)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums " style={{ background: `${CAT_COLOR.PROMOCAO}18`, color: CAT_COLOR.PROMOCAO , border: `1px solid ${CAT_COLOR.PROMOCAO}30` }}>
+                    ×{pp.quantidade ?? 1}
+                  </span>
+                  <span className="text-white text-xs">{pp.produto.nome}</span>
+                </div>
+                <span className="text-slate-500 text-xs tabular-nums mr-7">{fmtBRL(pp.produto.precoVenda * (pp.quantidade ?? 1))}</span>
               </div>
             ))}
           </div>

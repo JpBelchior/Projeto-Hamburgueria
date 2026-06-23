@@ -1,16 +1,8 @@
 import { Timer, ClipboardList, TrendingUp } from "lucide-react";
-import { fmtBRL, STATUS_COLOR, STATUS_LABEL } from "../../utils/format";
-import CardContainer from "../Ui/CardContainer";
+import { fmtBRL, STATUS_COLOR, STATUS_LABEL, deltaHint } from "../../utils/format";
+import MixBar from "../Ui/MixBar";
 import KpiCard from "../Ui/KpiCard";
 import { STATUS_COLS } from "../../constants";
-
-function mkHint(variacao, vsHint, { invertido = false } = {}) {
-  if (variacao == null) return "Sem dados do período anterior para comparação";
-  if (variacao === 0)   return "Igual ao período anterior";
-  const abs = Math.abs(variacao).toFixed(1);
-  if (invertido) return variacao < 0 ? `${abs}% mais rápido ${vsHint}` : `${abs}% mais lento ${vsHint}`;
-  return variacao > 0 ? `${abs}% a mais ${vsHint}` : `${abs}% a menos ${vsHint}`;
-}
 
 export default function PedidosStats({ pedidos, metricas, vsHint = "que o período anterior" }) {
   const ativos      = pedidos.filter((p) => p.status !== "CANCELADO");
@@ -56,7 +48,7 @@ export default function PedidosStats({ pedidos, metricas, vsHint = "que o perío
         value={String(total)}
         deltaLabel={`${ativos.length} ativos`}
         delta={metricas?.pedidos?.variacao}
-        deltaHint={metricas ? mkHint(metricas.pedidos.variacao, vsHint) : undefined}
+        deltaHint={metricas ? deltaHint(metricas.pedidos.variacao, vsHint) : undefined}
       />
       <KpiCard
         icon={TrendingUp}
@@ -64,7 +56,7 @@ export default function PedidosStats({ pedidos, metricas, vsHint = "que o perío
         value={fmtBRL(ticketMedio)}
         deltaLabel="por pedido"
         delta={metricas?.ticketMedio?.variacao}
-        deltaHint={metricas ? mkHint(metricas.ticketMedio.variacao, vsHint) : undefined}
+        deltaHint={metricas ? deltaHint(metricas.ticketMedio.variacao, vsHint) : undefined}
       />
       <KpiCard
         icon={Timer}
@@ -73,44 +65,14 @@ export default function PedidosStats({ pedidos, metricas, vsHint = "que o perío
         deltaLabel={comTempo.length > 0 ? `${comTempo.length} pedidos c/ Principal` : "sem dados"}
         hint="Média do tempo entre o pedido entrar em preparo e ser finalizado, contando apenas pedidos com ao menos um item da categoria Principal."
         delta={metricas?.tempoPreparo?.variacao}
-        deltaHint={metricas ? mkHint(metricas.tempoPreparo?.variacao, vsHint, { invertido: true }) : undefined}
+        deltaHint={metricas ? deltaHint(metricas.tempoPreparo?.variacao, vsHint, { invertido: true }) : undefined}
         invertido
       />
 
-      {/* Mix por status */}
-      <CardContainer className="hover:border-slate-600 transition-all relative">
-        <div className="px-5 py-4">
-        <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-3">
-          Mix por Status
-        </p>
-
-        {/* Barra colorida */}
-        <div className="flex h-2 rounded-full overflow-hidden mb-3 gap-0.5">
-          {STATUS_COLS.map((s) => (
-            contagem[s] > 0 && (
-              <div
-                key={s}
-                className="rounded-full transition-all duration-500"
-                style={{
-                  flex:       contagem[s],
-                  background: STATUS_COLOR[s],
-                }}
-              />
-            )
-          ))}
-        </div>
-
-        {/* Legendas */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
-          {STATUS_COLS.map((s) => (
-            <span key={s} className="flex items-center gap-1 text-[10px] text-slate-400">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: STATUS_COLOR[s] }} />
-              {STATUS_LABEL[s]} {contagem[s]}
-            </span>
-          ))}
-        </div>
-        </div>
-      </CardContainer>
+      <MixBar
+        title="Mix por Status"
+        items={STATUS_COLS.map((s) => ({ key: s, label: STATUS_LABEL[s], color: STATUS_COLOR[s], value: contagem[s] }))}
+      />
     </div>
   );
 }

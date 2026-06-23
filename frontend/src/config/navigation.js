@@ -21,8 +21,8 @@ export const GERENTE_NAV = [
   {
     section: "GESTÃO",
     items: [
-      { label: "Produtos", icon: UtensilsCrossed, path: "/Dashboard/produtos" },
       { label: "Ingredientes", icon: Package, path: "/Dashboard/ingredientes" },
+      { label: "Produtos", icon: UtensilsCrossed, path: "/Dashboard/produtos" },
       { label: "Combos & Promoções", icon: Layers, path: "/Dashboard/combos" },
       { label: "Funcionários", icon: Users, path: "/Dashboard/funcionarios" },
       { label: "Compras & Pagamentos", icon: Receipt, path: "/Dashboard/compras-pagamentos" },

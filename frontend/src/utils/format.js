@@ -141,3 +141,16 @@ export function fmtElapsedP(segundos) {
 export function elapsedSeconds(from) {
   return Math.floor((Date.now() - new Date(from).getTime()) / 1000);
 }
+
+export function clampQtd(value, unidade) {
+  const min = unidade === "UNIDADE" ? 1 : 0.1;
+  return Math.max(min, Number(value) || min);
+}
+
+export function deltaHint(variacao, vsHint, { invertido = false } = {}) {
+  if (variacao == null) return "Sem dados do período anterior para comparação";
+  if (variacao === 0)   return "Igual ao período anterior";
+  const abs = Math.abs(variacao).toFixed(1);
+  if (invertido) return variacao < 0 ? `${abs}% mais rápido ${vsHint}` : `${abs}% mais lento ${vsHint}`;
+  return variacao > 0 ? `${abs}% a mais ${vsHint}` : `${abs}% a menos ${vsHint}`;
+}

@@ -1,20 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { promocaoService } from "../services/promocao.service";
+import { usePeriodFetch } from "./usePeriodFetch";
 
 export function usePromocoes() {
-  const [dados,   setDados]   = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [erro,    setErro]    = useState(null);
-
-  const fetch = useCallback(() => {
-    setLoading(true);
-    promocaoService.getAll("", true)
-      .then(setDados)
-      .catch((e) => setErro(e.message ?? "Erro ao carregar promoções"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => { fetch(); }, [fetch]);
-
-  return { dados, loading, erro, refetch: fetch };
+  const fn = useCallback(() => promocaoService.getAll("", true), []);
+  return usePeriodFetch(fn, "Erro ao carregar promoções", []);
 }

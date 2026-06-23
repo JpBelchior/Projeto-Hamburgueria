@@ -15,13 +15,23 @@ const promocaoSelect = {
   updatedAt:    true,
   combos: {
     select: {
+      quantidade: true,
       combo: {
-        select: { id: true, nome: true, preco: true, ativo: true, tempoPreparo: true },
+        select: {
+          id: true, nome: true, preco: true, ativo: true, tempoPreparo: true,
+          produtos: {
+            select: {
+              quantidade: true,
+              produto: { select: { id: true, nome: true, precoVenda: true, categoria: true } },
+            },
+          },
+        },
       },
     },
   },
   produtos: {
     select: {
+      quantidade: true,
       produto: {
         select: { id: true, nome: true, precoVenda: true, ativo: true, categoria: true },
       },
@@ -31,18 +41,18 @@ const promocaoSelect = {
 
 function calcPrecos(p: {
   desconto:  number | null;
-  combos:    { combo: { preco: number } }[];
-  produtos:  { produto: { precoVenda: number } }[];
+  combos:    { quantidade: number; combo: { preco: number } }[];
+  produtos:  { quantidade: number; produto: { precoVenda: number } }[];
 }) {
   const precoTotal =
-    p.combos.reduce((s, c) => s + c.combo.preco, 0) +
-    p.produtos.reduce((s, pr) => s + pr.produto.precoVenda, 0);
+    p.combos.reduce((s, c) => s + c.combo.preco * c.quantidade, 0) +
+    p.produtos.reduce((s, pr) => s + pr.produto.precoVenda * pr.quantidade, 0);
   const precoReal =
     p.desconto != null ? precoTotal * (1 - p.desconto / 100) : null;
   return { precoTotal, precoReal };
 }
 
-function withPrecos<T extends { desconto: number | null; combos: { combo: { preco: number } }[]; produtos: { produto: { precoVenda: number } }[] }>(p: T) {
+function withPrecos<T extends { desconto: number | null; combos: { quantidade: number; combo: { preco: number } }[]; produtos: { quantidade: number; produto: { precoVenda: number } }[] }>(p: T) {
   return { ...p, ...calcPrecos(p) };
 }
 
@@ -78,11 +88,11 @@ export const criarPromocao = async (dto: CreatePromocaoDTO) => {
       descricao:     dto.descricao,
       tempoPreparo:  dto.tempoPreparo,
       restauranteId,
-      ...(dto.comboIds?.length && {
-        combos: { create: dto.comboIds.map((comboId) => ({ comboId })) },
+      ...(dto.combos?.length && {
+        combos: { create: dto.combos.map(({ id, quantidade }) => ({ comboId: id, quantidade })) },
       }),
-      ...(dto.produtoIds?.length && {
-        produtos: { create: dto.produtoIds.map((produtoId) => ({ produtoId })) },
+      ...(dto.produtos?.length && {
+        produtos: { create: dto.produtos.map(({ id, quantidade }) => ({ produtoId: id, quantidade })) },
       }),
     },
     select: promocaoSelect,
@@ -90,36 +100,36 @@ export const criarPromocao = async (dto: CreatePromocaoDTO) => {
   return withPrecos(row);
 };
 
-export const atualizarPromocao = async (id: number, dto: UpdatePromocaoDTO) => {
+export const atualizarPromocao = async (promocaoId: number, dto: UpdatePromocaoDTO) => {
   const restauranteId = RequestContext.getRestauranteId()!;
-  const existe = await prisma.promocao.findFirst({ where: { id, restauranteId } });
+  const existe = await prisma.promocao.findFirst({ where: { id: promocaoId, restauranteId } });
   if (!existe) return null;
 
-  const { comboIds, produtoIds, ...campos } = dto;
+  const { combos, produtos, ...campos } = dto;
 
   await prisma.$transaction(async (tx) => {
-    await tx.promocao.update({ where: { id }, data: campos as any });
+    await tx.promocao.update({ where: { id: promocaoId }, data: campos as any });
 
-    if (comboIds !== undefined) {
-      await tx.promocaoCombo.deleteMany({ where: { promocaoId: id } });
-      if (comboIds.length) {
+    if (combos !== undefined) {
+      await tx.promocaoCombo.deleteMany({ where: { promocaoId } });
+      if (combos.length) {
         await tx.promocaoCombo.createMany({
-          data: comboIds.map((comboId) => ({ promocaoId: id, comboId })),
+          data: combos.map(({ id: comboId, quantidade }) => ({ promocaoId, comboId, quantidade })),
         });
       }
     }
 
-    if (produtoIds !== undefined) {
-      await tx.promocaoProduto.deleteMany({ where: { promocaoId: id } });
-      if (produtoIds.length) {
+    if (produtos !== undefined) {
+      await tx.promocaoProduto.deleteMany({ where: { promocaoId } });
+      if (produtos.length) {
         await tx.promocaoProduto.createMany({
-          data: produtoIds.map((produtoId) => ({ promocaoId: id, produtoId })),
+          data: produtos.map(({ id: produtoId, quantidade }) => ({ promocaoId, produtoId, quantidade })),
         });
       }
     }
   });
 
-  return buscarPromocao(id);
+  return buscarPromocao(promocaoId);
 };
 
 export const toggleAtivo = async (id: number) => {

@@ -14,7 +14,7 @@ export function useDrawer(service, id, periodo, { onAtualizado, onDeletado } = {
     setErro(null);
     Promise.all([
       service.getById(id),
-      service.getDesempenho(id, periodo),
+      service.getDesempenho ? service.getDesempenho(id, periodo) : Promise.resolve(null),
     ])
       .then(([data, desemp]) => { setItem(data); setDesempenho(desemp); })
       .catch((e) => setErro(e.message ?? "Erro ao carregar dados"))
@@ -24,7 +24,7 @@ export function useDrawer(service, id, periodo, { onAtualizado, onDeletado } = {
   useEffect(() => { refetch(); }, [refetch]);
 
   const handleToggleAtivo = async () => {
-    if (!item) return;
+    if (!item || !service.toggleAtivo) return;
     const novoAtivo = !item.ativo;
     setItem((prev) => ({ ...prev, ativo: novoAtivo }));
     try {
@@ -52,8 +52,13 @@ export function useDrawer(service, id, periodo, { onAtualizado, onDeletado } = {
   };
 
   const handleDelete = async () => {
-    await service.remove(id);
-    onDeletado?.(id);
+    try {
+      await service.remove(id);
+      onDeletado?.(id);
+    } catch (e) {
+      setErroSalvar(e?.response?.data?.message ?? e?.message ?? "Erro ao excluir.");
+      throw e;
+    }
   };
 
   return { item, desempenho, loading, erro, salvando, erroSalvar, handleToggleAtivo, handleSalvar, handleDelete };

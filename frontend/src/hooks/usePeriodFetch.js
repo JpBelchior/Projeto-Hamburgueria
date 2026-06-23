@@ -25,5 +25,5 @@ export const usePeriodFetch = (fetchFn, errMsg, initialValue = []) => {
 
   useEffect(() => { run(); }, [run]);
 
-  return { dados, loading, erro, refetch: run };
+  return { dados, setDados, loading, erro, refetch: run };
 };

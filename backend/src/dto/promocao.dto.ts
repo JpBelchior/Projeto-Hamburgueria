@@ -1,9 +1,14 @@
+export interface PromocaoItemDTO {
+  id:         number;
+  quantidade: number;
+}
+
 export interface CreatePromocaoDTO {
   nome:          string;
   descricao?:    string;
   tempoPreparo?: number;
-  comboIds?:     number[];
-  produtoIds?:   number[];
+  combos?:       PromocaoItemDTO[];
+  produtos?:     PromocaoItemDTO[];
 }
 
 export interface UpdatePromocaoDTO {
@@ -11,6 +16,6 @@ export interface UpdatePromocaoDTO {
   descricao?:     string;
   desconto?:      number | null;
   tempoPreparo?:  number | null;
-  comboIds?:      number[];
-  produtoIds?:    number[];
+  combos?:        PromocaoItemDTO[];
+  produtos?:      PromocaoItemDTO[];
 }

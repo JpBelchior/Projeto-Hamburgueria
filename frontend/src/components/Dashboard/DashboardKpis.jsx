@@ -1,14 +1,7 @@
 import { DollarSign, ClipboardList, TrendingUp, Trophy } from "lucide-react";
 import KpiCard from "../Ui/KpiCard";
 import { formatMoeda } from "../../utils/Date.utils";
-
-function deltaHint(variacao, vsHint, { invertido = false } = {}) {
-  if (variacao === null) return "Sem dados do período anterior para comparação";
-  if (variacao === 0)    return "Igual ao período anterior";
-  const abs = Math.abs(variacao).toFixed(1);
-  if (invertido) return variacao < 0 ? `${abs}% mais rápido ${vsHint}` : `${abs}% mais lento ${vsHint}`;
-  return variacao > 0 ? `${abs}% a mais ${vsHint}` : `${abs}% a menos ${vsHint}`;
-}
+import { deltaHint } from "../../utils/format";
 
 export default function DashboardKpis({ dados, deltaLabel, vsHint }) {
   return (

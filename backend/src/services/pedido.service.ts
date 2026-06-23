@@ -378,6 +378,7 @@ export const editarPedido = async (id: number, dto: UpdatePedidoDTO) => {
           create: dto.itens.map((item) => ({
             produtoId:     item.produtoId,
             comboId:       item.comboId,
+            promocaoId:    item.promocaoId,
             quantidade:    item.quantidade,
             precoUnitario: item.precoUnitario,
             observacao:    item.observacao,

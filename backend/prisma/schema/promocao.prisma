@@ -22,6 +22,7 @@ model Promocao {
 model PromocaoCombo {
   promocaoId Int
   comboId    Int
+  quantidade Int      @default(1)
   promocao   Promocao @relation(fields: [promocaoId], references: [id], onDelete: Cascade)
   combo      Combo    @relation(fields: [comboId],    references: [id])
   @@id([promocaoId, comboId])
@@ -31,6 +32,7 @@ model PromocaoCombo {
 model PromocaoProduto {
   promocaoId Int
   produtoId  Int
+  quantidade Int      @default(1)
   promocao   Promocao @relation(fields: [promocaoId], references: [id], onDelete: Cascade)
   produto    Produto  @relation(fields: [produtoId],  references: [id])
   @@id([promocaoId, produtoId])

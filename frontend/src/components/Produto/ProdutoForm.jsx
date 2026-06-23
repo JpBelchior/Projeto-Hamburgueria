@@ -1,74 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { Search, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 import { ingredienteService } from "../../services/ingrediente.service";
 import FormField from "../Ui/FormField";
 import Button from "../Ui/Button";
+import EntitySelector from "../Ui/EntitySelector";
 import { CATEGORIA_OPTIONS, UNIDADE_LABEL } from "../../constants";
-import { INPUT_CLS as inputCls } from "../../utils/format";
-
-// ── Seletor de ingrediente ────────────────────────────────────────────────────
-
-function IngredienteSelector({ disponiveis, selecionados, onAdd }) {
-  const [busca,   setBusca]   = useState("");
-  const [aberto,  setAberto]  = useState(false);
-  const ref = useRef(null);
-
-  const idsSelecionados = new Set(selecionados.map((i) => i.ingredienteId));
-
-  const filtrados = busca.trim()
-    ? disponiveis.filter(
-        (i) =>
-          !idsSelecionados.has(i.id) &&
-          i.nome.toLowerCase().includes(busca.toLowerCase()),
-      )
-    : [];
-
-  const handleSelect = (ing) => {
-    onAdd({ ingredienteId: ing.id, nome: ing.nome, unidade: ing.unidade, quantidadeUsada: 1 });
-    setBusca("");
-    setAberto(false);
-  };
-
-  return (
-    <div className="relative" ref={ref}>
-      <div className="relative">
-        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-        <input
-          type="text"
-          value={busca}
-          onChange={(e) => { setBusca(e.target.value); setAberto(true); }}
-          onFocus={() => setAberto(true)}
-          onBlur={() => setTimeout(() => setAberto(false), 150)}
-          placeholder="Buscar ingrediente pelo nome…"
-          className="w-full pl-8 pr-4 py-2 bg-slate-800/50 border border-slate-700/50 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/40 transition-all"
-        />
-      </div>
-
-      {aberto && busca.trim() && filtrados.length > 0 && (
-        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700/50 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-          {filtrados.map((ing) => (
-            <button
-              key={ing.id}
-              onMouseDown={() => handleSelect(ing)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-slate-700/60 transition-colors text-left"
-            >
-              <span className="text-white text-xs truncate">{ing.nome}</span>
-              <span className="text-slate-500 text-[10px] shrink-0">{UNIDADE_LABEL[ing.unidade] ?? ing.unidade}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {aberto && busca.trim() && filtrados.length === 0 && (
-        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-slate-500">
-          Nenhum ingrediente encontrado
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Formulário principal ──────────────────────────────────────────────────────
+import { INPUT_CLS as inputCls, clampQtd } from "../../utils/format";
 
 export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, erro }) {
   const [form, setForm] = useState({
@@ -116,9 +53,8 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
       precoVenda:           Number(form.precoVenda),
       precoProducao:        form.precoProducao !== "" ? Number(form.precoProducao) : null,
       tempoPreparoEstimado: form.tempoPreparoEstimado !== "" ? Number(form.tempoPreparoEstimado) : null,
-      ingredientes:         ingredientesSel.map(({ ingredienteId, quantidadeUsada }) => ({
-        ingredienteId,
-        quantidadeUsada: Number(quantidadeUsada),
+      ingredientes:         ingredientesSel.map(({ ingredienteId, quantidadeUsada, unidade }) => ({
+        ingredienteId, quantidadeUsada: clampQtd(quantidadeUsada, unidade),
       })),
     });
   };
@@ -159,7 +95,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
           <input
             className={inputCls}
             type="number"
-            step="1"
+            step="0.01"
             min="0"
             value={form.precoVenda}
             onChange={set("precoVenda")}
@@ -171,7 +107,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
           <input
             className={inputCls}
             type="number"
-            step="1"
+            step="0.01"
             min="0"
             value={form.precoProducao}
             onChange={set("precoProducao")}
@@ -197,10 +133,12 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
           Ingredientes · Ficha Técnica
         </label>
 
-        <IngredienteSelector
+        <EntitySelector
           disponiveis={ingredientesDisp}
-          selecionados={ingredientesSel}
-          onAdd={addIngrediente}
+          selecionadosIds={ingredientesSel.map((i) => i.ingredienteId)}
+          onAdd={(ing) => addIngrediente({ ingredienteId: ing.id, nome: ing.nome, unidade: ing.unidade, quantidadeUsada: 1 })}
+          placeholder="Buscar ingrediente pelo nome…"
+          renderLabel={(ing) => UNIDADE_LABEL[ing.unidade] ?? ing.unidade}
         />
 
         {ingredientesSel.length > 0 && (
@@ -217,6 +155,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
                   min={ing.unidade === "UNIDADE" ? "1" : "0.1"}
                   value={ing.quantidadeUsada}
                   onChange={(e) => setQtd(ing.ingredienteId, e.target.value)}
+                  onBlur={(e) => setQtd(ing.ingredienteId, clampQtd(e.target.value, ing.unidade))}
                   className="w-20 bg-slate-700/50 border border-slate-600/40 rounded-lg px-2 py-1 text-xs text-white text-right focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all"
                 />
                 <span className="text-slate-500 text-[10px] w-6 shrink-0">

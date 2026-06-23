@@ -30,7 +30,7 @@ export default function ConfirmDialog({
             Voltar
           </button>
           <button
-            onClick={() => { onConfirm(); onClose(); }}
+            onClick={async () => { try { await onConfirm(); } finally { onClose(); } }}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${btnCls}`}
           >
             {confirmLabel}
