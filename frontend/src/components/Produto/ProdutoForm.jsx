@@ -29,7 +29,7 @@ export default function ProdutoForm({ initialData, onSubmit, onCancel, loading, 
   const [ingredientesDisp, setIngredientesDisp] = useState([]);
 
   useEffect(() => {
-    ingredienteService.getAll().then(setIngredientesDisp).catch(() => {});
+    ingredienteService.getAll(true).then(setIngredientesDisp).catch(() => {});
   }, []);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));

@@ -5,8 +5,7 @@ export interface CreateGastoDTO {
   nome:            string;
   valor:           number;
   descricao?:      string;
-  mes:             number;
-  ano:             number;
+  data:            Date;
   ingredientes?:   { id: number; quantidade: number }[];
   funcionarioIds?: number[];
 }
@@ -20,7 +19,7 @@ export interface UpdateGastoDTO {
 }
 
 export interface ListGastosDTO {
-  tipo?: TipoGasto;
-  mes?:  number;
-  ano?:  number;
+  tipo?:       TipoGasto;
+  mes?:        number;
+  ano?:        number;
 }

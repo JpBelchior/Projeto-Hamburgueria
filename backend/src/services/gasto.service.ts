@@ -36,8 +36,10 @@ export const findAll = async (filtros: ListGastosDTO = {}) => {
 
   if (filtros.tipo) where.tipo = filtros.tipo;
   if (filtros.mes && filtros.ano) {
-    where.mes = filtros.mes;
-    where.ano = filtros.ano;
+    where.data = {
+      gte: new Date(filtros.ano, filtros.mes - 1, 1),
+      lt:  new Date(filtros.ano, filtros.mes, 1),
+    };
   }
 
   const gastos = await prisma.gasto.findMany({

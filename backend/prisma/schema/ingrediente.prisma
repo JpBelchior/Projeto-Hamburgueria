@@ -6,6 +6,7 @@ model Ingrediente {
   quantidadeAtual Float
   unidade         UnidadeMedida
   essencial       Boolean              @default(false)
+  ativo           Boolean              @default(true)
   estoqueMinimo   Float?
   imagem          String?
   createdAt       DateTime             @default(now())

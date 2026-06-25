@@ -5,7 +5,7 @@ import Button from "../Ui/Button";
 import EntitySelector from "../Ui/EntitySelector";
 import { produtoService } from "../../services/produto.service";
 import { comboService } from "../../services/combo.service";
-import { fmtBRL, INPUT_CLS as inputCls } from "../../utils/format";
+import { fmtBRL, INPUT_CLS as inputCls, clampDesconto } from "../../utils/format";
 
 export default function PromocaoForm({ initialData, onSubmit, onCancel, loading, erro }) {
   const [form, setForm] = useState({
@@ -74,11 +74,13 @@ export default function PromocaoForm({ initialData, onSubmit, onCancel, loading,
             className={inputCls}
             type="number"
             step="0.1"
-            min="0"
+            min="0.1"
             max="100"
+            required
             value={form.desconto}
             onChange={set("desconto")}
-            placeholder="—"
+            onBlur={(e) => setForm((f) => ({ ...f, desconto: e.target.value !== "" ? clampDesconto(e.target.value) : "" }))}
+            placeholder="Ex: 10"
           />
         </FormField>
         <FormField label="Tempo de Preparo (min)">

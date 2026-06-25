@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { funcionarioService } from "../services/funcionario.service";
+import useAuthStore from "../store/useAuthStore";
 
 export function usePedidoForm(drawer, actions) {
   const isEditar = drawer.modo === "editar";
+  const user     = useAuthStore((s) => s.user);
 
   const [form,         setForm]         = useState({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: "", itens: [] });
   const [funcionarios, setFuncionarios] = useState([]);
@@ -19,29 +21,88 @@ export function usePedidoForm(drawer, actions) {
     if (!drawer.aberto) return;
     if (isEditar && drawer.dados) {
       const p = drawer.dados;
+
+      // Agrupa itens com mesmo promocaoId em um único item de promoção
+      const promoGroups = new Map();
+      const regularRaw  = [];
+
+      for (const i of (p.itens ?? [])) {
+        if (i.promocaoId) {
+          if (!promoGroups.has(i.promocaoId)) promoGroups.set(i.promocaoId, []);
+          promoGroups.get(i.promocaoId).push(i);
+        } else {
+          regularRaw.push(i);
+        }
+      }
+
+      const regularItens = regularRaw.map((i) => ({
+        produtoId:     i.produtoId    ?? undefined,
+        comboId:       i.comboId      ?? undefined,
+        categoria:     i.produto?.categoria,
+        comboProdutos: i.combo?.produtos ?? [],
+        tipo:          i.produtoId ? "produto" : "combo",
+        nome:          i.produto?.nome ?? i.combo?.nome ?? "Item excluído",
+        quantidade:    i.quantidade,
+        precoUnitario: i.precoUnitario,
+        observacao:    i.observacao ?? "",
+      }));
+
+      const promoItens = [...promoGroups.entries()].map(([promocaoId, items]) => {
+        const first = items[0];
+        const nome  = first.promocao?.nome ?? "Promoção excluída";
+
+        // Novo formato: um único item com só promocaoId
+        if (items.length === 1 && !first.comboId && !first.produtoId) {
+          return {
+            promocaoId,
+            tipo:             "promocao",
+            nome,
+            quantidade:       first.quantidade,
+            precoUnitario:    first.precoUnitario,
+            observacao:       first.observacao ?? "",
+            promocaoCombos:   first.promocao?.combos   ?? [],
+            promocaoProdutos: first.promocao?.produtos  ?? [],
+          };
+        }
+
+        // Formato antigo: vários itens com mesmo promocaoId (combo/produto separados)
+        const totalPreco = items.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0);
+        return {
+          promocaoId,
+          tipo:             "promocao",
+          nome,
+          quantidade:       1,
+          precoUnitario:    totalPreco,
+          observacao:       "",
+          promocaoCombos:   items.filter(i => i.comboId).map(i => ({ combo: { nome: i.combo?.nome }, quantidade: i.quantidade })),
+          promocaoProdutos: items.filter(i => i.produtoId).map(i => ({ produto: { nome: i.produto?.nome }, quantidade: i.quantidade })),
+        };
+      });
+
       setForm({
         nomeCliente:    p.nomeCliente ?? "",
         mesa:           p.mesa != null ? String(p.mesa) : "",
         formaPagamento: p.formaPagamento ?? "",
         funcionarioId:  p.funcionarioId ? String(p.funcionarioId) : "",
-        itens: (p.itens ?? []).map((i) => ({
-          produtoId:     i.produtoId    ?? undefined,
-          comboId:       i.comboId      ?? undefined,
-          promocaoId:    i.promocaoId   ?? undefined,
-          categoria:     i.produto?.categoria,
-          comboProdutos: i.combo?.produtos ?? [],
-          tipo:          i.produtoId ? "produto" : "combo",
-          nome:          i.produto?.nome ?? i.combo?.nome ?? "",
-          quantidade:    i.quantidade,
-          precoUnitario: i.precoUnitario,
-          observacao:    i.observacao ?? "",
-        })),
+        itens: [...regularItens, ...promoItens],
       });
     } else {
-      setForm({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: "", itens: [] });
+      const meuFunc = funcionarios.find((f) => f.user?.id === user?.id);
+      setForm({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: meuFunc ? String(meuFunc.id) : "", itens: [] });
     }
     setErro(null);
   }, [drawer.aberto, drawer.dados]);
+
+  // Caso funcionários carregue após o drawer abrir, preenche o padrão
+  useEffect(() => {
+    if (!drawer.aberto || isEditar) return;
+    setForm((prev) => {
+      if (prev.funcionarioId !== "") return prev;
+      const meuFunc = funcionarios.find((f) => f.user?.id === user?.id);
+      if (!meuFunc) return prev;
+      return { ...prev, funcionarioId: String(meuFunc.id) };
+    });
+  }, [funcionarios]);
 
   const setField    = (k, v) => setForm((p) => ({ ...p, [k]: v }));
   const setItem     = (idx, k, v) =>
@@ -50,40 +111,27 @@ export function usePedidoForm(drawer, actions) {
 
   const addItem = (item, tipo) => {
     if (tipo === "promocao") {
-      const precoTotal = item.precoTotal ?? 0;
-      const precoReal  = item.precoReal  ?? precoTotal;
-      const fator      = precoTotal > 0 ? precoReal / precoTotal : 1;
-
-      const novosItens = [
-        ...(item.combos ?? []).map((pc) => ({
-          comboId:       pc.combo.id,
-          promocaoId:    item.id,
-          comboProdutos: pc.combo.produtos ?? [],
-          nome:          pc.combo.nome,
-          tipo:          "combo",
-          quantidade:    pc.quantidade ?? 1,
-          precoUnitario: pc.combo.preco * fator,
-          observacao:    "",
-        })),
-        ...(item.produtos ?? []).map((pp) => ({
-          produtoId:     pp.produto.id,
-          promocaoId:    item.id,
-          categoria:     pp.produto.categoria,
-          nome:          pp.produto.nome,
-          tipo:          "produto",
-          quantidade:    pp.quantidade ?? 1,
-          precoUnitario: pp.produto.precoVenda * fator,
-          observacao:    "",
-        })),
-      ];
-
-      setForm((p) => ({ ...p, itens: [...p.itens, ...novosItens] }));
+      const precoUnitario = item.precoReal ?? item.precoTotal ?? 0;
+      setForm((p) => ({
+        ...p,
+        itens: [
+          ...p.itens,
+          {
+            promocaoId:       item.id,
+            nome:             item.nome,
+            tipo:             "promocao",
+            quantidade:       1,
+            precoUnitario,
+            observacao:       "",
+            promocaoCombos:   item.combos   ?? [],
+            promocaoProdutos: item.produtos ?? [],
+          },
+        ],
+      }));
       return;
     }
 
-    const preco = tipo === "produto"
-      ? item.precoVenda * (1 - (item.desconto ?? 0) / 100)
-      : item.preco;
+    const preco = tipo === "produto" ? item.precoVenda : item.preco;
     setForm((p) => ({
       ...p,
       itens: [

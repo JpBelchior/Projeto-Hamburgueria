@@ -30,6 +30,9 @@ async function main() {
   await prisma.combo.deleteMany();
   await prisma.produtoIngrediente.deleteMany();
   await prisma.produto.deleteMany();
+  await prisma.gastoIngredienteIngrediente.deleteMany();
+  await prisma.gastoFuncionarioFuncionario.deleteMany();
+  await prisma.gasto.deleteMany();
   await prisma.ingrediente.deleteMany();
   await prisma.funcionario.deleteMany();
   await prisma.userRole.deleteMany();
@@ -145,6 +148,95 @@ async function main() {
       prisma.ingrediente.create({ data: { nome: "Batata Palito",     quantidadeAtual: 15,  estoqueMinimo: 3,   unidade: UnidadeMedida.KG,      restauranteId: rid } }),
     ]);
   console.log("✅ Ingredientes criados.");
+
+  // ── Gastos ────────────────────────────────────────────────────────────────
+  // Helper: data exata (sem hora) N meses atrás
+  const d = (mesesAtras: number, dia: number) => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() - mesesAtras, dia);
+  };
+
+  // Compra de ingredientes — mês atual
+  await prisma.gasto.create({
+    data: {
+      tipo: "INGREDIENTE", nome: "Compra de proteínas", valor: 1200,
+      data: d(0, 3), restauranteId: rid,
+      ingrediente: {
+        create: {
+          ingredientes: {
+            create: [
+              { ingredienteId: carneBovina.id, quantidade: 50 },
+              { ingredienteId: bacon.id,       quantidade: 100 },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  // Compra de ingredientes — mês anterior
+  await prisma.gasto.create({
+    data: {
+      tipo: "INGREDIENTE", nome: "Compra semanal de insumos", valor: 980,
+      data: d(1, 8), restauranteId: rid,
+      ingrediente: {
+        create: {
+          ingredientes: {
+            create: [
+              { ingredienteId: paoBrioche.id,    quantidade: 100 },
+              { ingredienteId: queijoCheddar.id, quantidade: 200 },
+              { ingredienteId: molhoEspecial.id, quantidade: 2   },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  // Folha de pagamento — mês atual
+  await prisma.gasto.create({
+    data: {
+      tipo: "FUNCIONARIO", nome: "Folha de pagamento", valor: 4000,
+      data: d(0, 5), restauranteId: rid,
+      funcionario: {
+        create: {
+          funcionarios: { create: funcIds.map((id) => ({ funcionarioId: id })) },
+        },
+      },
+    },
+  });
+
+  // Folha de pagamento — mês anterior
+  await prisma.gasto.create({
+    data: {
+      tipo: "FUNCIONARIO", nome: "Folha de pagamento", valor: 4000,
+      data: d(1, 5), restauranteId: rid,
+      funcionario: {
+        create: {
+          funcionarios: { create: funcIds.map((id) => ({ funcionarioId: id })) },
+        },
+      },
+    },
+  });
+
+  // Gastos genéricos
+  await prisma.gasto.create({
+    data: {
+      tipo: "GENERICO", nome: "Aluguel", valor: 3500,
+      descricao: "Aluguel do espaço comercial",
+      data: d(0, 1), restauranteId: rid,
+    },
+  });
+
+  await prisma.gasto.create({
+    data: {
+      tipo: "GENERICO", nome: "Energia elétrica", valor: 620,
+      descricao: "Conta de energia do mês anterior",
+      data: d(1, 15), restauranteId: rid,
+    },
+  });
+
+  console.log("✅ Gastos criados.");
 
   // ── Produtos ──────────────────────────────────────────────────────────────
   const classicBurger = await prisma.produto.create({

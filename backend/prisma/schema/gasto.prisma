@@ -15,8 +15,7 @@ model Gasto {
   nome          String
   valor         Float
   descricao     String?
-  mes           Int
-  ano           Int
+  data          DateTime
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

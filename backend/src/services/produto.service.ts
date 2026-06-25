@@ -10,7 +10,6 @@ const produtoSelect = {
   categoria:            true,
   precoVenda:           true,
   precoProducao:        true,
-  desconto:             true,
   tempoPreparoEstimado: true,
   ativo:                true,
   imagem:               true,
@@ -33,7 +32,7 @@ export const listarProdutos = async (busca?: string, categoria?: string, incluir
 
 export const buscarProduto = async (id: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
-  return prisma.produto.findFirst({
+  const produto = await prisma.produto.findFirst({
     where:  { id, restauranteId },
     select: {
       ...produtoSelect,
@@ -46,6 +45,34 @@ export const buscarProduto = async (id: number) => {
       },
     },
   });
+  if (!produto) return null;
+
+  // combos onde este é o único produto — serão excluídos junto
+  const combosAExcluir = await prisma.$queryRaw<{ nome: string }[]>`
+    SELECT c.nome
+    FROM combos c
+    JOIN combo_produtos cp ON cp.comboId = c.id
+    GROUP BY c.id, c.nome
+    HAVING COUNT(*) = 1
+      AND SUM(CASE WHEN cp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
+  `;
+
+  // promoções onde este produto é o único item (sem outros produtos e sem combos)
+  const promocoesAExcluir = await prisma.$queryRaw<{ nome: string }[]>`
+    SELECT pr.nome
+    FROM promocoes pr
+    JOIN promocao_produtos pp ON pp.promocaoId = pr.id
+    GROUP BY pr.id, pr.nome
+    HAVING COUNT(*) = 1
+      AND SUM(CASE WHEN pp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
+      AND (SELECT COUNT(*) FROM promocao_combos pc WHERE pc.promocaoId = pr.id) = 0
+  `;
+
+  return {
+    ...produto,
+    combosAExcluir:    combosAExcluir.map((c) => c.nome),
+    promocoesAExcluir: promocoesAExcluir.map((p) => p.nome),
+  };
 };
 
 export const getDesempenho = async (id: number, periodo: Periodo) => {
@@ -268,11 +295,53 @@ export const deletarProduto = async (id: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const existe = await prisma.produto.findFirst({ where: { id, restauranteId } });
   if (!existe) return null;
-  await prisma.$transaction([
-    prisma.pedidoItem.updateMany({ where: { produtoId: id }, data: { produtoId: null } }),
-    prisma.comboProduto.deleteMany({ where: { produtoId: id } }),
-    prisma.produto.delete({ where: { id } }),
-  ]);
+
+  // combos onde este é o único produto → excluir o combo inteiro
+  const combosUnicos = await prisma.$queryRaw<{ id: number }[]>`
+    SELECT c.id
+    FROM combos c
+    JOIN combo_produtos cp ON cp.comboId = c.id
+    GROUP BY c.id
+    HAVING COUNT(*) = 1
+      AND SUM(CASE WHEN cp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
+  `;
+  const idsCombosAExcluir = combosUnicos.map((c) => Number(c.id));
+
+  // promoções onde este produto é o único item (sem outros produtos e sem combos)
+  const promocoesUnicas = await prisma.$queryRaw<{ id: number }[]>`
+    SELECT pr.id
+    FROM promocoes pr
+    JOIN promocao_produtos pp ON pp.promocaoId = pr.id
+    GROUP BY pr.id
+    HAVING COUNT(*) = 1
+      AND SUM(CASE WHEN pp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
+      AND (SELECT COUNT(*) FROM promocao_combos pc WHERE pc.promocaoId = pr.id) = 0
+  `;
+  const idsPromocoesAExcluir = promocoesUnicas.map((p) => Number(p.id));
+
+  await prisma.$transaction(async (tx) => {
+    // exclui combos que ficariam vazios (remove PromocaoCombo primeiro para evitar FK)
+    if (idsCombosAExcluir.length > 0) {
+      await tx.promocaoCombo.deleteMany({ where: { comboId: { in: idsCombosAExcluir } } });
+      await tx.combo.deleteMany({ where: { id: { in: idsCombosAExcluir } } });
+      // ComboProduto cascadeia via onDelete: Cascade em comboId
+      // PedidoItem.comboId vira null via SetNull automático do MySQL
+    }
+    // exclui promoções que ficariam vazias
+    if (idsPromocoesAExcluir.length > 0) {
+      await tx.pedidoItem.updateMany({ where: { promocaoId: { in: idsPromocoesAExcluir } }, data: { promocaoId: null } });
+      await tx.promocao.deleteMany({ where: { id: { in: idsPromocoesAExcluir } } });
+      // PromocaoCombo e PromocaoProduto cascadeiam via onDelete: Cascade em promocaoId
+    }
+    // remove o produto dos combos e promoções restantes
+    await tx.comboProduto.deleteMany({ where: { produtoId: id } });
+    await tx.promocaoProduto.deleteMany({ where: { produtoId: id } });
+    // nulifica referências em pedidos
+    await tx.pedidoItem.updateMany({ where: { produtoId: id }, data: { produtoId: null } });
+    // deleta o produto
+    await tx.produto.delete({ where: { id } });
+  });
+
   return { deleted: true };
 };
 

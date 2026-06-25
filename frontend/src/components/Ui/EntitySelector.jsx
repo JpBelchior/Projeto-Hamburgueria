@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 
-export default function EntitySelector({ disponiveis, selecionadosIds = [], onAdd, placeholder, renderLabel, getName }) {
+export default function EntitySelector({ disponiveis, selecionadosIds = [], onAdd, placeholder, renderLabel, getName, onCreateNew }) {
   const [busca,  setBusca]  = useState("");
   const [aberto, setAberto] = useState(false);
 
@@ -45,8 +45,18 @@ export default function EntitySelector({ disponiveis, selecionadosIds = [], onAd
       )}
 
       {aberto && busca.trim() && filtrados.length === 0 && (
-        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-slate-500">
-          Nenhum resultado encontrado
+        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700/50 rounded-xl overflow-hidden">
+          <p className="px-4 pt-3 pb-2 text-xs text-slate-500">Nenhum resultado encontrado</p>
+          {onCreateNew && (
+            <button
+              type="button"
+              onMouseDown={() => { onCreateNew(busca); setBusca(""); setAberto(false); }}
+              className="w-full flex items-center gap-1.5 px-4 pb-3 text-xs text-amber-400 hover:text-amber-300 transition-colors text-left"
+            >
+              <span className="font-bold text-sm leading-none">+</span>
+              {`Criar "${busca}"`}
+            </button>
+          )}
         </div>
       )}
     </div>

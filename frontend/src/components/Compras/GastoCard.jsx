@@ -1,6 +1,6 @@
 import ItemCard from "../Ui/ItemCard";
 import { fmtBRL } from "../../utils/format";
-import { MESES } from "../../constants";
+import { formatData } from "../../utils/Date.utils";
 
 const TIPO_CFG = {
   INGREDIENTE: {
@@ -30,9 +30,8 @@ const TIPO_CFG = {
 };
 
 export default function GastoCard({ gasto, onClick }) {
-  const cfg      = TIPO_CFG[gasto.tipo] ?? TIPO_CFG.GENERICO;
-  const count    = cfg.countFn(gasto);
-  const mesLabel = MESES.find((m) => m.value === gasto.mes)?.label ?? "";
+  const cfg   = TIPO_CFG[gasto.tipo] ?? TIPO_CFG.GENERICO;
+  const count = cfg.countFn(gasto);
 
   const badge = (
     <div className={`inline-flex items-center px-2 py-0.5 rounded-md mb-1 ${cfg.badgeCls}`}>
@@ -63,7 +62,7 @@ export default function GastoCard({ gasto, onClick }) {
       glowColor={cfg.glowColor}
       badge={badge}
       name={gasto.nome || "Sem nome"}
-      subtitle={<p className="text-slate-500 text-[11px]">{mesLabel} {gasto.ano}</p>}
+      subtitle={<p className="text-slate-500 text-[11px]">{formatData(gasto.data)}</p>}
       footer={footer}
       onClick={onClick}
     >

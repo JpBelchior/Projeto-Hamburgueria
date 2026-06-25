@@ -1,8 +1,30 @@
 import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { StatusPedido, CategoriaProduct } from "@prisma/client";
-import { CreatePedidoDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
+import { CreatePedidoDTO, PedidoItemDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
 import { DateRange, Periodo, getRanges } from "../utils/dateRange";
+
+async function validarItensRestaurante(itens: PedidoItemDTO[], restauranteId: number) {
+  const produtoIds  = [...new Set(itens.filter(i => i.produtoId).map(i => i.produtoId!))];
+  const comboIds    = [...new Set(itens.filter(i => i.comboId).map(i => i.comboId!))];
+  const promocaoIds = [...new Set(itens.filter(i => i.promocaoId).map(i => i.promocaoId!))];
+
+  const [produtos, combos, promocoes] = await Promise.all([
+    produtoIds.length  > 0 ? prisma.produto.findMany({ where: { id: { in: produtoIds },  restauranteId }, select: { id: true } }) : [],
+    comboIds.length    > 0 ? prisma.combo.findMany(  { where: { id: { in: comboIds },    restauranteId }, select: { id: true } }) : [],
+    promocaoIds.length > 0 ? prisma.promocao.findMany({ where: { id: { in: promocaoIds }, restauranteId }, select: { id: true } }) : [],
+  ]);
+
+  const idsProdutos  = new Set(produtos.map(p => p.id));
+  const idsCombos    = new Set(combos.map(c => c.id));
+  const idsPromocoes = new Set(promocoes.map(p => p.id));
+
+  for (const item of itens) {
+    if (item.produtoId  && !idsProdutos.has(item.produtoId))   throw Object.assign(new Error("Produto inválido para este restaurante."),  { statusCode: 400 });
+    if (item.comboId    && !idsCombos.has(item.comboId))       throw Object.assign(new Error("Combo inválido para este restaurante."),    { statusCode: 400 });
+    if (item.promocaoId && !idsPromocoes.has(item.promocaoId)) throw Object.assign(new Error("Promoção inválida para este restaurante."), { statusCode: 400 });
+  }
+}
 
 function calcVariacao(atual: number, anterior: number): number | null {
   if (anterior === 0) return null;
@@ -256,7 +278,7 @@ export const getTopItens = async (periodo: Periodo) => {
 const pedidoInclude = {
   itens: {
     include: {
-      produto: { select: { id: true, nome: true, categoria: true } },
+      produto:  { select: { id: true, nome: true, categoria: true } },
       combo: {
         select: {
           id:   true,
@@ -265,6 +287,24 @@ const pedidoInclude = {
             select: {
               quantidade: true,
               produto: { select: { nome: true, categoria: true } },
+            },
+          },
+        },
+      },
+      promocao: {
+        select: {
+          id: true,
+          nome: true,
+          combos: {
+            select: {
+              quantidade: true,
+              combo: { select: { id: true, nome: true } },
+            },
+          },
+          produtos: {
+            select: {
+              quantidade: true,
+              produto: { select: { id: true, nome: true } },
             },
           },
         },
@@ -316,7 +356,15 @@ export const criarPedido = async (dto: CreatePedidoDTO) => {
         where:  { user: { id: funcionario.id }, restauranteId },
         select: { id: true },
       });
-  if (!func) throw new Error("Funcionário não encontrado para este restaurante.");
+  if (!func) throw Object.assign(new Error("Funcionário não encontrado para este restaurante."), { statusCode: 400 });
+
+  for (const item of dto.itens) {
+    if (!item.produtoId && !item.comboId && !item.promocaoId) {
+      throw Object.assign(new Error("Cada item do pedido deve referenciar ao menos um produto, combo ou promoção."), { statusCode: 400 });
+    }
+  }
+
+  await validarItensRestaurante(dto.itens, restauranteId);
 
   type MaxRow = { maxNum: bigint | number | null };
   const [row] = await prisma.$queryRaw<MaxRow[]>`
@@ -360,6 +408,15 @@ export const editarPedido = async (id: number, dto: UpdatePedidoDTO) => {
 
   const existente = await prisma.pedido.findFirst({ where: { id, restauranteId } });
   if (!existente) return null;
+
+  if (dto.itens) {
+    for (const item of dto.itens) {
+      if (!item.produtoId && !item.comboId && !item.promocaoId) {
+        throw Object.assign(new Error("Cada item do pedido deve referenciar ao menos um produto, combo ou promoção."), { statusCode: 400 });
+      }
+    }
+    await validarItensRestaurante(dto.itens, restauranteId);
+  }
 
   const valorTotal = dto.itens
     ? dto.itens.reduce((acc, item) => acc + item.quantidade * item.precoUnitario, 0)

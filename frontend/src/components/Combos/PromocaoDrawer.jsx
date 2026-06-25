@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Power, ChevronDown } from "lucide-react";
-import { Clock, TrendingDown } from "lucide-react";
+import { Clock, TrendingDown, TrendingUp } from "lucide-react";
 import { DrawerSection } from "../Ui/Drawer";
 import Button from "../Ui/Button";
-import { fmtBRL, CAT_COLOR } from "../../utils/format";
+import { fmtBRL, CAT_COLOR, margemStyle } from "../../utils/format";
 import { usePromocaoDrawer } from "../../hooks/usePromocaoDrawer";
 import { promocaoService } from "../../services/promocao.service";
 import EntityDrawerShell from "../Ui/EntityDrawerShell";
@@ -17,6 +17,16 @@ function DetalheView({ promocao, desempenho, periodoLabel }) {
 
   const totalCombos   = (promocao.combos   ?? []).reduce((s, pc) => s + pc.combo.preco        * (pc.quantidade ?? 1), 0);
   const totalProdutos = (promocao.produtos  ?? []).reduce((s, pp) => s + pp.produto.precoVenda * (pp.quantidade ?? 1), 0);
+
+  const custoCombos   = (promocao.combos   ?? []).reduce((s, pc) =>
+    s + (pc.quantidade ?? 1) * (pc.combo.produtos ?? []).reduce((cs, cp) => cs + cp.quantidade * (cp.produto.precoProducao ?? 0), 0), 0);
+  const custoProdutos = (promocao.produtos ?? []).reduce((s, pp) =>
+    s + (pp.quantidade ?? 1) * (pp.produto.precoProducao ?? 0), 0);
+  const custo = custoCombos + custoProdutos;
+
+  const margem = (custo > 0 && promocao.precoReal != null)
+    ? ((promocao.precoReal - custo) / custo) * 100
+    : null;
 
   return (
     <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
@@ -51,11 +61,11 @@ function DetalheView({ promocao, desempenho, periodoLabel }) {
 
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
-            <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1">Preço Total</p>
+            <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1">Preço de Custo</p>
             <p className="text-white text-base font-bold tabular-nums">
-              {promocao.precoTotal != null ? fmtBRL(promocao.precoTotal) : "—"}
+              {custo > 0 ? fmtBRL(custo) : "—"}
             </p>
-            <p className="text-slate-600 text-[10px] mt-0.5">soma dos itens incluídos</p>
+            <p className="text-slate-600 text-[10px] mt-0.5">soma do custo de produção</p>
           </div>
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
             <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1">Preço com Desconto</p>
@@ -66,17 +76,17 @@ function DetalheView({ promocao, desempenho, periodoLabel }) {
           </div>
         </div>
 
-        {promocao.desconto != null && (
+        {margem != null && (
           <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <TrendingDown size={13} className="text-fuchsia-400 shrink-0" />
+              <TrendingUp size={13} className="text-emerald-400 shrink-0" />
               <div>
-                <p className="text-slate-400 text-xs">Desconto aplicado</p>
-                <p className="text-slate-600 text-[10px]">sobre o preço total dos itens</p>
+                <p className="text-slate-400 text-xs">Margem de lucro</p>
+                <p className="text-slate-600 text-[10px]">lucro sobre o custo de produção dos itens</p>
               </div>
             </div>
-            <span className="text-fuchsia-400 text-sm font-semibold tabular-nums shrink-0">
-              {promocao.desconto.toFixed(1)}% off
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg border shrink-0 ${margemStyle(margem)}`}>
+              {margem.toFixed(0)}%
             </span>
           </div>
         )}
@@ -153,6 +163,21 @@ function DetalheView({ promocao, desempenho, periodoLabel }) {
             <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-700/50">
               <span className="text-slate-500 text-xs uppercase tracking-widest font-semibold">Total</span>
               <span className="text-white text-sm font-bold tabular-nums">{fmtBRL(totalCombos + totalProdutos)}</span>
+            </div>
+          )}
+
+          {promocao.desconto != null && promocao.precoReal != null && (
+            <div className="mt-3 bg-slate-800/40 border border-slate-700/40 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <TrendingDown size={13} className="text-fuchsia-400 shrink-0" />
+                <div>
+                  <p className="text-slate-400 text-xs">Desconto da promoção</p>
+                  <p className="text-slate-600 text-[10px]">economia de {fmtBRL((totalCombos + totalProdutos) - promocao.precoReal)} para o cliente</p>
+                </div>
+              </div>
+              <span className="text-fuchsia-400 text-sm font-semibold tabular-nums shrink-0">
+                {promocao.desconto.toFixed(1)}% off
+              </span>
             </div>
           )}
         </div>

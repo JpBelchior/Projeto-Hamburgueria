@@ -147,6 +147,10 @@ export function clampQtd(value, unidade) {
   return Math.max(min, Number(value) || min);
 }
 
+export function clampDesconto(value) {
+  return Math.min(100, Math.max(0.1, Number(value) || 0.1));
+}
+
 export function deltaHint(variacao, vsHint, { invertido = false } = {}) {
   if (variacao == null) return "Sem dados do período anterior para comparação";
   if (variacao === 0)   return "Igual ao período anterior";

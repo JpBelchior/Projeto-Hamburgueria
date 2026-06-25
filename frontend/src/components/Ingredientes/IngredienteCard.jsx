@@ -3,11 +3,15 @@ import ItemCard from "../Ui/ItemCard";
 import { UNIDADE_LABEL } from "../../constants";
 
 export default function IngredienteCard({ ingrediente, onClick }) {
-  const { nome, imagem, essencial, unidade, quantidadeAtual, estoqueMinimo } = ingrediente;
+  const { nome, imagem, essencial, ativo, unidade, quantidadeAtual, estoqueMinimo } = ingrediente;
   const abaixoDoMinimo = estoqueMinimo != null && quantidadeAtual < estoqueMinimo;
   const unidadeLabel   = UNIDADE_LABEL[unidade] ?? unidade;
 
-  const badge = essencial ? (
+  const badge = !ativo ? (
+    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md mb-1 bg-slate-700/40 border border-slate-600/40">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Inativo</span>
+    </div>
+  ) : essencial ? (
     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md mb-1 bg-amber-500/10 border border-amber-500/30">
       <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400">Essencial</span>
     </div>
@@ -43,8 +47,9 @@ export default function IngredienteCard({ ingrediente, onClick }) {
   return (
     <ItemCard
       onClick={onClick}
-      borderColor={abaixoDoMinimo ? "#781e1e" : essencial ? "#b8914f" : "#334155"}
-      glowColor={abaixoDoMinimo ? "#ef444412" : essencial ? "#f59e0b08" : "transparent"}
+      inactive={!ativo}
+      borderColor={!ativo ? "#1e293b" : abaixoDoMinimo ? "#781e1e" : essencial ? "#b8914f" : "#334155"}
+      glowColor={!ativo ? "transparent" : abaixoDoMinimo ? "#ef444412" : essencial ? "#f59e0b08" : "transparent"}
       avatar={{ name: nome, src: imagem ?? undefined }}
       badge={badge}
       name={nome}

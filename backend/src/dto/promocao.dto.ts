@@ -5,6 +5,7 @@ export interface PromocaoItemDTO {
 
 export interface CreatePromocaoDTO {
   nome:          string;
+  desconto:      number;
   descricao?:    string;
   tempoPreparo?: number;
   combos?:       PromocaoItemDTO[];

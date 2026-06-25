@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import * as IngredienteService from "../services/ingrediente.service";
 import { isPrismaUniqueViolation } from "../utils/prisma-error";
 
-export const listarIngredientes = async (_req: Request, res: Response): Promise<void> => {
+export const listarIngredientes = async (req: Request, res: Response): Promise<void> => {
   try {
-    const dados = await IngredienteService.listarIngredientes();
+    const incluirInativos = req.query.incluirInativos === "true";
+    const dados = await IngredienteService.listarIngredientes(incluirInativos);
     res.json(dados);
   } catch (error) {
     console.error("Erro ao listar ingredientes:", error);
@@ -71,6 +72,21 @@ export const deletarIngrediente = async (req: Request, res: Response): Promise<v
     res.json(result);
   } catch (error) {
     console.error("Erro ao deletar ingrediente:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+};
+
+export const toggleAtivo = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    const result = await IngredienteService.toggleAtivo(id);
+    if (!result) {
+      res.status(404).json({ message: "Ingrediente não encontrado." });
+      return;
+    }
+    res.json(result);
+  } catch (error) {
+    console.error("Erro ao alternar status do ingrediente:", error);
     res.status(500).json({ message: "Erro interno do servidor." });
   }
 };

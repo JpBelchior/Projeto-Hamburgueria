@@ -47,9 +47,9 @@ export const criarPedido = async (req: Request, res: Response): Promise<void> =>
   try {
     const pedido = await PedidoService.criarPedido(req.body);
     res.status(201).json(pedido);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao criar pedido:", error);
-    res.status(500).json({ message: "Erro interno do servidor." });
+    res.status(error?.statusCode ?? 500).json({ message: error?.message ?? "Erro interno do servidor." });
   }
 };
 
@@ -62,9 +62,9 @@ export const editarPedido = async (req: Request, res: Response): Promise<void> =
       return;
     }
     res.json(pedido);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao editar pedido:", error);
-    res.status(500).json({ message: "Erro interno do servidor." });
+    res.status(error?.statusCode ?? 500).json({ message: error?.message ?? "Erro interno do servidor." });
   }
 };
 

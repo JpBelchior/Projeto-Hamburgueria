@@ -102,7 +102,10 @@ function KanbanCard({ pedido, tick, actions, onDragStart, onDragEnd, dragging, b
   const nomeFunc = pedido.funcionario?.user?.name ?? "—";
   const qtdItens = pedido.itens?.reduce((s, i) => s + i.quantidade, 0) ?? 0;
   const primeiroItem = pedido.itens?.[0];
-  const nomeItem = primeiroItem?.produto?.nome ?? primeiroItem?.combo?.nome ?? "—";
+  const nomeItem = primeiroItem?.produto?.nome
+    ?? primeiroItem?.combo?.nome
+    ?? primeiroItem?.promocao?.nome
+    ?? (primeiroItem ? "Item excluído" : "—");
 
   const tempoTotal =
     pedido.status === "FINALIZADO" && pedido.tempoFimPreparo && pedido.createdAt

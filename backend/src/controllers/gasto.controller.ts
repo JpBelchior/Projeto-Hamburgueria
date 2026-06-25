@@ -23,10 +23,16 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
 
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { tipo, nome, valor, descricao, mes, ano, ingredientes, funcionarioIds } = req.body;
+    const { tipo, nome, valor, descricao, data, ingredientes, funcionarioIds } = req.body;
 
-    if (!tipo || !nome || valor == null || !mes || !ano) {
-      res.status(400).json({ message: "Campos obrigatórios: tipo, nome, valor, mes, ano." });
+    if (!tipo || !nome || valor == null || !data) {
+      res.status(400).json({ message: "Campos obrigatórios: tipo, nome, valor, data." });
+      return;
+    }
+
+    const dataGasto = new Date(data);
+    if (isNaN(dataGasto.getTime())) {
+      res.status(400).json({ message: "Data inválida." });
       return;
     }
 
@@ -35,8 +41,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
       nome,
       valor:          Number(valor),
       descricao,
-      mes:            Number(mes),
-      ano:            Number(ano),
+      data:           dataGasto,
       ingredientes:   Array.isArray(ingredientes)
         ? ingredientes.map((i: any) => ({ id: Number(i.id), quantidade: Number(i.quantidade) }))
         : undefined,

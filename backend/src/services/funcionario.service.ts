@@ -196,8 +196,8 @@ export const toggleActive = async (funcionarioId: number) => {
 export const getMetricas = async () => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const now = new Date();
-  const mes = now.getMonth() + 1;
-  const ano = now.getFullYear();
+  const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+  const fimMes    = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
   const baseWhere = {
     restauranteId,
@@ -209,7 +209,7 @@ export const getMetricas = async () => {
       where: baseWhere,
       select: { cargo: true, salario: true, active: true },
     }),
-    prisma.gasto.aggregate({ where: { restauranteId, mes, ano }, _sum: { valor: true } }),
+    prisma.gasto.aggregate({ where: { restauranteId, data: { gte: inicioMes, lt: fimMes } }, _sum: { valor: true } }),
   ]);
 
   const total       = funcionarios.length;

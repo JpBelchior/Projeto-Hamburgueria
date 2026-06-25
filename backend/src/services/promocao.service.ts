@@ -22,7 +22,7 @@ const promocaoSelect = {
           produtos: {
             select: {
               quantidade: true,
-              produto: { select: { id: true, nome: true, precoVenda: true, categoria: true } },
+              produto: { select: { id: true, nome: true, precoVenda: true, precoProducao: true, categoria: true } },
             },
           },
         },
@@ -33,7 +33,7 @@ const promocaoSelect = {
     select: {
       quantidade: true,
       produto: {
-        select: { id: true, nome: true, precoVenda: true, ativo: true, categoria: true },
+        select: { id: true, nome: true, precoVenda: true, precoProducao: true, ativo: true, categoria: true },
       },
     },
   },
@@ -85,6 +85,7 @@ export const criarPromocao = async (dto: CreatePromocaoDTO) => {
   const row = await prisma.promocao.create({
     data: {
       nome:          dto.nome,
+      desconto:      dto.desconto,
       descricao:     dto.descricao,
       tempoPreparo:  dto.tempoPreparo,
       restauranteId,

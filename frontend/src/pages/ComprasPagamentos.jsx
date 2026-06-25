@@ -222,8 +222,6 @@ const ComprasPagamentos = () => {
         <GastoDrawer
           gasto={drawerGasto.gasto}
           tipoInicial={drawerGasto.tipoInicial}
-          mes={mes}
-          ano={ano}
           createMode={drawerGasto.gasto === null}
           onClose={() => setDrawerGasto(null)}
           onCriado={() => { handleAlterado(); setDrawerGasto(null); }}

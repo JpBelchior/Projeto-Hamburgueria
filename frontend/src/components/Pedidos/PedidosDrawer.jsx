@@ -27,6 +27,28 @@ function ComboProdutosLista({ produtos }) {
   );
 }
 
+// ── Sub-itens de promoção ─────────────────────────────────────────────────────
+
+function PromocaoItensLista({ combos, produtos }) {
+  const hasCombos   = combos?.length   > 0;
+  const hasProdutos = produtos?.length > 0;
+  if (!hasCombos && !hasProdutos) return null;
+  return (
+    <div className="mt-1 pl-2 border-l-2 border-fuchsia-500/30 flex flex-col gap-0.5">
+      {(combos ?? []).map((pc, i) => (
+        <span key={`c${i}`} className="text-slate-500 text-[10px]">
+          {pc.quantidade}× {pc.combo?.nome}
+        </span>
+      ))}
+      {(produtos ?? []).map((pp, i) => (
+        <span key={`p${i}`} className="text-slate-500 text-[10px]">
+          {pp.quantidade}× {pp.produto?.nome}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Timeline ─────────────────────────────────────────────────────────────────
 
 const STEPS = [
@@ -153,13 +175,14 @@ function DetalheView({ pedido }) {
         <DrawerSection>Itens</DrawerSection>
         <div className="flex flex-col gap-1.5">
           {(pedido.itens ?? []).map((item, idx) => {
-            const nome = item.produto?.nome ?? item.combo?.nome ?? `Item ${idx + 1}`;
+            const nome = item.produto?.nome ?? item.combo?.nome ?? item.promocao?.nome ?? "Item excluído";
             return (
               <div key={item.id ?? idx} className="flex flex-col gap-1.5 py-2 border-b border-slate-800/60 last:border-0">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <span className="text-white text-xs">{item.quantidade}× {nome}</span>
                     <ComboProdutosLista produtos={item.combo?.produtos} />
+                    <PromocaoItensLista combos={item.promocao?.combos} produtos={item.promocao?.produtos} />
                   </div>
                   <span className="text-slate-300 text-xs tabular-nums shrink-0">
                     {fmtBRL(item.quantidade * item.precoUnitario)}
@@ -242,7 +265,7 @@ function ItemSelector({ onSelect }) {
           {filtrados.map((item) => {
             let preco, cor, label;
             if (aba === "produto") {
-              preco = item.precoVenda * (1 - (item.desconto ?? 0) / 100);
+              preco = item.precoVenda;
               cor   = CAT_COLOR[item.categoria] ?? "#94a3b8";
               label = CAT_LABEL[item.categoria] ?? item.categoria;
             } else if (aba === "combo") {
@@ -346,26 +369,22 @@ function FormView({ drawer, actions }) {
             <div className="flex flex-col gap-2 mt-3">
               {form.itens.map((item, idx) => {
                 const isCombo = item.tipo === "combo";
-                const cor = isCombo ? "#a78bfa" : (CAT_COLOR[item.categoria] ?? "#94a3b8");
-                const promoColor = CAT_COLOR.PROMOCAO;
+                const isPromo = item.tipo === "promocao";
+                const cor = isPromo
+                  ? CAT_COLOR.PROMOCAO
+                  : isCombo
+                    ? "#a78bfa"
+                    : (CAT_COLOR[item.categoria] ?? "#94a3b8");
                 return (
                   <div key={idx} className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
-                    {/* Nome + categoria + remover */}
+                    {/* Nome + tipo badge + remover */}
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
                         style={{ color: cor, background: `${cor}20` }}
                       >
-                        {isCombo ? "Combo" : (CAT_LABEL[item.categoria] ?? "—")}
+                        {isPromo ? "Promoção" : isCombo ? "Combo" : (CAT_LABEL[item.categoria] ?? "—")}
                       </span>
-                      {item.promocaoId && (
-                        <span
-                          className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0"
-                          style={{ color: promoColor, background: `${promoColor}18`, border: `1px solid ${promoColor}30` }}
-                        >
-                          Promo
-                        </span>
-                      )}
                       <span className="text-white text-xs flex-1 truncate">{item.nome}</span>
                       <button onClick={() => removeItem(idx)} className="text-slate-600 hover:text-red-400 transition-colors shrink-0">
                         <Trash2 size={13} />
@@ -374,6 +393,9 @@ function FormView({ drawer, actions }) {
 
                     {/* Sub-itens do combo */}
                     {isCombo && <ComboProdutosLista produtos={item.comboProdutos} />}
+
+                    {/* Sub-itens da promoção */}
+                    {isPromo && <PromocaoItensLista combos={item.promocaoCombos} produtos={item.promocaoProdutos} />}
 
                     {/* Quantidade + preço */}
                     <div className="flex items-center gap-3">

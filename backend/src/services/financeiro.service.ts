@@ -32,17 +32,10 @@ async function calcReceita(restauranteId: number, range: DateRange): Promise<num
 
 async function calcCustoIngredientes(
   restauranteId: number,
-  tipo: TipoFinanceiro,
-  mes: number,
-  ano: number,
+  range: DateRange,
 ): Promise<number> {
-  const where =
-    tipo === "mensal"
-      ? { restauranteId, mes, ano }
-      : { restauranteId, ano };
-
   const agg = await prisma.gasto.aggregate({
-    where: { ...where, tipo: "INGREDIENTE" },
+    where: { restauranteId, tipo: "INGREDIENTE", data: { gte: range.inicio, lt: range.fim } },
     _sum:  { valor: true },
   });
   return agg._sum.valor ?? 0;
@@ -50,17 +43,10 @@ async function calcCustoIngredientes(
 
 async function calcCustoFuncionarios(
   restauranteId: number,
-  tipo: TipoFinanceiro,
-  mes: number,
-  ano: number,
+  range: DateRange,
 ): Promise<number> {
-  const where =
-    tipo === "mensal"
-      ? { restauranteId, mes, ano }
-      : { restauranteId, ano };
-
   const agg = await prisma.gasto.aggregate({
-    where: { ...where, tipo: "FUNCIONARIO" },
+    where: { restauranteId, tipo: "FUNCIONARIO", data: { gte: range.inicio, lt: range.fim } },
     _sum:  { valor: true },
   });
   return agg._sum.valor ?? 0;
@@ -76,8 +62,8 @@ export const getMetricasFinanceiro = async (
 
   const [receita, custoIngredientes, custoFuncionarios] = await Promise.all([
     calcReceita(restauranteId, range),
-    calcCustoIngredientes(restauranteId, tipo, mes, ano),
-    calcCustoFuncionarios(restauranteId, tipo, mes, ano),
+    calcCustoIngredientes(restauranteId, range),
+    calcCustoFuncionarios(restauranteId, range),
   ]);
 
   const custoTotal = Math.round((custoIngredientes + custoFuncionarios) * 100) / 100;

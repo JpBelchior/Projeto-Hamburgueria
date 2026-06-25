@@ -5,7 +5,8 @@ import Button from "../Ui/Button";
 import GastoForm from "./GastoForm";
 import { gastoService } from "../../services/gasto.service";
 import { ACCENT, fmtBRL } from "../../utils/format";
-import { MESES, UNIDADE_LABEL } from "../../constants";
+import { UNIDADE_LABEL } from "../../constants";
+import { formatData } from "../../utils/Date.utils";
 
 // ── Configuração por tipo ─────────────────────────────────────────────────────
 
@@ -41,9 +42,8 @@ const CFG = {
 // ── Vista de detalhes ─────────────────────────────────────────────────────────
 
 function DetalheView({ gasto }) {
-  const cfg      = CFG[gasto.tipo] ?? CFG.GENERICO;
-  const mesLabel = MESES.find((m) => m.value === gasto.mes)?.label ?? "";
-  const itens    = cfg.getItens(gasto);
+  const cfg   = CFG[gasto.tipo] ?? CFG.GENERICO;
+  const itens = cfg.getItens(gasto);
 
   return (
     <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
@@ -58,8 +58,8 @@ function DetalheView({ gasto }) {
       <div>
         <DrawerSection>Dados do Lançamento</DrawerSection>
         <div className="flex flex-col gap-3">
-          <DrawerRow label="Valor"   value={fmtBRL(gasto.valor)} highlight />
-          <DrawerRow label="Período" value={`${mesLabel} / ${gasto.ano}`} />
+          <DrawerRow label="Valor" value={fmtBRL(gasto.valor)} highlight />
+          <DrawerRow label="Data"  value={formatData(gasto.data)} />
           {gasto.descricao && <DrawerRow label="Descrição" value={gasto.descricao} />}
         </div>
       </div>
@@ -146,8 +146,6 @@ function DeleteModal({ gasto, onConfirm, onClose }) {
 export default function GastoDrawer({
   gasto,
   tipoInicial,
-  mes,
-  ano,
   createMode = false,
   onClose,
   onCriado,
@@ -163,7 +161,7 @@ export default function GastoDrawer({
     setSalvando(true);
     setErroSalvar(null);
     try {
-      await gastoService.create({ ...data, mes, ano });
+      await gastoService.create(data);
       onCriado?.();
     } catch (e) {
       setErroSalvar(e?.response?.data?.message ?? e?.message ?? "Erro ao criar lançamento.");

@@ -175,7 +175,18 @@ export default function ProdutoDrawer({
       onCriar={(data) => produtoService.criar(data)}
       onCriado={onProdutoCriado}
       confirmTitle="Excluir produto"
-      confirmMessage={`Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido do cardápio. Pedidos passados que o incluem não serão afetados.`}
+      confirmMessage={(() => {
+        const combos    = produto?.combosAExcluir    ?? [];
+        const promocoes = produto?.promocoesAExcluir ?? [];
+        const partes = [`Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido do cardápio.`];
+        for (const nomeCombo of combos) {
+          partes.push(`Como esse é o único produto do combo "${nomeCombo}", também o excluiremos.`);
+        }
+        for (const nomePromocao of promocoes) {
+          partes.push(`Como esse é o único item da promoção "${nomePromocao}", também a excluiremos.`);
+        }
+        return partes.join("\n\n");
+      })()}
       footerActions={
         produto && (
           <Button variant="ghost" size="sm" icon={Power} onClick={handleToggleAtivo}>

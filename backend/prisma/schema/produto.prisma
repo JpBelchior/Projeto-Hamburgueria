@@ -7,7 +7,6 @@ model Produto {
   categoria            CategoriaProduct
   precoVenda           Float
   precoProducao        Float?
-  desconto             Float                @default(0)
   tempoPreparoEstimado Int?
   ativo                Boolean              @default(true)
   imagem               String?
@@ -21,6 +20,7 @@ model Produto {
   pedidoItens          PedidoItem[]
   promocoes            PromocaoProduto[]
 
+  @@unique([nome, restauranteId])
   @@map("produtos")
 }
 

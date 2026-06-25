@@ -20,7 +20,7 @@ export default function ConfirmDialog({
       <div className="flex flex-col gap-5">
         <div className="flex items-start gap-3">
           <AlertTriangle size={18} className="text-red-400 shrink-0 mt-0.5" />
-          <p className="text-slate-300 text-sm leading-relaxed">{message}</p>
+          <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line">{message}</p>
         </div>
         <div className="flex gap-2 justify-end">
           <button
