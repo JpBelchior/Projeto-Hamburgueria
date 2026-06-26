@@ -199,7 +199,22 @@ export default function ComboDrawer({
       onCriar={(data) => comboService.create(data)}
       onCriado={onComboCriado}
       confirmTitle="Excluir combo"
-      confirmMessage={`Tem certeza que deseja excluir "${combo?.nome}"? O combo será removido do cardápio.`}
+      confirmMessage={(() => {
+        const promocoesQueContem = combo?.promocoesQueContem ?? [];
+        const promocoesAExcluir  = combo?.promocoesAExcluir  ?? [];
+        const partes = [
+          promocoesQueContem.length > 0
+            ? `Tem certeza que deseja excluir "${combo?.nome}"? O combo será removido de todas as promoções onde está incluso.`
+            : `Tem certeza que deseja excluir "${combo?.nome}"? O combo será removido do cardápio.`,
+        ];
+        if (promocoesQueContem.length > 0) {
+          partes.push(`As promoções são: ${promocoesQueContem.join(", ")}.`);
+        }
+        for (const nomePromocao of promocoesAExcluir) {
+          partes.push(`Como esse é o único item da promoção "${nomePromocao}", também a excluiremos.`);
+        }
+        return partes.join("\n\n");
+      })()}
       footerActions={
         combo && (
           <Button variant="ghost" size="sm" icon={Power} onClick={handleToggleAtivo}>

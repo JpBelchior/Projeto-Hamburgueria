@@ -2,6 +2,7 @@ import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { StatusPedido } from "@prisma/client";
 import { DateRange, Periodo, getRanges } from "../utils/dateRange";
+import { validateIngredientesDoRestaurante } from "../utils/validate-ownership";
 
 const produtoSelect = {
   id:                   true,
@@ -47,31 +48,44 @@ export const buscarProduto = async (id: number) => {
   });
   if (!produto) return null;
 
-  // combos onde este é o único produto — serão excluídos junto
-  const combosAExcluir = await prisma.$queryRaw<{ nome: string }[]>`
-    SELECT c.nome
-    FROM combos c
-    JOIN combo_produtos cp ON cp.comboId = c.id
-    GROUP BY c.id, c.nome
-    HAVING COUNT(*) = 1
-      AND SUM(CASE WHEN cp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
-  `;
-
-  // promoções onde este produto é o único item (sem outros produtos e sem combos)
-  const promocoesAExcluir = await prisma.$queryRaw<{ nome: string }[]>`
-    SELECT pr.nome
-    FROM promocoes pr
-    JOIN promocao_produtos pp ON pp.promocaoId = pr.id
-    GROUP BY pr.id, pr.nome
-    HAVING COUNT(*) = 1
-      AND SUM(CASE WHEN pp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
-      AND (SELECT COUNT(*) FROM promocao_combos pc WHERE pc.promocaoId = pr.id) = 0
-  `;
+  const [combosQueContem, promocoesQueContem, combosAExcluir, promocoesAExcluir] = await Promise.all([
+    // todos os combos que contêm este produto
+    prisma.comboProduto.findMany({
+      where:  { produtoId: id },
+      select: { combo: { select: { nome: true } } },
+    }),
+    // todas as promoções que contêm este produto diretamente
+    prisma.promocaoProduto.findMany({
+      where:  { produtoId: id },
+      select: { promocao: { select: { nome: true } } },
+    }),
+    // combos onde este é o único produto — serão excluídos junto
+    prisma.$queryRaw<{ nome: string }[]>`
+      SELECT c.nome
+      FROM combos c
+      JOIN combo_produtos cp ON cp.comboId = c.id
+      GROUP BY c.id, c.nome
+      HAVING COUNT(*) = 1
+        AND SUM(CASE WHEN cp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
+    `,
+    // promoções onde este produto é o único item (sem outros produtos e sem combos)
+    prisma.$queryRaw<{ nome: string }[]>`
+      SELECT pr.nome
+      FROM promocoes pr
+      JOIN promocao_produtos pp ON pp.promocaoId = pr.id
+      GROUP BY pr.id, pr.nome
+      HAVING COUNT(*) = 1
+        AND SUM(CASE WHEN pp.produtoId = ${id} THEN 1 ELSE 0 END) = 1
+        AND (SELECT COUNT(*) FROM promocao_combos pc WHERE pc.promocaoId = pr.id) = 0
+    `,
+  ]);
 
   return {
     ...produto,
-    combosAExcluir:    combosAExcluir.map((c) => c.nome),
-    promocoesAExcluir: promocoesAExcluir.map((p) => p.nome),
+    combosQueContem:    combosQueContem.map((cp) => cp.combo.nome),
+    promocoesQueContem: promocoesQueContem.map((pp) => pp.promocao.nome),
+    combosAExcluir:     combosAExcluir.map((c) => c.nome),
+    promocoesAExcluir:  promocoesAExcluir.map((p) => p.nome),
   };
 };
 
@@ -228,6 +242,7 @@ export const criarProduto = async (data: {
   }
 
   const { ingredientes, ...campos } = data;
+  if (ingredientes?.length) await validateIngredientesDoRestaurante(ingredientes.map(i => i.ingredienteId), restauranteId);
   const novo = await prisma.produto.create({
     data: {
       ...campos as any,
@@ -268,9 +283,10 @@ export const atualizarProduto = async (
 
   const { ingredientes, ...campos } = data;
 
-  await prisma.produto.update({ where: { id }, data: campos as any });
+  await prisma.produto.update({ where: { id, restauranteId }, data: campos as any });
 
   if (ingredientes !== undefined) {
+    if (ingredientes.length) await validateIngredientesDoRestaurante(ingredientes.map(i => i.ingredienteId), restauranteId);
     await prisma.$transaction([
       prisma.produtoIngrediente.deleteMany({ where: { produtoId: id } }),
       ...ingredientes.map(({ ingredienteId, quantidadeUsada }) =>
@@ -288,7 +304,7 @@ export const toggleAtivo = async (id: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const produto = await prisma.produto.findFirst({ where: { id, restauranteId }, select: { ativo: true } });
   if (!produto) return null;
-  return prisma.produto.update({ where: { id }, data: { ativo: !produto.ativo }, select: produtoSelect });
+  return prisma.produto.update({ where: { id, restauranteId }, data: { ativo: !produto.ativo }, select: produtoSelect });
 };
 
 export const deletarProduto = async (id: number) => {
@@ -339,7 +355,7 @@ export const deletarProduto = async (id: number) => {
     // nulifica referências em pedidos
     await tx.pedidoItem.updateMany({ where: { produtoId: id }, data: { produtoId: null } });
     // deleta o produto
-    await tx.produto.delete({ where: { id } });
+    await tx.produto.delete({ where: { id, restauranteId } });
   });
 
   return { deleted: true };

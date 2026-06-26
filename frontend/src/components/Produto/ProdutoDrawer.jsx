@@ -176,13 +176,26 @@ export default function ProdutoDrawer({
       onCriado={onProdutoCriado}
       confirmTitle="Excluir produto"
       confirmMessage={(() => {
-        const combos    = produto?.combosAExcluir    ?? [];
-        const promocoes = produto?.promocoesAExcluir ?? [];
-        const partes = [`Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido do cardápio.`];
-        for (const nomeCombo of combos) {
+        const combosQueContem    = produto?.combosQueContem    ?? [];
+        const promocoesQueContem = produto?.promocoesQueContem ?? [];
+        const combosAExcluir    = produto?.combosAExcluir    ?? [];
+        const promocoesAExcluir = produto?.promocoesAExcluir ?? [];
+        const temVinculos = combosQueContem.length > 0 || promocoesQueContem.length > 0;
+        const partes = [
+          temVinculos
+            ? `Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido de todos os combos e promoções onde está incluso.`
+            : `Tem certeza que deseja excluir "${produto?.nome}"? O produto será removido do cardápio.`,
+        ];
+        if (combosQueContem.length > 0) {
+          partes.push(`Os combos são: ${combosQueContem.join(", ")}.`);
+        }
+        if (promocoesQueContem.length > 0) {
+          partes.push(`As promoções são: ${promocoesQueContem.join(", ")}.`);
+        }
+        for (const nomeCombo of combosAExcluir) {
           partes.push(`Como esse é o único produto do combo "${nomeCombo}", também o excluiremos.`);
         }
-        for (const nomePromocao of promocoes) {
+        for (const nomePromocao of promocoesAExcluir) {
           partes.push(`Como esse é o único item da promoção "${nomePromocao}", também a excluiremos.`);
         }
         return partes.join("\n\n");

@@ -1,30 +1,9 @@
 import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { StatusPedido, CategoriaProduct } from "@prisma/client";
-import { CreatePedidoDTO, PedidoItemDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
+import { CreatePedidoDTO, UpdatePedidoDTO, UpdateStatusDTO, ListPedidosDTO } from "../dto/pedido.dto";
 import { DateRange, Periodo, getRanges } from "../utils/dateRange";
-
-async function validarItensRestaurante(itens: PedidoItemDTO[], restauranteId: number) {
-  const produtoIds  = [...new Set(itens.filter(i => i.produtoId).map(i => i.produtoId!))];
-  const comboIds    = [...new Set(itens.filter(i => i.comboId).map(i => i.comboId!))];
-  const promocaoIds = [...new Set(itens.filter(i => i.promocaoId).map(i => i.promocaoId!))];
-
-  const [produtos, combos, promocoes] = await Promise.all([
-    produtoIds.length  > 0 ? prisma.produto.findMany({ where: { id: { in: produtoIds },  restauranteId }, select: { id: true } }) : [],
-    comboIds.length    > 0 ? prisma.combo.findMany(  { where: { id: { in: comboIds },    restauranteId }, select: { id: true } }) : [],
-    promocaoIds.length > 0 ? prisma.promocao.findMany({ where: { id: { in: promocaoIds }, restauranteId }, select: { id: true } }) : [],
-  ]);
-
-  const idsProdutos  = new Set(produtos.map(p => p.id));
-  const idsCombos    = new Set(combos.map(c => c.id));
-  const idsPromocoes = new Set(promocoes.map(p => p.id));
-
-  for (const item of itens) {
-    if (item.produtoId  && !idsProdutos.has(item.produtoId))   throw Object.assign(new Error("Produto inválido para este restaurante."),  { statusCode: 400 });
-    if (item.comboId    && !idsCombos.has(item.comboId))       throw Object.assign(new Error("Combo inválido para este restaurante."),    { statusCode: 400 });
-    if (item.promocaoId && !idsPromocoes.has(item.promocaoId)) throw Object.assign(new Error("Promoção inválida para este restaurante."), { statusCode: 400 });
-  }
-}
+import { validateProdutosDoRestaurante, validateCombosDoRestaurante, validatePromocoesDoRestaurante } from "../utils/validate-ownership";
 
 function calcVariacao(atual: number, anterior: number): number | null {
   if (anterior === 0) return null;
@@ -275,6 +254,25 @@ export const getTopItens = async (periodo: Periodo) => {
 
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 
+type MaxRow = { maxNum: bigint | number | null };
+
+async function gerarNumeroPedido(restauranteId: number): Promise<string> {
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    const [row] = await prisma.$queryRaw<MaxRow[]>`
+      SELECT MAX(CAST(SUBSTRING(numeroPedido, 2) AS UNSIGNED)) AS maxNum
+      FROM pedidos
+      WHERE restauranteId = ${restauranteId}
+    `;
+    const numero = `P${String(Number(row?.maxNum ?? 0) + 1).padStart(4, "0")}`;
+    const existe = await prisma.pedido.findFirst({
+      where:  { numeroPedido: numero, restauranteId },
+      select: { id: true },
+    });
+    if (!existe) return numero;
+  }
+  throw Object.assign(new Error("Não foi possível gerar número de pedido único."), { statusCode: 500 });
+}
+
 const pedidoInclude = {
   itens: {
     include: {
@@ -364,15 +362,16 @@ export const criarPedido = async (dto: CreatePedidoDTO) => {
     }
   }
 
-  await validarItensRestaurante(dto.itens, restauranteId);
+  const produtoIds  = [...new Set(dto.itens.filter(i => i.produtoId).map(i => i.produtoId!))];
+  const comboIds    = [...new Set(dto.itens.filter(i => i.comboId).map(i => i.comboId!))];
+  const promocaoIds = [...new Set(dto.itens.filter(i => i.promocaoId).map(i => i.promocaoId!))];
+  await Promise.all([
+    validateProdutosDoRestaurante(produtoIds, restauranteId),
+    validateCombosDoRestaurante(comboIds, restauranteId),
+    validatePromocoesDoRestaurante(promocaoIds, restauranteId),
+  ]);
 
-  type MaxRow = { maxNum: bigint | number | null };
-  const [row] = await prisma.$queryRaw<MaxRow[]>`
-    SELECT MAX(CAST(SUBSTRING(numeroPedido, 2) AS UNSIGNED)) AS maxNum
-    FROM pedidos
-    WHERE restauranteId = ${restauranteId}
-  `;
-  const numeroPedido = `P${String(Number(row?.maxNum ?? 0) + 1).padStart(4, "0")}`;
+  const numeroPedido = await gerarNumeroPedido(restauranteId);
 
   const valorTotal = dto.itens.reduce(
     (acc, item) => acc + item.quantidade * item.precoUnitario,
@@ -415,7 +414,14 @@ export const editarPedido = async (id: number, dto: UpdatePedidoDTO) => {
         throw Object.assign(new Error("Cada item do pedido deve referenciar ao menos um produto, combo ou promoção."), { statusCode: 400 });
       }
     }
-    await validarItensRestaurante(dto.itens, restauranteId);
+    const pIds  = [...new Set(dto.itens.filter(i => i.produtoId).map(i => i.produtoId!))];
+    const cIds  = [...new Set(dto.itens.filter(i => i.comboId).map(i => i.comboId!))];
+    const prIds = [...new Set(dto.itens.filter(i => i.promocaoId).map(i => i.promocaoId!))];
+    await Promise.all([
+      validateProdutosDoRestaurante(pIds, restauranteId),
+      validateCombosDoRestaurante(cIds, restauranteId),
+      validatePromocoesDoRestaurante(prIds, restauranteId),
+    ]);
   }
 
   const valorTotal = dto.itens
@@ -423,7 +429,7 @@ export const editarPedido = async (id: number, dto: UpdatePedidoDTO) => {
     : undefined;
 
   return prisma.pedido.update({
-    where: { id },
+    where: { id, restauranteId },
     data: {
       nomeCliente:    dto.nomeCliente,
       mesa:           dto.mesa,
@@ -464,7 +470,7 @@ export const atualizarStatus = async (id: number, dto: UpdateStatusDTO) => {
   }
 
   return prisma.pedido.update({
-    where:   { id },
+    where:   { id, restauranteId },
     data,
     include: pedidoInclude,
   });
@@ -478,7 +484,7 @@ export const deletarPedido = async (id: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const pedido = await prisma.pedido.findFirst({ where: { id, restauranteId } });
   if (!pedido) return null;
-  await prisma.pedido.delete({ where: { id } });
+  await prisma.pedido.delete({ where: { id, restauranteId } });
   return true;
 };
 

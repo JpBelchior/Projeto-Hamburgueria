@@ -118,7 +118,7 @@ export const atualizarIngrediente = async (
   }
 
   return prisma.ingrediente.update({
-    where:  { id },
+    where:  { id, restauranteId },
     data:   data as any,
     select: ingredienteSelect,
   });
@@ -129,7 +129,7 @@ export const toggleAtivo = async (id: number) => {
   const existe = await prisma.ingrediente.findFirst({ where: { id, restauranteId } });
   if (!existe) return null;
   return prisma.ingrediente.update({
-    where:  { id },
+    where:  { id, restauranteId },
     data:   { ativo: !existe.ativo },
     select: ingredienteSelect,
   });
@@ -180,7 +180,7 @@ export const deletarIngrediente = async (id: number) => {
     // remove da ficha técnica dos produtos restantes
     await tx.produtoIngrediente.deleteMany({ where: { ingredienteId: id } });
     // deleta o ingrediente
-    await tx.ingrediente.delete({ where: { id } });
+    await tx.ingrediente.delete({ where: { id, restauranteId } });
   });
 
   return { deleted: true };

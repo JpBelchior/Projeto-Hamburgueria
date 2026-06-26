@@ -2,6 +2,7 @@ import prisma from "../config/prisma";
 import { RequestContext } from "../utils/request-context";
 import { Periodo, getRanges } from "../utils/dateRange";
 import { StatusPedido } from "@prisma/client";
+import { validateProdutosDoRestaurante } from "../utils/validate-ownership";
 
 const comboSelect = {
   id:           true,
@@ -35,10 +36,35 @@ export const listarCombos = async (busca?: string, incluirInativos = false) => {
 
 export const buscarCombo = async (id: number) => {
   const restauranteId = RequestContext.getRestauranteId()!;
-  return prisma.combo.findFirst({
+  const combo = await prisma.combo.findFirst({
     where:  { id, restauranteId },
     select: comboSelect,
   });
+  if (!combo) return null;
+
+  const [promocoesQueContem, promocoesAExcluir] = await Promise.all([
+    // todas as promoções que contêm este combo
+    prisma.promocaoCombo.findMany({
+      where:  { comboId: id },
+      select: { promocao: { select: { nome: true } } },
+    }),
+    // promoções onde este combo é o único item — serão excluídas junto
+    prisma.$queryRaw<{ nome: string }[]>`
+      SELECT pr.nome
+      FROM promocoes pr
+      JOIN promocao_combos pc ON pc.promocaoId = pr.id
+      GROUP BY pr.id, pr.nome
+      HAVING COUNT(*) = 1
+        AND SUM(CASE WHEN pc.comboId = ${id} THEN 1 ELSE 0 END) = 1
+        AND (SELECT COUNT(*) FROM promocao_produtos pp WHERE pp.promocaoId = pr.id) = 0
+    `,
+  ]);
+
+  return {
+    ...combo,
+    promocoesQueContem: promocoesQueContem.map((pc) => pc.promocao.nome),
+    promocoesAExcluir:  promocoesAExcluir.map((p) => p.nome),
+  };
 };
 
 export const criarCombo = async (data: {
@@ -57,6 +83,7 @@ export const criarCombo = async (data: {
   }
 
   const { produtos, ...campos } = data;
+  if (produtos?.length) await validateProdutosDoRestaurante(produtos.map(p => p.produtoId), restauranteId);
   const novo = await prisma.combo.create({
     data: {
       ...campos,
@@ -95,9 +122,10 @@ export const atualizarCombo = async (
   const { produtos, ...campos } = data;
 
   await prisma.$transaction(async (tx) => {
-    await tx.combo.update({ where: { id }, data: campos });
+    await tx.combo.update({ where: { id, restauranteId }, data: campos });
 
     if (produtos !== undefined) {
+      if (produtos.length) await validateProdutosDoRestaurante(produtos.map(p => p.produtoId), restauranteId);
       await tx.comboProduto.deleteMany({ where: { comboId: id } });
       if (produtos.length) {
         await tx.comboProduto.createMany({
@@ -116,7 +144,7 @@ export const toggleAtivo = async (id: number) => {
   if (!existe) return null;
 
   return prisma.combo.update({
-    where:  { id },
+    where:  { id, restauranteId },
     data:   { ativo: !existe.ativo },
     select: comboSelect,
   });
@@ -127,7 +155,29 @@ export const deletarCombo = async (id: number) => {
   const existe = await prisma.combo.findFirst({ where: { id, restauranteId } });
   if (!existe) return null;
 
-  await prisma.combo.delete({ where: { id } });
+  // promoções onde este combo é o único item (sem outros combos e sem produtos)
+  const promocoesUnicas = await prisma.$queryRaw<{ id: number }[]>`
+    SELECT pr.id
+    FROM promocoes pr
+    JOIN promocao_combos pc ON pc.promocaoId = pr.id
+    GROUP BY pr.id
+    HAVING COUNT(*) = 1
+      AND SUM(CASE WHEN pc.comboId = ${id} THEN 1 ELSE 0 END) = 1
+      AND (SELECT COUNT(*) FROM promocao_produtos pp WHERE pp.promocaoId = pr.id) = 0
+  `;
+  const idsPromocoesAExcluir = promocoesUnicas.map((p) => Number(p.id));
+
+  await prisma.$transaction(async (tx) => {
+    if (idsPromocoesAExcluir.length > 0) {
+      await tx.pedidoItem.updateMany({ where: { promocaoId: { in: idsPromocoesAExcluir } }, data: { promocaoId: null } });
+      await tx.promocao.deleteMany({ where: { id: { in: idsPromocoesAExcluir } } });
+      // PromocaoCombo e PromocaoProduto cascadeiam via onDelete: Cascade em promocaoId
+    }
+    // deleta o combo — PromocaoCombo das promoções restantes cascadeia via comboId
+    await tx.combo.delete({ where: { id, restauranteId } });
+    // ComboProduto cascadeia via onDelete: Cascade em comboId
+  });
+
   return true;
 };
 

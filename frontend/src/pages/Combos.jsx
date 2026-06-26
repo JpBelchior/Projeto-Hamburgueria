@@ -36,10 +36,6 @@ const Combos = () => {
   const setFiltro = setFilter("filtro");
 
   const [drawer,  setDrawer]  = useState(null);
-  const [periodo, setPeriodo] = useState("30dias");
-
-  const periodoLabel = PERIODOS.find((p) => p.value === periodo)?.label ?? periodo;
-
   const loading = loadingCombos || loadingPromocoes;
 
   const handleRefresh = useCallback(() => {
@@ -123,7 +119,6 @@ const Combos = () => {
             search={{ value: busca, onChange: setBusca, placeholder: "Buscar combos e promoções..." }}
             tabs={[
               { options: TABS,    value: filtro,  onChange: setFiltro  },
-              { options: PERIODOS, value: periodo, onChange: setPeriodo },
             ]}
             dirty={dirty}
             onReset={reset}
@@ -198,8 +193,6 @@ const Combos = () => {
     {drawer?.tipo === "combo" && drawer.item && (
       <ComboDrawer
         comboId={drawer.item.id}
-        periodo={periodo}
-        periodoLabel={periodoLabel}
         onClose={() => setDrawer(null)}
         onComboAtualizado={handleComboAtualizado}
         onComboDeletado={handleComboDeletado}
@@ -216,8 +209,6 @@ const Combos = () => {
     {drawer?.tipo === "promocao" && drawer.item && (
       <PromocaoDrawer
         promocaoId={drawer.item.id}
-        periodo={periodo}
-        periodoLabel={periodoLabel}
         onClose={() => setDrawer(null)}
         onPromocaoAtualizada={handlePromocaoAtualizada}
         onPromocaoDeletada={handlePromocaoDeletada}

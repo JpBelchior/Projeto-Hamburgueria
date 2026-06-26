@@ -3,6 +3,7 @@ import { RequestContext } from "../utils/request-context";
 import { CreatePromocaoDTO, UpdatePromocaoDTO } from "../dto/promocao.dto";
 import { Periodo, getRanges } from "../utils/dateRange";
 import { StatusPedido } from "@prisma/client";
+import { validateCombosDoRestaurante, validateProdutosDoRestaurante } from "../utils/validate-ownership";
 
 const promocaoSelect = {
   id:           true,
@@ -82,6 +83,11 @@ export const buscarPromocao = async (id: number) => {
 export const criarPromocao = async (dto: CreatePromocaoDTO) => {
   const restauranteId = RequestContext.getRestauranteId()!;
 
+  await Promise.all([
+    dto.combos?.length   ? validateCombosDoRestaurante(dto.combos.map(c => c.id), restauranteId)   : Promise.resolve(),
+    dto.produtos?.length ? validateProdutosDoRestaurante(dto.produtos.map(p => p.id), restauranteId) : Promise.resolve(),
+  ]);
+
   const row = await prisma.promocao.create({
     data: {
       nome:          dto.nome,
@@ -108,8 +114,13 @@ export const atualizarPromocao = async (promocaoId: number, dto: UpdatePromocaoD
 
   const { combos, produtos, ...campos } = dto;
 
+  await Promise.all([
+    combos?.length   ? validateCombosDoRestaurante(combos.map(c => c.id), restauranteId)     : Promise.resolve(),
+    produtos?.length ? validateProdutosDoRestaurante(produtos.map(p => p.id), restauranteId) : Promise.resolve(),
+  ]);
+
   await prisma.$transaction(async (tx) => {
-    await tx.promocao.update({ where: { id: promocaoId }, data: campos as any });
+    await tx.promocao.update({ where: { id: promocaoId, restauranteId }, data: campos as any });
 
     if (combos !== undefined) {
       await tx.promocaoCombo.deleteMany({ where: { promocaoId } });
@@ -139,7 +150,7 @@ export const toggleAtivo = async (id: number) => {
   if (!existe) return null;
 
   const row = await prisma.promocao.update({
-    where:  { id },
+    where:  { id, restauranteId },
     data:   { ativo: !existe.ativo },
     select: promocaoSelect,
   });
@@ -151,7 +162,7 @@ export const deletarPromocao = async (id: number) => {
   const existe = await prisma.promocao.findFirst({ where: { id, restauranteId } });
   if (!existe) return null;
 
-  await prisma.promocao.delete({ where: { id } });
+  await prisma.promocao.delete({ where: { id, restauranteId } });
   return true;
 };
 

@@ -1,6 +1,7 @@
 import { RequestContext } from "../utils/request-context";
 import prisma from "../config/prisma";
-import { TipoGasto, CreateGastoDTO, UpdateGastoDTO, ListGastosDTO } from "../dto/gasto.dto";
+import { CreateGastoDTO, UpdateGastoDTO, ListGastosDTO } from "../dto/gasto.dto";
+import { validateIngredientesDoRestaurante, validateFuncionariosDoRestaurante } from "../utils/validate-ownership";
 
 const includeGasto = {
   ingrediente: {
@@ -78,6 +79,7 @@ export const create = async (dto: CreateGastoDTO) => {
   const { tipo, ingredientes, funcionarioIds, ...base } = dto;
 
   if (tipo === "INGREDIENTE") {
+    if (ingredientes?.length) await validateIngredientesDoRestaurante(ingredientes.map(i => i.id), restauranteId);
     return prisma.$transaction(async (tx) => {
       const gasto = await tx.gasto.create({
         data: {
@@ -104,7 +106,7 @@ export const create = async (dto: CreateGastoDTO) => {
         await Promise.all(
           ingredientes.map(({ id, quantidade }) =>
             tx.ingrediente.update({
-              where: { id },
+              where: { id, restauranteId },
               data:  { quantidadeAtual: { increment: quantidade } },
             }),
           ),
@@ -116,6 +118,7 @@ export const create = async (dto: CreateGastoDTO) => {
   }
 
   if (tipo === "FUNCIONARIO") {
+    if (funcionarioIds?.length) await validateFuncionariosDoRestaurante(funcionarioIds, restauranteId);
     return prisma.gasto.create({
       data: {
         ...base,
@@ -148,6 +151,7 @@ export const update = async (id: number, dto: UpdateGastoDTO) => {
   const { ingredientes, funcionarioIds, ...base } = dto;
 
   if (gasto.tipo === "INGREDIENTE" && ingredientes !== undefined) {
+    if (ingredientes.length) await validateIngredientesDoRestaurante(ingredientes.map(i => i.id), restauranteId);
     return prisma.$transaction(async (tx) => {
       const antigas = await tx.gastoIngredienteIngrediente.findMany({
         where: { gastoIngredienteId: id },
@@ -157,7 +161,7 @@ export const update = async (id: number, dto: UpdateGastoDTO) => {
         await Promise.all(
           antigas.map((a) =>
             tx.ingrediente.update({
-              where: { id: a.ingredienteId },
+              where: { id: a.ingredienteId, restauranteId },
               data:  { quantidadeAtual: { decrement: a.quantidade } },
             }),
           ),
@@ -178,18 +182,19 @@ export const update = async (id: number, dto: UpdateGastoDTO) => {
         await Promise.all(
           ingredientes.map(({ id: ingId, quantidade }) =>
             tx.ingrediente.update({
-              where: { id: ingId },
+              where: { id: ingId, restauranteId },
               data:  { quantidadeAtual: { increment: quantidade } },
             }),
           ),
         );
       }
 
-      return tx.gasto.update({ where: { id }, data: base, include: includeGasto });
+      return tx.gasto.update({ where: { id, restauranteId }, data: base, include: includeGasto });
     });
   }
 
   if (gasto.tipo === "FUNCIONARIO" && funcionarioIds !== undefined) {
+    if (funcionarioIds.length) await validateFuncionariosDoRestaurante(funcionarioIds, restauranteId);
     await prisma.gastoFuncionarioFuncionario.deleteMany({ where: { gastoFuncionarioId: id } });
 
     if (funcionarioIds.length) {
@@ -199,7 +204,7 @@ export const update = async (id: number, dto: UpdateGastoDTO) => {
     }
   }
 
-  return prisma.gasto.update({ where: { id }, data: base, include: includeGasto });
+  return prisma.gasto.update({ where: { id, restauranteId }, data: base, include: includeGasto });
 };
 
 export const remove = async (id: number, reverterEstoque = false) => {
@@ -217,18 +222,18 @@ export const remove = async (id: number, reverterEstoque = false) => {
         await Promise.all(
           juncoes.map((j) =>
             tx.ingrediente.update({
-              where: { id: j.ingredienteId },
+              where: { id: j.ingredienteId, restauranteId },
               data:  { quantidadeAtual: { decrement: j.quantidade } },
             }),
           ),
         );
       }
 
-      await tx.gasto.delete({ where: { id } });
+      await tx.gasto.delete({ where: { id, restauranteId } });
       return { deleted: true };
     });
   }
 
-  await prisma.gasto.delete({ where: { id } });
+  await prisma.gasto.delete({ where: { id, restauranteId } });
   return { deleted: true };
 };
