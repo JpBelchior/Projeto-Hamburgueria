@@ -1,0 +1,15 @@
+<% var temDesconto = p.desconto != null; %>
+<% var economia = temDesconto ? p.precoTotal - p.precoReal : 0; %>
+<% var itens = (p.combos || []).map(function (pc) { return pc.quantidade + "× " + pc.combo.nome; })
+      .concat((p.produtos || []).map(function (pp) { return pp.quantidade + "× " + pp.produto.nome; }))
+      .join("  ·  "); %>
+<div class="combo promo">
+  <span class="selo"><%= temDesconto ? Math.round(p.desconto) + "% off" : "Promoção" %></span>
+  <div class="nome"><%= p.nome %></div>
+  <p class="itens"><%= itens %></p>
+  <div class="precos">
+    <% if (temDesconto) { %><span class="de"><%= fmtBRL(p.precoTotal) %></span><% } %>
+    <span class="por"><%= fmtBRL(temDesconto ? p.precoReal : p.precoTotal) %></span>
+    <% if (economia > 0) { %><span class="eco">economize <%= fmtBRL(economia) %></span><% } %>
+  </div>
+</div>

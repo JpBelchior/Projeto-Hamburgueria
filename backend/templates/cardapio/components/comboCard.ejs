@@ -1,0 +1,10 @@
+<div class="combo">
+  <% if (c.desconto != null) { %><span class="selo"><%= Math.round(c.desconto) %>% off</span><% } %>
+  <div class="nome"><%= c.nome %></div>
+  <p class="itens"><%= c.produtos.map(function (cp) { return cp.quantidade + "× " + cp.produto.nome; }).join("  ·  ") %></p>
+  <div class="precos">
+    <% if (c.desconto != null) { %><span class="de"><%= fmtBRL(c.precoNormal) %></span><% } %>
+    <span class="por"><%= fmtBRL(c.preco) %></span>
+    <% if (c.economia > 0) { %><span class="eco">economize <%= fmtBRL(c.economia) %></span><% } %>
+  </div>
+</div>

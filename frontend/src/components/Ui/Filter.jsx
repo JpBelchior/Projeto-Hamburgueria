@@ -7,7 +7,7 @@ import Button from "./Button";
  * Filter — barra de filtros reutilizável
  *
  * Props:
- *   search   {{ value, onChange, placeholder }}   — SearchBar
+ *   search   {{ value, onChange, placeholder }} | {{ value, onChange, placeholder }}[]  — um ou mais SearchBars
  *   tabs     {{ options, value, onChange }[]}     — um ou mais TabSelectors
  *   dirty    {boolean}                            — exibe botão "Limpar"
  *   onReset  {function}                           — limpa todos os filtros
@@ -16,19 +16,20 @@ import Button from "./Button";
  */
 export default function Filter({ search, tabs = [], dirty, onReset, action, actions }) {
   const actionList = actions ?? (action ? [action] : []);
+  const searches = Array.isArray(search) ? search : search ? [search] : [];
 
   return (
     <div className="flex flex-wrap items-center gap-2 bg-slate-900/60 border border-slate-700/50 rounded-2xl px-4 py-3">
 
-      {search && (
-        <div className="min-w-[180px] max-w-xs flex-1">
+      {searches.map((s, i) => (
+        <div key={i} className="min-w-[180px] max-w-xs flex-1">
           <SearchBar
-            value={search.value}
-            onChange={search.onChange}
-            placeholder={search.placeholder}
+            value={s.value}
+            onChange={s.onChange}
+            placeholder={s.placeholder}
           />
         </div>
-      )}
+      ))}
 
       {tabs.map((tab, i) => (
         <TabSelector
@@ -47,7 +48,7 @@ export default function Filter({ search, tabs = [], dirty, onReset, action, acti
             <div className="w-px h-5 bg-slate-700/60" />
           )}
           {actionList.map((a, i) => (
-            <Button key={i} icon={a.icon} size="sm" onClick={a.onClick}>
+            <Button key={i} icon={a.icon} size="sm" onClick={a.onClick} disabled={a.disabled}>
               {a.label}
             </Button>
           ))}

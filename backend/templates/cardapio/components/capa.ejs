@@ -1,0 +1,32 @@
+<div class="capa">
+  <span class="capa-canto capa-canto--tl"></span>
+  <span class="capa-canto capa-canto--tr"></span>
+  <span class="capa-canto capa-canto--bl"></span>
+  <span class="capa-canto capa-canto--br"></span>
+
+  <p class="capa-marca">Edição <%= new Date().getFullYear() %></p>
+
+  <div class="capa-miolo">
+    <div class="ornamento">
+      <span></span>
+      <% if (restaurante && restaurante.logo) { %>
+        <img src="<%= restaurante.logo %>" alt="<%= restaurante.nome %>" />
+      <% } %>
+      <span></span>
+    </div>
+    <h1>Cardápio</h1>
+    <p class="sub"><%= (restaurante && restaurante.nome) || "Seu Restaurante" %> · Feito para você</p>
+    <p class="frase">Preparado na hora, com ingredientes frescos, do jeito que você gosta.</p>
+  </div>
+
+  <div class="capa-base">
+    <% if (categorias && categorias.length) { %>
+      <div class="capa-indice">
+        <% categorias.forEach(function (c, i) { %>
+          <% if (i > 0) { %><span class="capa-indice-ponto">·</span><% } %>
+          <span class="capa-indice-item"><%= c %></span>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</div>

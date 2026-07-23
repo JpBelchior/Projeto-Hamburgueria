@@ -1,0 +1,30 @@
+<table class="secao-table<%= secao.novaPagina ? " secao-table--nova-pagina" : "" %>">
+  <thead>
+    <tr>
+      <td>
+        <% if (secao.comDivisor) { %><%- include("divisor") %><% } %>
+        <div class="secao-head">
+          <span class="num">Nº <%= String(secao.numero).padStart(2, "0") %></span>
+          <h2><%= secao.titulo %></h2>
+          <span class="tag"><%= secao.tag %></span>
+        </div>
+      </td>
+    </tr>
+  </thead>
+  <tbody>
+    <% secao.itens.forEach(function (p) { %>
+      <tr>
+        <td>
+          <div class="item">
+            <div class="info">
+              <div class="nome"><%= p.nome %></div>
+              <% if (p.descricao) { %><p class="desc"><%= p.descricao %></p><% } %>
+            </div>
+            <span class="pontos"></span>
+            <span class="preco"><%= fmtBRL(p.precoVenda) %></span>
+          </div>
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>

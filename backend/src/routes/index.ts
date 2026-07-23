@@ -11,6 +11,7 @@ import promocaoRoutes  from "./promocao/promocao.routes";
 import gastoRoutes from "./gasto/gasto.routes";
 import financeiroRoutes from "./financeiro/financeiro.routes";
 import ingredienteRoutes from "./ingrediente/ingrediente.routes";
+import cardapioRoutes from "./cardapio/cardapio.routes";
 
 export const publicRoutes = Router();
 publicRoutes.use("/auth", authRoutes);
@@ -27,3 +28,4 @@ protectedRoutes.use("/pedidos",            pedidoRoutes);
 protectedRoutes.use("/gastos",             gastoRoutes);
 protectedRoutes.use("/financeiro",         financeiroRoutes);
 protectedRoutes.use("/ingredientes",       ingredienteRoutes);
+protectedRoutes.use("/cardapio",           cardapioRoutes);

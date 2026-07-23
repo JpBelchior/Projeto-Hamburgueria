@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { pedidoService } from "../services/pedido.service";
 
-const FILTROS_INICIAIS = { periodo: "hoje", status: "", formaPagamento: "", busca: "" };
+const FILTROS_INICIAIS = { periodo: "hoje", formaPagamento: "", busca: "", mesa: "" };
 const DRAWER_FECHADO   = { aberto: false, modo: "criar", dados: null };
 
 export function usePedidos() {
@@ -21,7 +21,6 @@ export function usePedidos() {
     try {
       const data = await pedidoService.getAll({
         periodo:        f.periodo,
-        status:         f.status        || undefined,
         formaPagamento: f.formaPagamento || undefined,
       });
       setPedidos(data);
@@ -52,8 +51,8 @@ export function usePedidos() {
   const filtered = useMemo(() => {
     const busca = (filters.busca ?? "").toLowerCase().trim();
     return pedidos.filter((p) => {
-      if (filters.status         && p.status         !== filters.status)         return false;
       if (filters.formaPagamento && p.formaPagamento !== filters.formaPagamento) return false;
+      if (filters.mesa && String(p.mesa ?? "") !== filters.mesa) return false;
       if (busca) {
         const num    = (p.numeroPedido ?? "").toLowerCase();
         const client = (p.nomeCliente  ?? "").toLowerCase();
@@ -61,7 +60,7 @@ export function usePedidos() {
       }
       return true;
     });
-  }, [pedidos, filters.status, filters.formaPagamento, filters.busca]);
+  }, [pedidos, filters.formaPagamento, filters.mesa, filters.busca]);
 
   const actions = {
     setFilter: (key, value) =>

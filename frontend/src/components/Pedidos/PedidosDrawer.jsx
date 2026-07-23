@@ -313,7 +313,7 @@ function ItemSelector({ onSelect }) {
 // ── Formulário de criação/edição ──────────────────────────────────────────────
 
 function FormView({ drawer, actions }) {
-  const { form, funcionarios, saving, erro, isEditar, setField, setItem, removeItem, addItem, valorTotal, handleSubmit } = usePedidoForm(drawer, actions);
+  const { form, responsavelNome, saving, erro, isEditar, setField, setItem, removeItem, addItem, valorTotal, handleSubmit } = usePedidoForm(drawer, actions);
 
   return (
     <>
@@ -347,14 +347,9 @@ function FormView({ drawer, actions }) {
 
         {/* Atendente */}
         <FormField label="Atendente Responsável">
-          <select value={form.funcionarioId} onChange={(e) => setField("funcionarioId", e.target.value)} className={inputCls}>
-            <option value="">— Selecionar atendente —</option>
-            {funcionarios.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.user.name}{f.cargo ? ` · ${f.cargo}` : ""}
-              </option>
-            ))}
-          </select>
+          <div className={inputCls + " flex items-center text-slate-300"}>
+            {responsavelNome}
+          </div>
         </FormField>
 
         {/* Itens */}

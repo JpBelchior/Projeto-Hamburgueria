@@ -1,21 +1,13 @@
 import { useState, useEffect } from "react";
-import { funcionarioService } from "../services/funcionario.service";
 import useAuthStore from "../store/useAuthStore";
 
 export function usePedidoForm(drawer, actions) {
   const isEditar = drawer.modo === "editar";
   const user     = useAuthStore((s) => s.user);
 
-  const [form,         setForm]         = useState({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: "", itens: [] });
-  const [funcionarios, setFuncionarios] = useState([]);
-  const [saving,       setSaving]       = useState(false);
-  const [erro,         setErro]         = useState(null);
-
-  useEffect(() => {
-    funcionarioService.getAll()
-      .then((list) => setFuncionarios(list.filter((f) => f.active)))
-      .catch(() => {});
-  }, []);
+  const [form,   setForm]   = useState({ nomeCliente: "", mesa: "", formaPagamento: "", itens: [] });
+  const [saving, setSaving] = useState(false);
+  const [erro,   setErro]   = useState(null);
 
   useEffect(() => {
     if (!drawer.aberto) return;
@@ -83,26 +75,17 @@ export function usePedidoForm(drawer, actions) {
         nomeCliente:    p.nomeCliente ?? "",
         mesa:           p.mesa != null ? String(p.mesa) : "",
         formaPagamento: p.formaPagamento ?? "",
-        funcionarioId:  p.funcionarioId ? String(p.funcionarioId) : "",
         itens: [...regularItens, ...promoItens],
       });
     } else {
-      const meuFunc = funcionarios.find((f) => f.user?.id === user?.id);
-      setForm({ nomeCliente: "", mesa: "", formaPagamento: "", funcionarioId: meuFunc ? String(meuFunc.id) : "", itens: [] });
+      setForm({ nomeCliente: "", mesa: "", formaPagamento: "", itens: [] });
     }
     setErro(null);
   }, [drawer.aberto, drawer.dados]);
 
-  // Caso funcionários carregue após o drawer abrir, preenche o padrão
-  useEffect(() => {
-    if (!drawer.aberto || isEditar) return;
-    setForm((prev) => {
-      if (prev.funcionarioId !== "") return prev;
-      const meuFunc = funcionarios.find((f) => f.user?.id === user?.id);
-      if (!meuFunc) return prev;
-      return { ...prev, funcionarioId: String(meuFunc.id) };
-    });
-  }, [funcionarios]);
+  const responsavelNome = isEditar
+    ? drawer.dados?.funcionario?.user?.name ?? "—"
+    : user?.name ?? "—";
 
   const setField    = (k, v) => setForm((p) => ({ ...p, [k]: v }));
   const setItem     = (idx, k, v) =>
@@ -164,7 +147,6 @@ export function usePedidoForm(drawer, actions) {
         nomeCliente:    form.nomeCliente    || undefined,
         mesa:           form.mesa           ? Number(form.mesa) : undefined,
         formaPagamento: form.formaPagamento || undefined,
-        funcionarioId:  form.funcionarioId  ? Number(form.funcionarioId) : undefined,
         itens: form.itens.map((i) => ({
           produtoId:     i.produtoId     || undefined,
           comboId:       i.comboId       || undefined,
@@ -183,5 +165,5 @@ export function usePedidoForm(drawer, actions) {
     }
   };
 
-  return { form, funcionarios, saving, erro, isEditar, setField, setItem, removeItem, addItem, valorTotal, handleSubmit };
+  return { form, responsavelNome, saving, erro, isEditar, setField, setItem, removeItem, addItem, valorTotal, handleSubmit };
 }

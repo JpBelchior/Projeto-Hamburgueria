@@ -345,15 +345,10 @@ export const criarPedido = async (dto: CreatePedidoDTO) => {
   const restauranteId = RequestContext.getRestauranteId()!;
   const funcionario   = RequestContext.getUser()!;
 
-  const func = dto.funcionarioId
-    ? await prisma.funcionario.findFirst({
-        where:  { id: dto.funcionarioId, restauranteId },
-        select: { id: true },
-      })
-    : await prisma.funcionario.findFirst({
-        where:  { user: { id: funcionario.id }, restauranteId },
-        select: { id: true },
-      });
+  const func = await prisma.funcionario.findFirst({
+    where:  { user: { id: funcionario.id }, restauranteId },
+    select: { id: true },
+  });
   if (!func) throw Object.assign(new Error("Funcionário não encontrado para este restaurante."), { statusCode: 400 });
 
   for (const item of dto.itens) {

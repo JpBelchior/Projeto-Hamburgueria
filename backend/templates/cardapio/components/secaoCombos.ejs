@@ -1,0 +1,22 @@
+<table class="secao-table secao-table--grid<%= secao.novaPagina ? " secao-table--nova-pagina" : "" %>">
+  <thead>
+    <tr>
+      <td colspan="2">
+        <% if (secao.comDivisor) { %><%- include("divisor") %><% } %>
+        <div class="secao-head">
+          <span class="num">Nº <%= String(secao.numero).padStart(2, "0") %></span>
+          <h2>Combos</h2>
+          <span class="tag">Os favoritos da casa, com desconto</span>
+        </div>
+      </td>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (var i = 0; i < secao.combos.length; i += 2) { %>
+      <tr>
+        <td><%- include("comboCard", { c: secao.combos[i], fmtBRL: fmtBRL }) %></td>
+        <td><% if (secao.combos[i + 1]) { %><%- include("comboCard", { c: secao.combos[i + 1], fmtBRL: fmtBRL }) %><% } %></td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>

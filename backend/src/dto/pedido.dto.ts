@@ -13,7 +13,6 @@ export interface CreatePedidoDTO {
   nomeCliente?:    string;
   mesa?:           number;
   formaPagamento?: FormaPagamento;
-  funcionarioId?:  number;
   itens:           PedidoItemDTO[];
 }
 
