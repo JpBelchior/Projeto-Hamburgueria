@@ -18,6 +18,7 @@ export default function FinanceiroCard() {
 
   const custoIngredientes = dados?.custoIngredientes ?? 0;
   const custoFuncionarios = dados?.custoFuncionarios ?? 0;
+  const custoOutros       = dados?.custoOutros       ?? 0;
   const custoTotal        = dados?.custoTotal        ?? 0;
   const receita           = dados?.receita           ?? 0;
   const margem            = dados?.margem            ?? 0;
@@ -25,8 +26,10 @@ export default function FinanceiroCard() {
 
   const margemPct       = receita > 0 ? (margem / receita) * 100 : 0;
   const custoPctReceita = receita > 0 ? (custoTotal / receita) * 100 : 0;
-  const ingPct          = custoTotal > 0 ? (custoIngredientes / custoTotal) * 100 : 50;
-  const funcPct         = custoTotal > 0 ? (custoFuncionarios / custoTotal) * 100 : 50;
+  const ingPct          = custoTotal > 0 ? (custoIngredientes / custoTotal) * 100 : 34;
+  const funcPct         = custoTotal > 0 ? (custoFuncionarios / custoTotal) * 100 : 33;
+  const outrosPct       = custoTotal > 0 ? (custoOutros       / custoTotal) * 100 : 33;
+  const OUTROS_COLOR    = "#38bdf8";
 
   const mesSelecionado = MESES.find((m) => m.value === mes)?.label ?? "";
 
@@ -103,21 +106,25 @@ export default function FinanceiroCard() {
                 Composição do custo
               </span>
               <span className="text-slate-600 tabular-nums">
-                {ingPct.toFixed(0)}% ingredientes · {funcPct.toFixed(0)}% funcionários
+                {ingPct.toFixed(0)}% ingredientes · {funcPct.toFixed(0)}% funcionários · {outrosPct.toFixed(0)}% outros
               </span>
             </div>
-            <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-800 mb-4">
-              <div
-                style={{ width: `${ingPct}%`, background: ACCENT.from }}
-                title={`Ingredientes ${ingPct.toFixed(1)}%`}
-              />
-              <div
-                style={{ width: `${funcPct}%`, background: "#94a3b8" }}
-                title={`Funcionários ${funcPct.toFixed(1)}%`}
-              />
+            <div className="relative mb-4">
+              <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-800">
+                <div style={{ width: `${ingPct}%`, background: ACCENT.from }} />
+                <div style={{ width: `${funcPct}%`, background: "#94a3b8" }} />
+                <div style={{ width: `${outrosPct}%`, background: OUTROS_COLOR }} />
+              </div>
+
+              {/* Zonas de hover (fora do overflow-hidden, para o tooltip não ser cortado) */}
+              <div className="absolute inset-0 flex">
+                <BarSegmentTooltip width={ingPct} label="Ingredientes" pct={ingPct} borderColor={ACCENT.border} />
+                <BarSegmentTooltip width={funcPct} label="Funcionários" pct={funcPct} borderColor="rgba(148,163,184,0.4)" />
+                <BarSegmentTooltip width={outrosPct} label="Outros" pct={outrosPct} borderColor="rgba(56,189,248,0.4)" />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <CustoRow
                 label="Ingredientes"
                 sub="Compras registradas no período"
@@ -129,6 +136,12 @@ export default function FinanceiroCard() {
                 sub="Folha registrada no período"
                 value={custoFuncionarios}
                 color="#94a3b8"
+              />
+              <CustoRow
+                label="Outros"
+                sub="Demais gastos registrados no período"
+                value={custoOutros}
+                color={OUTROS_COLOR}
               />
             </div>
 
@@ -159,6 +172,22 @@ function MetricBox({ label, value, sub, highlight, hint }) {
         {value}
       </p>
       {sub && <p className="text-slate-500 text-[10px] mt-1 tabular-nums">{sub}</p>}
+    </div>
+  );
+}
+
+function BarSegmentTooltip({ width, label, pct, borderColor }) {
+  if (width <= 0) return null;
+  return (
+    <div className="group relative h-full" style={{ width: `${width}%` }}>
+      <div
+        className="absolute -top-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap bg-black/90 border rounded-lg px-2.5 py-1.5 shadow-xl backdrop-blur z-10"
+        style={{ borderColor }}
+      >
+        <p className="text-white text-[11px] font-semibold tabular-nums">
+          {label} · {pct.toFixed(1)}%
+        </p>
+      </div>
     </div>
   );
 }

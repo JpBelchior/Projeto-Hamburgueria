@@ -59,7 +59,13 @@ const Dashboard = () => {
       <FinanceiroCard />
 
       {/* Gráfico de vendas */}
-      <SalesChart period={periodo} refreshing={loading} />
+      <SalesChart
+        period={periodo}
+        refreshing={loading}
+        variacaoFaturamento={dados?.faturamento?.variacao}
+        variacaoPedidos={dados?.pedidos?.variacao}
+        vsHint={vsHint}
+      />
 
       {/* Ranking e mix de categorias */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

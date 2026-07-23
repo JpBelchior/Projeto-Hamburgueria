@@ -34,10 +34,7 @@ export const gerarPDF = async (req: Request, res: Response): Promise<void> => {
     const pdfConteudo = await page.pdf({
       format: "A4",
       printBackground: true,
-      // bottom maior que os demais lados: reserva a faixa onde o rodapé fixo
-      // (position: fixed, ver cardapio.ejs) fica, pra nunca sobrepor o último
-      // item da página.
-      margin: { top: "0.6in", bottom: "0.85in", left: "0.6in", right: "0.6in" },
+      margin: { top: "0.6in", bottom: "0.6in", left: "0.6in", right: "0.6in" },
     });
 
     const documentoFinal = await PDFDocument.create();

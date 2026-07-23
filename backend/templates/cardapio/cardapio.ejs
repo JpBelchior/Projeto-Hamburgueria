@@ -37,9 +37,15 @@
      no DOM) e depois unida ao PDF do restante do conteúdo — ver gerarPDF em
      cardapio.controller.ts. */
   .pagina-moldura { position: fixed; top: 6px; left: 6px; right: 6px; bottom: 6px; border: 1px solid rgba(251,191,36,.4); pointer-events: none; }
+  /* Altura fixa e sem quebra de linha: assim o rodapé tem uma altura previsível,
+     que bate exatamente com a de .rodape-espacador (usado nas tabelas de cada
+     seção) — é esse espaçador, e não o próprio fixed, que o Chromium respeita de
+     verdade no cálculo de quebra de página, garantindo que nenhum item real
+     (por maior que seja) chegue a sobrepor o rodapé. */
   .rodape-fixo {
-    position: fixed; left: 0; right: 0; bottom: 16px;
-    display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    position: fixed; left: 0; right: 0; bottom: 16px; height: 20px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    flex-wrap: nowrap; overflow: hidden; white-space: nowrap;
     padding: 14px 0.7in 0; font-size: 8.5px; letter-spacing: 1.2px; text-transform: uppercase;
     color: #475569; font-weight: 600;
   }
@@ -48,6 +54,7 @@
     background: linear-gradient(to right, transparent, rgba(251,191,36,.45), transparent);
   }
   .rodape-fixo .ponto { color: rgba(251,191,36,.4); }
+  .rodape-espacador { height: 50px; }
 
   /* ══ Capa ══
      Agora que a capa vira sua própria página (quebra forçada antes da primeira

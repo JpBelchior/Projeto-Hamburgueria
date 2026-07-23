@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import { GERENTE_NAV } from "../config/navigation";
 import Avatar from "./Ui/Avatar";
+import PerfilDrawer from "./Perfil/PerfilDrawer";
 
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [perfilOpen, setPerfilOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -15,6 +17,10 @@ const Sidebar = () => {
   };
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const primaryRole = user?.roles?.[0];
+  const roleLabel = primaryRole
+    ? primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1).toLowerCase()
+    : "Gerente";
 
   return (
     <aside
@@ -111,17 +117,20 @@ const Sidebar = () => {
       {/* Footer — usuário + logout */}
       <div className="border-t border-amber-500/10 p-3 space-y-2">
         {!collapsed && (
-          <div className="flex items-center gap-3 px-2 py-2 rounded-xl bg-slate-900/50">
+          <button
+            onClick={() => setPerfilOpen(true)}
+            className="w-full flex items-center gap-3 px-2 py-2 rounded-xl bg-slate-900/50 hover:bg-slate-800/70 border border-transparent hover:border-amber-500/20 transition-all duration-200"
+          >
             <Avatar name={user?.name || "Gerente"} size="sm" />
-            <div className="overflow-hidden">
+            <div className="overflow-hidden text-left">
               <p className="text-white text-xs font-semibold truncate">
                 {user?.name || "Gerente"}
               </p>
               <p className="text-slate-500 text-[10px] truncate">
-                {user?.role || "GERENTE"}
+                {roleLabel}
               </p>
             </div>
-          </div>
+          </button>
         )}
 
         <button
@@ -141,6 +150,8 @@ const Sidebar = () => {
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
       </button>
+
+      {perfilOpen && <PerfilDrawer onClose={() => setPerfilOpen(false)} />}
     </aside>
   );
 };

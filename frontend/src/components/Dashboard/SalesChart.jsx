@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from "react";
 import {
-  ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ReferenceDot,
 } from "recharts";
 import { ACCENT, fmtBRL, fmtBRLShort, fmtNum } from "../../utils/format";
 import TabSelector from "../Ui/TabSelector";
 import { usePeriodFetch } from "../../hooks/usePeriodFetch";
 import { dashboardService } from "../../services/dashboard.service";
-import { ChartAreaIcon } from "lucide-react";
+import { ChartAreaIcon, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import CardContainer from "../Ui/CardContainer";
 import ErrorAlert from "../Ui/ErrorAlert";
 
@@ -21,6 +21,33 @@ const TITULO = {
   "30dias": "últimos 30 dias",
   anual:  "por mês",
 };
+
+function CustomCursor({ points, height }) {
+  if (!points?.length) return null;
+  const { x, y } = points[0];
+  return (
+    <g>
+      <rect x={x - 14} y={y} width={28} height={height} fill={ACCENT.from} fillOpacity={0.06} />
+      <line x1={x} y1={y} x2={x} y2={y + height} stroke={ACCENT.from} strokeWidth={1} strokeDasharray="3 3" />
+    </g>
+  );
+}
+
+function TrendBadge({ variacao }) {
+  if (variacao == null) return null;
+  const isNeutral = variacao === 0;
+  const positive  = !isNeutral && variacao > 0;
+  const color = isNeutral ? "text-slate-400 bg-slate-500/10 border-slate-500/20"
+    : positive ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+    : "text-red-400 bg-red-500/10 border-red-500/20";
+  const Icon = isNeutral ? Minus : positive ? ArrowUp : ArrowDown;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${color}`}>
+      <Icon size={10} />
+      {isNeutral ? "—" : `${Math.abs(variacao).toFixed(1)}%`}
+    </span>
+  );
+}
 
 function CustomTooltip({ active, payload, label, metric }) {
   if (!active || !payload?.length) return null;
@@ -38,7 +65,7 @@ function CustomTooltip({ active, payload, label, metric }) {
   );
 }
 
-export default function SalesChart({ period, refreshing }) {
+export default function SalesChart({ period, refreshing, variacaoFaturamento, variacaoPedidos }) {
   const [metric, setMetric] = useState("faturamento");
   const fn = useCallback(() => dashboardService.getVendas(period), [period]);
   const { dados, loading, erro } = usePeriodFetch(fn, "Não foi possível carregar os dados de vendas.");
@@ -48,6 +75,7 @@ export default function SalesChart({ period, refreshing }) {
   const peak  = data.length > 0
     ? data.reduce((p, d) => (d[metric] > p[metric] ? d : p), data[0])
     : null;
+  const variacao = metric === "faturamento" ? variacaoFaturamento : variacaoPedidos;
 
   return (
     <CardContainer>
@@ -62,16 +90,17 @@ export default function SalesChart({ period, refreshing }) {
             </h3>
 
             {!loading && !erro && peak && (
-              <p className="text-slate-500 text-xs mt-0.5">
+              <p className="text-slate-500 text-xs mt-0.5 flex items-center gap-1.5 flex-wrap">
                 Total:{" "}
                 <span className="text-white font-semibold tabular-nums">
                   {metric === "faturamento" ? fmtBRL(total) : `${fmtNum(total)} pedidos`}
                 </span>
-                <span className="text-slate-700 mx-1.5">·</span>
+                <span className="text-slate-700 mx-0.5">·</span>
                 pico {peak.label}:{" "}
                 <span className="font-semibold" style={{ color: ACCENT.text }}>
                   {metric === "faturamento" ? fmtBRLShort(peak[metric]) : peak[metric]}
                 </span>
+                <TrendBadge variacao={variacao} />
               </p>
             )}
           </div>
@@ -109,7 +138,7 @@ export default function SalesChart({ period, refreshing }) {
           style={{ height: 260, opacity: refreshing ? 0.4 : 1, transition: "opacity .3s" }}
         >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
+            <AreaChart data={data} margin={{ top: 12, right: 16, left: 4, bottom: 4 }} accessibilityLayer>
               <defs>
                 <linearGradient id="salesArea" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%"   stopColor={ACCENT.from} stopOpacity={0.28} />
@@ -147,10 +176,12 @@ export default function SalesChart({ period, refreshing }) {
                     : v
                 }
                 width={42}
+                domain={[0, (max) => Math.ceil(max * 1.15)]}
               />
               <Tooltip
                 content={<CustomTooltip metric={metric} />}
-                cursor={{ stroke: ACCENT.from, strokeWidth: 1, strokeDasharray: "3 3" }}
+                cursor={<CustomCursor />}
+                position={{ y: 4 }}
               />
               <Area
                 type="monotone"
@@ -161,6 +192,18 @@ export default function SalesChart({ period, refreshing }) {
                 fill="url(#salesArea)"
                 activeDot={{ r: 5, fill: ACCENT.to, stroke: "#000", strokeWidth: 2 }}
               />
+              {peak && (
+                <ReferenceDot
+                  x={peak.label}
+                  y={peak[metric]}
+                  r={4}
+                  fill={ACCENT.to}
+                  stroke="#000"
+                  strokeWidth={2}
+                  isFront
+                  ifOverflow="extendDomain"
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </div>

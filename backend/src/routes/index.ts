@@ -12,6 +12,7 @@ import gastoRoutes from "./gasto/gasto.routes";
 import financeiroRoutes from "./financeiro/financeiro.routes";
 import ingredienteRoutes from "./ingrediente/ingrediente.routes";
 import cardapioRoutes from "./cardapio/cardapio.routes";
+import userRoutes from "./user/user.routes";
 
 export const publicRoutes = Router();
 publicRoutes.use("/auth", authRoutes);
@@ -29,3 +30,4 @@ protectedRoutes.use("/gastos",             gastoRoutes);
 protectedRoutes.use("/financeiro",         financeiroRoutes);
 protectedRoutes.use("/ingredientes",       ingredienteRoutes);
 protectedRoutes.use("/cardapio",           cardapioRoutes);
+protectedRoutes.use("/users",              userRoutes);
